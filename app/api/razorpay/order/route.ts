@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-import { createMockRazorpayOrder } from "@/lib/razorpay"
+import { createRazorpayOrder } from "@/lib/razorpay"
+import { createPurchaseOrder } from "@/lib/db"
 import { getPlanById } from "@/lib/products"
 
 export async function POST(request: Request) {
@@ -30,14 +31,26 @@ export async function POST(request: Request) {
       )
     }
 
-    // Create mock Razorpay order
-    const order = await createMockRazorpayOrder(plan.pricing.IN.amount, planId)
+    // Create real Razorpay order
+    const order = await createRazorpayOrder(plan.pricing.IN.amount, planId)
+
+    // Persist order so verification can activate the right subscription safely
+    await createPurchaseOrder({
+      orderId: order.id,
+      email: session.user.email,
+      planId,
+      provider: "razorpay",
+      amount: order.amount,
+      currency: order.currency,
+      status: "created",
+      paymentId: null,
+    })
 
     return NextResponse.json({
       orderId: order.id,
       amount: order.amount,
       currency: order.currency,
-      keyId: process.env.RAZORPAY_KEY_ID || "rzp_test_mock",
+      keyId: process.env.RAZORPAY_KEY_ID,
     })
   } catch (error) {
     console.error("Razorpay order error:", error)

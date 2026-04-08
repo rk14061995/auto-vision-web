@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-import { updateUser } from "@/lib/db"
-import { verifyMockRazorpaySignature, mapPlanToRazorpay } from "@/lib/razorpay"
+import {
+  applyPlanPurchase,
+  getPurchaseOrderByOrderId,
+  markPurchaseOrderPaid,
+} from "@/lib/db"
+import { verifyRazorpaySignature } from "@/lib/razorpay"
 
 export async function POST(request: Request) {
   const session = await auth()
@@ -12,14 +16,36 @@ export async function POST(request: Request) {
 
   try {
     const {
-      planId,
       razorpay_order_id,
       razorpay_payment_id,
       razorpay_signature,
     } = await request.json()
 
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return NextResponse.json(
+        { error: "Missing payment verification fields" },
+        { status: 400 }
+      )
+    }
+
+    const order = await getPurchaseOrderByOrderId(razorpay_order_id)
+    if (!order) {
+      return NextResponse.json({ error: "Order not found" }, { status: 404 })
+    }
+
+    if (order.email !== session.user.email) {
+      return NextResponse.json({ error: "Order does not belong to user" }, { status: 403 })
+    }
+
+    if (order.status !== "created") {
+      return NextResponse.json(
+        { error: "Order already processed" },
+        { status: 409 }
+      )
+    }
+
     // Verify signature
-    const isValid = verifyMockRazorpaySignature(
+    const isValid = verifyRazorpaySignature(
       razorpay_order_id,
       razorpay_payment_id,
       razorpay_signature
@@ -32,19 +58,19 @@ export async function POST(request: Request) {
       )
     }
 
-    // Update user subscription
-    const { planType, projectLimit } = mapPlanToRazorpay(planId)
-    
-    // Set expiry to 30 days from now
-    const subscriptionExpiry = new Date()
-    subscriptionExpiry.setDate(subscriptionExpiry.getDate() + 30)
+    const updatedUser = await applyPlanPurchase(
+      session.user.email,
+      order.planId,
+      razorpay_payment_id
+    )
+    if (!updatedUser) {
+      return NextResponse.json(
+        { error: "Failed to activate subscription" },
+        { status: 500 }
+      )
+    }
 
-    await updateUser(session.user.email, {
-      planType: planType as "free" | "1-project" | "5-projects" | "50-projects" | "100-projects" | "business",
-      projectLimit,
-      razorpayCustomerId: razorpay_payment_id,
-      subscriptionExpiry,
-    })
+    await markPurchaseOrderPaid(razorpay_order_id, razorpay_payment_id)
 
     return NextResponse.json({
       success: true,

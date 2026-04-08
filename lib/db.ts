@@ -1,5 +1,6 @@
 import "server-only"
 import { MongoClient, Db, ObjectId } from "mongodb"
+import { getPlanById } from "./products"
 
 const uri = process.env.MONGODB_URI || ""
 const options = {}
@@ -60,6 +61,20 @@ export interface User {
   updatedAt: Date
 }
 
+export interface PurchaseOrder {
+  _id?: ObjectId
+  orderId: string
+  email: string
+  planId: string
+  provider: "razorpay"
+  amount: number
+  currency: "INR" | "USD"
+  status: "created" | "paid" | "failed"
+  paymentId: string | null
+  createdAt: Date
+  updatedAt: Date
+}
+
 export async function getUserByEmail(email: string): Promise<User | null> {
   const db = await getDb()
   return db.collection<User>("users").findOne({ email })
@@ -84,6 +99,72 @@ export async function updateUser(
       { returnDocument: "after" }
     )
   return result
+}
+
+export async function createPurchaseOrder(
+  order: Omit<PurchaseOrder, "_id" | "createdAt" | "updatedAt">
+): Promise<PurchaseOrder> {
+  const db = await getDb()
+  const now = new Date()
+  const document: PurchaseOrder = {
+    ...order,
+    createdAt: now,
+    updatedAt: now,
+  }
+
+  const result = await db.collection<PurchaseOrder>("purchase_orders").insertOne(document)
+  return { ...document, _id: result.insertedId }
+}
+
+export async function getPurchaseOrderByOrderId(
+  orderId: string
+): Promise<PurchaseOrder | null> {
+  const db = await getDb()
+  return db.collection<PurchaseOrder>("purchase_orders").findOne({ orderId })
+}
+
+export async function markPurchaseOrderPaid(
+  orderId: string,
+  paymentId: string
+): Promise<void> {
+  const db = await getDb()
+  await db.collection<PurchaseOrder>("purchase_orders").updateOne(
+    { orderId },
+    {
+      $set: {
+        status: "paid",
+        paymentId,
+        updatedAt: new Date(),
+      },
+    }
+  )
+}
+
+export async function applyPlanPurchase(
+  email: string,
+  planId: string,
+  providerPaymentId: string
+): Promise<User | null> {
+  const user = await getUserByEmail(email)
+  if (!user) return null
+
+  const plan = getPlanById(planId)
+  if (!plan) return null
+
+  const now = new Date()
+  const baseDate =
+    user.subscriptionExpiry && user.subscriptionExpiry > now
+      ? new Date(user.subscriptionExpiry)
+      : now
+
+  baseDate.setDate(baseDate.getDate() + 30)
+
+  return updateUser(email, {
+    planType: plan.id as User["planType"],
+    projectLimit: plan.projectLimit,
+    subscriptionExpiry: baseDate,
+    razorpayCustomerId: providerPaymentId,
+  })
 }
 
 export { getClientPromise as clientPromise }

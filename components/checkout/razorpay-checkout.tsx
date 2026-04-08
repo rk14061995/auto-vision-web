@@ -2,13 +2,13 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Script from "next/script"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import { Loader2, CreditCard, Smartphone, Building } from "lucide-react"
 import { type Plan, formatPrice } from "@/lib/products"
-import { generateMockPaymentResponse } from "@/lib/razorpay"
 import { cn } from "@/lib/utils"
 
 interface RazorpayCheckoutProps {
@@ -18,6 +18,14 @@ interface RazorpayCheckoutProps {
 }
 
 type PaymentMethod = "card" | "upi" | "netbanking"
+
+declare global {
+  interface Window {
+    Razorpay: new (options: Record<string, unknown>) => {
+      open: () => void
+    }
+  }
+}
 
 export function RazorpayCheckout({
   plan,
@@ -47,37 +55,68 @@ export function RazorpayCheckout({
       }
 
       const orderData = await orderRes.json()
-
-      // Simulate payment processing
-      setIsProcessing(true)
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-
-      // Generate mock payment response
-      const paymentResponse = generateMockPaymentResponse(orderData.orderId)
-
-      // Verify payment
-      const verifyRes = await fetch("/api/razorpay/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          planId: plan.id,
-          ...paymentResponse,
-        }),
-      })
-
-      if (!verifyRes.ok) {
-        throw new Error("Payment verification failed")
+      if (!window.Razorpay) {
+        throw new Error("Razorpay SDK not loaded")
       }
 
-      toast.success("Payment successful!")
-      router.push("/dashboard")
-      router.refresh()
+      setIsProcessing(true)
+      const razorpay = new window.Razorpay({
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "AutoVision Pro",
+        description: `${plan.name} subscription`,
+        order_id: orderData.orderId,
+        prefill: {
+          name: userName,
+          email: userEmail,
+        },
+        theme: {
+          color: "#0f172a",
+        },
+        handler: async (response: {
+          razorpay_order_id: string
+          razorpay_payment_id: string
+          razorpay_signature: string
+        }) => {
+          try {
+            const verifyRes = await fetch("/api/razorpay/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(response),
+            })
+
+            if (!verifyRes.ok) {
+              throw new Error("Payment verification failed")
+            }
+
+            toast.success("Payment successful!")
+            router.push("/dashboard")
+            router.refresh()
+          } catch (verifyError) {
+            console.error("Payment verification error:", verifyError)
+            toast.error("Payment verification failed.")
+            setIsProcessing(false)
+            setIsLoading(false)
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setIsProcessing(false)
+            setIsLoading(false)
+            toast.error("Payment cancelled")
+          },
+        },
+      })
+
+      razorpay.open()
     } catch (error) {
       console.error("Payment error:", error)
       toast.error("Payment failed. Please try again.")
-    } finally {
-      setIsLoading(false)
       setIsProcessing(false)
+      setIsLoading(false)
+    } finally {
+      // Controlled in handler/modal callbacks.
     }
   }
 
@@ -95,6 +134,7 @@ export function RazorpayCheckout({
 
   return (
     <div className="space-y-6">
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
       {/* Order Summary */}
       <div className="rounded-lg border border-border/50 bg-secondary/30 p-4">
         <div className="flex items-center justify-between">
@@ -204,7 +244,7 @@ export function RazorpayCheckout({
       </Button>
 
       <p className="text-center text-xs text-muted-foreground">
-        This is a demo checkout. No real payment will be processed.
+        You will be redirected to Razorpay&apos;s secure checkout.
       </p>
     </div>
   )

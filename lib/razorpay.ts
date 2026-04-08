@@ -1,10 +1,9 @@
-// Mock Razorpay utilities for India payments
-// In production, replace with actual Razorpay SDK integration
+import crypto from "node:crypto"
 
 export interface RazorpayOrder {
   id: string
   amount: number
-  currency: string
+  currency: "INR"
   receipt: string
   status: "created" | "attempted" | "paid"
   created_at: number
@@ -16,57 +15,56 @@ export interface RazorpayPaymentResponse {
   razorpay_signature: string
 }
 
-// Generate mock order ID
-function generateOrderId(): string {
-  return `order_mock_${Date.now()}_${Math.random().toString(36).substring(7)}`
-}
-
-// Generate mock payment ID
-function generatePaymentId(): string {
-  return `pay_mock_${Date.now()}_${Math.random().toString(36).substring(7)}`
-}
-
-// Create mock Razorpay order
-export async function createMockRazorpayOrder(
+export async function createRazorpayOrder(
   amount: number,
   planId: string
 ): Promise<RazorpayOrder> {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 500))
-  
-  return {
-    id: generateOrderId(),
-    amount: amount * 100, // Razorpay uses paise
-    currency: "INR",
-    receipt: `receipt_${planId}_${Date.now()}`,
-    status: "created",
-    created_at: Date.now(),
+  const keyId = process.env.RAZORPAY_KEY_ID
+  const keySecret = process.env.RAZORPAY_KEY_SECRET
+  if (!keyId || !keySecret) {
+    throw new Error("Razorpay credentials not configured")
   }
+
+  const auth = Buffer.from(`${keyId}:${keySecret}`).toString("base64")
+  const receipt = `receipt_${planId}_${Date.now()}`
+
+  const response = await fetch("https://api.razorpay.com/v1/orders", {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${auth}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      amount: amount * 100,
+      currency: "INR",
+      receipt,
+      payment_capture: 1,
+    }),
+  })
+
+  if (!response.ok) {
+    const body = await response.text()
+    throw new Error(`Failed to create Razorpay order: ${body}`)
+  }
+
+  const order = (await response.json()) as RazorpayOrder
+  return order
 }
 
-// Mock signature verification
-export function verifyMockRazorpaySignature(
+export function verifyRazorpaySignature(
   orderId: string,
   paymentId: string,
   signature: string
 ): boolean {
-  // In a real implementation, you would verify the signature using:
-  // generated_signature = hmac_sha256(order_id + "|" + razorpay_payment_id, secret)
-  // return generated_signature === razorpay_signature
-  
-  // For mock purposes, we accept any signature that starts with "mock_sig_"
-  return signature.startsWith("mock_sig_")
-}
+  const keySecret = process.env.RAZORPAY_KEY_SECRET
+  if (!keySecret) return false
 
-// Generate mock payment response (simulating successful payment)
-export function generateMockPaymentResponse(
-  orderId: string
-): RazorpayPaymentResponse {
-  return {
-    razorpay_order_id: orderId,
-    razorpay_payment_id: generatePaymentId(),
-    razorpay_signature: `mock_sig_${Date.now()}`,
-  }
+  const expected = crypto
+    .createHmac("sha256", keySecret)
+    .update(`${orderId}|${paymentId}`)
+    .digest("hex")
+
+  return expected === signature
 }
 
 // Plan mapping for Razorpay

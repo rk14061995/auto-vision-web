@@ -45,9 +45,9 @@ export default async function CheckoutPage({
     notFound()
   }
 
-  // Determine country - from query param, session, or default to US
+  // Determine country - from query param, session, or default to India
   const country: Country =
-    (countryParam as Country) || session.user.country || "US"
+    (countryParam as Country) || session.user.country || "IN"
 
   const isIndianCheckout = country === "IN"
   const pricing = plan.pricing[country]

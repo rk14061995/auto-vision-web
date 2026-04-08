@@ -4,7 +4,7 @@ export async function detectCountry(headers: Headers): Promise<Country> {
   // First try Vercel's geolocation header
   const vercelCountry = headers.get("x-vercel-ip-country")
   if (vercelCountry === "IN") return "IN"
-  if (vercelCountry) return "US" // Default to US for all other countries
+  if (vercelCountry) return "US"
   
   // Fallback: try to detect via IP
   try {
@@ -19,10 +19,10 @@ export async function detectCountry(headers: Headers): Promise<Country> {
       }
     }
   } catch {
-    // Silently fail and default to US
+    // Silently fail and default to India
   }
   
-  return "US" // Default
+  return "IN" // Default
 }
 
 export function getCountryName(country: Country): string {

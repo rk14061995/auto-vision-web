@@ -7,7 +7,7 @@ import { CountrySelector } from "./country-selector"
 import { PricingCard } from "./pricing-card"
 
 export function PricingTable() {
-  const [country, setCountry] = useState<Country>("US")
+  const [country, setCountry] = useState<Country>("IN")
   const [isLoading, setIsLoading] = useState(true)
 
   // Auto-detect country on mount
@@ -20,7 +20,7 @@ export function PricingTable() {
           setCountry(data.country)
         }
       } catch {
-        // Default to US if detection fails
+        // Default to India if detection fails
       } finally {
         setIsLoading(false)
       }
