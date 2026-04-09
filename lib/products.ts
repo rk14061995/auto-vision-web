@@ -144,6 +144,74 @@ export function getPlanById(id: string): Plan | undefined {
   return PLANS.find((plan) => plan.id === id)
 }
 
+export interface AdType {
+  id: string
+  name: string
+  description: string
+  duration: number // in days
+  pricing: {
+    IN: { amount: number; currency: "INR" }
+    US: { amount: number; currency: "USD" }
+  }
+  dimensions: string
+  maxImages: number
+}
+
+export const AD_TYPES: AdType[] = [
+  {
+    id: "banner",
+    name: "Banner Ad",
+    description: "Horizontal banner displayed at the top of pages",
+    duration: 30,
+    pricing: {
+      IN: { amount: 50, currency: "INR" },
+      US: { amount: 1, currency: "USD" },
+    },
+    dimensions: "728x90px",
+    maxImages: 1,
+  },
+  {
+    id: "horizontal",
+    name: "Horizontal Ad",
+    description: "Wide horizontal advertisement for better visibility",
+    duration: 30,
+    pricing: {
+      IN: { amount: 70, currency: "INR" },
+      US: { amount: 1.5, currency: "USD" },
+    },
+    dimensions: "970x250px",
+    maxImages: 1,
+  },
+  {
+    id: "square",
+    name: "Square Ad",
+    description: "Square advertisement for sidebar placement",
+    duration: 30,
+    pricing: {
+      IN: { amount: 60, currency: "INR" },
+      US: { amount: 1.2, currency: "USD" },
+    },
+    dimensions: "300x300px",
+    maxImages: 1,
+  },
+  {
+    id: "video",
+    name: "Video Ad",
+    description: "Short video advertisement with auto-play",
+    duration: 30,
+    pricing: {
+      IN: { amount: 100, currency: "INR" },
+      US: { amount: 2, currency: "USD" },
+    },
+    dimensions: "16:9 aspect ratio",
+    maxImages: 1,
+  },
+]
+
+export function getAdTypeById(id: string): AdType | undefined {
+  return AD_TYPES.find(ad => ad.id === id)
+}
+
 export function formatPrice(amount: number, currency: "INR" | "USD"): string {
   if (amount === -1) return "Contact Sales"
   if (amount === 0) return "Free"

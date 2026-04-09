@@ -4,12 +4,15 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
+import { DashboardTabs } from "@/components/dashboard/dashboard-tabs"
 import {
   Plus,
   Folder,
   ArrowUpRight,
   Clock,
   AlertTriangle,
+  Users,
+  Megaphone,
 } from "lucide-react"
 import { getPlanById, formatPrice } from "@/lib/products"
 
@@ -27,14 +30,14 @@ export default async function DashboardPage() {
 
   const { projectLimit, projectsUsed, planType, subscriptionExpiry } = session.user
   const plan = getPlanById(planType)
+  const adRequests = [] // Placeholder for ad requests
   const isUnlimited = projectLimit === -1
   const usagePercent = isUnlimited ? 0 : (projectsUsed / projectLimit) * 100
   const isNearLimit = !isUnlimited && usagePercent >= 80
   const isAtLimit = !isUnlimited && projectsUsed >= projectLimit
 
   // Check if subscription is expired
-  const isExpired =
-    subscriptionExpiry && new Date(subscriptionExpiry) < new Date()
+  const isExpired = subscriptionExpiry && new Date(subscriptionExpiry) < new Date()
 
   // Mock projects data
   const projects = [
@@ -63,10 +66,22 @@ export default async function DashboardPage() {
               Welcome back, {session.user.name}
             </p>
           </div>
-          <Button disabled={isAtLimit || isExpired} className="gap-2">
-            <Plus className="h-4 w-4" />
-            New Project
-          </Button>
+          <div className="flex gap-2">
+            <Button disabled={isAtLimit || !!isExpired} className="gap-2">
+              <Plus className="h-4 w-4" />
+              New Project
+            </Button>
+            <Button variant="outline" className="gap-2">
+              <Users className="h-4 w-4" />
+              Refer Now
+            </Button>
+            <Link href="/dashboard?tab=create-ad">
+              <Button variant="outline" className="gap-2">
+                <Megaphone className="h-4 w-4" />
+                Create Ad
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Alerts */}
@@ -167,41 +182,8 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Projects List */}
-        <div className="mt-12">
-          <h2 className="text-lg font-semibold">Your Projects</h2>
-          {projects.length === 0 ? (
-            <div className="mt-6 rounded-xl border border-dashed border-border p-12 text-center">
-              <Folder className="mx-auto h-12 w-12 text-muted-foreground" />
-              <h3 className="mt-4 font-medium">No projects yet</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Create your first project to start designing
-              </p>
-              <Button className="mt-4 gap-2" disabled={isAtLimit || isExpired}>
-                <Plus className="h-4 w-4" />
-                Create Project
-              </Button>
-            </div>
-          ) : (
-            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {projects.map((project) => (
-                <div
-                  key={project.id}
-                  className="group cursor-pointer rounded-xl border border-border/50 bg-card p-4 transition-all hover:border-border hover:shadow-lg"
-                >
-                  <div className="aspect-video rounded-lg bg-secondary" />
-                  <h3 className="mt-4 font-medium group-hover:text-primary">
-                    {project.name}
-                  </h3>
-                  <p className="mt-1 flex items-center text-sm text-muted-foreground">
-                    <Clock className="mr-1 h-3 w-3" />
-                    {project.lastModified}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        {/* Tabs */}
+        <DashboardTabs projects={projects} isAtLimit={isAtLimit} isExpired={isExpired} userEmail={session.user.email} userName={session.user.name || 'User'} />
       </div>
     </div>
   )

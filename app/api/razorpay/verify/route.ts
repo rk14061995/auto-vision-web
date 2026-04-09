@@ -4,12 +4,14 @@ import {
   applyPlanPurchase,
   getPurchaseOrderByOrderId,
   markPurchaseOrderPaid,
+  updateAdvertisement,
 } from "@/lib/db"
 import { verifyRazorpaySignature } from "@/lib/razorpay"
+import { getAdTypeById } from "@/lib/products"
 
 export async function POST(request: Request) {
   const session = await auth()
-  
+
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
@@ -19,6 +21,8 @@ export async function POST(request: Request) {
       razorpay_order_id,
       razorpay_payment_id,
       razorpay_signature,
+      isAdPayment,
+      adType,
     } = await request.json()
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
@@ -58,24 +62,38 @@ export async function POST(request: Request) {
       )
     }
 
-    const updatedUser = await applyPlanPurchase(
-      session.user.email,
-      order.planId,
-      razorpay_payment_id
-    )
-    if (!updatedUser) {
-      return NextResponse.json(
-        { error: "Failed to activate subscription" },
-        { status: 500 }
+    if (isAdPayment) {
+      // Handle advertisement payment verification
+      // For ads, we don't need to update user plan, just mark the order as paid
+      // The actual ad creation happens after payment success in the frontend
+      await markPurchaseOrderPaid(razorpay_order_id, razorpay_payment_id)
+
+      return NextResponse.json({
+        success: true,
+        message: "Ad payment verified successfully",
+        isAdPayment: true,
+      })
+    } else {
+      // Handle regular plan payment
+      const updatedUser = await applyPlanPurchase(
+        session.user.email,
+        order.planId,
+        razorpay_payment_id
       )
+      if (!updatedUser) {
+        return NextResponse.json(
+          { error: "Failed to activate subscription" },
+          { status: 500 }
+        )
+      }
+
+      await markPurchaseOrderPaid(razorpay_order_id, razorpay_payment_id)
+
+      return NextResponse.json({
+        success: true,
+        message: "Payment verified successfully",
+      })
     }
-
-    await markPurchaseOrderPaid(razorpay_order_id, razorpay_payment_id)
-
-    return NextResponse.json({
-      success: true,
-      message: "Payment verified successfully",
-    })
   } catch (error) {
     console.error("Razorpay verify error:", error)
     return NextResponse.json(

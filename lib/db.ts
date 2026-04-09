@@ -75,6 +75,26 @@ export interface PurchaseOrder {
   updatedAt: Date
 }
 
+export interface Advertisement {
+  _id?: ObjectId
+  email: string
+  shopName: string
+  shopDescription: string
+  contactInfo: string
+  images: string[] // URLs of uploaded images
+  adType: "banner" | "horizontal" | "square" | "video"
+  status: "active" | "expired" | "pending"
+  views: number
+  clicks: number
+  startDate: Date
+  endDate: Date
+  paymentAmount: number
+  paymentCurrency: "INR" | "USD"
+  paymentId: string | null
+  createdAt: Date
+  updatedAt: Date
+}
+
 export async function getUserByEmail(email: string): Promise<User | null> {
   const db = await getDb()
   return db.collection<User>("users").findOne({ email })
@@ -165,6 +185,70 @@ export async function applyPlanPurchase(
     subscriptionExpiry: baseDate,
     razorpayCustomerId: providerPaymentId,
   })
+}
+
+// Advertisement functions
+export async function createAdvertisement(
+  adData: Omit<Advertisement, "_id" | "createdAt" | "updatedAt" | "views" | "clicks" | "status">
+): Promise<Advertisement> {
+  const db = await getDb()
+  const now = new Date()
+  const document: Advertisement = {
+    ...adData,
+    views: 0,
+    clicks: 0,
+    status: "pending",
+    createdAt: now,
+    updatedAt: now,
+  }
+
+  const result = await db.collection<Advertisement>("advertisements").insertOne(document)
+  return { ...document, _id: result.insertedId }
+}
+
+export async function getAdvertisementsByEmail(email: string): Promise<Advertisement[]> {
+  const db = await getDb()
+  return db.collection<Advertisement>("advertisements").find({ email }).sort({ createdAt: -1 }).toArray()
+}
+
+export async function updateAdvertisement(
+  adId: string,
+  update: Partial<Advertisement>
+): Promise<Advertisement | null> {
+  const db = await getDb()
+  const result = await db
+    .collection<Advertisement>("advertisements")
+    .findOneAndUpdate(
+      { _id: new ObjectId(adId) },
+      { $set: { ...update, updatedAt: new Date() } },
+      { returnDocument: "after" }
+    )
+  return result
+}
+
+export async function incrementAdViews(adId: string): Promise<void> {
+  const db = await getDb()
+  await db.collection<Advertisement>("advertisements").updateOne(
+    { _id: new ObjectId(adId) },
+    { $inc: { views: 1 }, $set: { updatedAt: new Date() } }
+  )
+}
+
+export async function incrementAdClicks(adId: string): Promise<void> {
+  const db = await getDb()
+  await db.collection<Advertisement>("advertisements").updateOne(
+    { _id: new ObjectId(adId) },
+    { $inc: { clicks: 1 }, $set: { updatedAt: new Date() } }
+  )
+}
+
+export async function getActiveAdvertisements(): Promise<Advertisement[]> {
+  const db = await getDb()
+  const now = new Date()
+  return db.collection<Advertisement>("advertisements").find({
+    status: "active",
+    endDate: { $gte: now }
+  }).toArray()
 }
 
 export { getClientPromise as clientPromise }
