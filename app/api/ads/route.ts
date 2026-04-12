@@ -1,3 +1,19 @@
+import { getActiveAdvertisements } from '@/lib/db';
+
+// GET /api/ads/random - returns random active ads for marketing
+export async function GET_RANDOM(request: NextRequest) {
+  try {
+    // Fetch all active ads
+    const allAds = await getActiveAdvertisements();
+    // Shuffle and pick up to 5 random ads
+    const shuffled = allAds.sort(() => 0.5 - Math.random());
+    const randomAds = shuffled.slice(0, 5);
+    return NextResponse.json(randomAds);
+  } catch (error) {
+    console.error('Error fetching random ads:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { createAdvertisement, getAdvertisementsByEmail } from "@/lib/db"

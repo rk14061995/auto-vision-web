@@ -95,6 +95,26 @@ export interface Advertisement {
   updatedAt: Date
 }
 
+export interface CarProject {
+  _id?: ObjectId
+  email: string
+  projectName: string
+  description: string
+  carDetails: {
+    make: string // e.g., "Tesla", "BMW"
+    model: string // e.g., "Model S", "M4"
+    year: number
+    color: string
+  }
+  baseImage: string // URL of the base car image
+  modifications: any[] // Fabric.js canvas objects
+  canvasData: string // Serialized canvas state (JSON)
+  status: "draft" | "completed"
+  createdAt: Date
+  updatedAt: Date
+  lastAccessedAt: Date
+}
+
 export async function getUserByEmail(email: string): Promise<User | null> {
   const db = await getDb()
   return db.collection<User>("users").findOne({ email })
@@ -249,6 +269,64 @@ export async function getActiveAdvertisements(): Promise<Advertisement[]> {
     status: "active",
     endDate: { $gte: now }
   }).toArray()
+}
+
+// Car Project functions
+export async function createCarProject(
+  projectData: Omit<CarProject, "_id" | "createdAt" | "updatedAt" | "lastAccessedAt">
+): Promise<CarProject> {
+  const db = await getDb()
+  const now = new Date()
+  const document: CarProject = {
+    ...projectData,
+    createdAt: now,
+    updatedAt: now,
+    lastAccessedAt: now,
+  }
+
+  const result = await db.collection<CarProject>("car_projects").insertOne(document)
+  return { ...document, _id: result.insertedId }
+}
+
+export async function getCarProjectById(projectId: string): Promise<CarProject | null> {
+  const db = await getDb()
+  return db.collection<CarProject>("car_projects").findOne({ _id: new ObjectId(projectId) })
+}
+
+export async function getCarProjectsByEmail(email: string): Promise<CarProject[]> {
+  const db = await getDb()
+  return db.collection<CarProject>("car_projects")
+    .find({ email })
+    .sort({ lastAccessedAt: -1 })
+    .toArray()
+}
+
+export async function updateCarProject(
+  projectId: string,
+  update: Partial<CarProject>
+): Promise<CarProject | null> {
+  const db = await getDb()
+  const result = await db
+    .collection<CarProject>("car_projects")
+    .findOneAndUpdate(
+      { _id: new ObjectId(projectId) },
+      { $set: { ...update, updatedAt: new Date(), lastAccessedAt: new Date() } },
+      { returnDocument: "after" }
+    )
+  return result
+}
+
+export async function deleteCarProject(projectId: string): Promise<void> {
+  const db = await getDb()
+  await db.collection<CarProject>("car_projects").deleteOne({ _id: new ObjectId(projectId) })
+}
+
+export async function incrementProjectsUsed(email: string): Promise<void> {
+  const db = await getDb()
+  await db.collection<User>("users").updateOne(
+    { email },
+    { $inc: { projectsUsed: 1 }, $set: { updatedAt: new Date() } }
+  )
 }
 
 export { getClientPromise as clientPromise }
