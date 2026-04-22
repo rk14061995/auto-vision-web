@@ -13,60 +13,22 @@ import {
   Folder,
   Clock,
 } from "lucide-react"
-
-interface Advertisement {
-  _id: string
-  email: string
-  shopName: string
-  shopDescription: string
-  contactInfo: string
-  images: string[]
-  adType: string
-  status: "active" | "expired" | "pending"
-  views: number
-  clicks: number
-  startDate: Date
-  endDate: Date
-  paymentAmount: number
-  paymentCurrency: string
-  paymentId: string | null
-  createdAt: Date
-  updatedAt: Date
-}
-
-interface CarProject {
-  _id: string
-  email: string
-  projectName: string
-  description: string
-  carDetails: {
-    make: string
-    model: string
-    year: number
-    color: string
-  }
-  baseImage: string
-  status: "draft" | "completed"
-  createdAt: Date
-  updatedAt: Date
-  lastAccessedAt: Date
-}
+import type { Advertisement, CarProject } from '@/lib/db'
 
 interface DashboardTabsProps {
-  projects: any[]
   isAtLimit: boolean
   isExpired: boolean | null
   userEmail: string
   userName: string
 }
 
-export function DashboardTabs({ projects, isAtLimit, isExpired, userEmail, userName }: DashboardTabsProps) {
+export function DashboardTabs({ isAtLimit, isExpired, userEmail, userName }: DashboardTabsProps) {
   const searchParams = useSearchParams()
   const tabParam = searchParams.get('tab')
   const [activeTab, setActiveTab] = useState(
     tabParam === 'create-ad' ? 'create-ad' : tabParam === 'create-project' ? 'create-project' : 'projects'
   )
-  const [advertisements, setAdvertisements] = useState<Advertisement[]>([])
+  const [advertisements, setAdvertisements] = useState<any[]>([])
   const [carProjects, setCarProjects] = useState<CarProject[]>([])
   const [loading, setLoading] = useState(true)
   const [projectsLoading, setProjectsLoading] = useState(true)
@@ -163,43 +125,53 @@ export function DashboardTabs({ projects, isAtLimit, isExpired, userEmail, userN
             </div>
           ) : (
             <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {carProjects.map((project) => (
-                <div
-                  key={project._id}
-                  className="group rounded-xl border border-border/50 bg-card p-4 transition-all hover:border-border hover:shadow-lg"
-                >
-                  {project.baseImage && (
-                    <div className="aspect-video rounded-lg bg-secondary overflow-hidden">
-                      <img 
-                        src={project.baseImage.substring(0, 100) === 'data:' ? project.baseImage : '#'} 
-                        alt={project.projectName}
-                        className="w-full h-full object-cover"
-                      />
+              {carProjects.map((project) => {
+                const projectId = project._id?.toString() || ''
+                const imageSrc =
+                  project.baseImage &&
+                  (project.baseImage.startsWith('data:') ||
+                    project.baseImage.startsWith('http://') ||
+                    project.baseImage.startsWith('https://'))
+                    ? project.baseImage
+                    : ''
+                return (
+                  <div
+                    key={projectId}
+                    className="group rounded-xl border border-border/50 bg-card p-4 transition-all hover:border-border hover:shadow-lg"
+                  >
+                    {project.baseImage && (
+                      <div className="aspect-video rounded-lg bg-secondary overflow-hidden">
+                        <img 
+                          src={imageSrc} 
+                          alt={project.projectName}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                    <div className="mt-4">
+                      <h3 className="font-medium group-hover:text-primary">
+                        {project.projectName}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {project.carDetails.year} {project.carDetails.make} {project.carDetails.model}
+                      </p>
+                      <p className="mt-1 flex items-center text-sm text-muted-foreground">
+                        <Clock className="mr-1 h-3 w-3" />
+                        {new Date(project.lastAccessedAt).toLocaleDateString()}
+                      </p>
+                      <Button 
+                        onClick={() => handleOpenProject(projectId)}
+                        size="sm" 
+                        className="mt-4 w-full gap-1"
+                        variant="outline"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        Open & Edit
+                      </Button>
                     </div>
-                  )}
-                  <div className="mt-4">
-                    <h3 className="font-medium group-hover:text-primary">
-                      {project.projectName}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {project.carDetails.year} {project.carDetails.make} {project.carDetails.model}
-                    </p>
-                    <p className="mt-1 flex items-center text-sm text-muted-foreground">
-                      <Clock className="mr-1 h-3 w-3" />
-                      {new Date(project.lastAccessedAt).toLocaleDateString()}
-                    </p>
-                    <Button 
-                      onClick={() => handleOpenProject(project._id)}
-                      size="sm" 
-                      className="mt-4 w-full gap-1"
-                      variant="outline"
-                    >
-                      <ExternalLink className="h-3 w-3" />
-                      Open & Edit
-                    </Button>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>

@@ -15,6 +15,7 @@ import {
   Megaphone,
 } from "lucide-react"
 import { getPlanById, formatPrice } from "@/lib/products"
+import { getCarProjectsByEmail } from "@/lib/db"
 
 export const metadata: Metadata = {
   title: "Dashboard - AutoVision Pro",
@@ -38,22 +39,6 @@ export default async function DashboardPage() {
 
   // Check if subscription is expired
   const isExpired = subscriptionExpiry && new Date(subscriptionExpiry) < new Date()
-
-  // Mock projects data
-  const projects = [
-    {
-      id: "1",
-      name: "Tesla Model S Custom",
-      thumbnail: null,
-      lastModified: "2 hours ago",
-    },
-    {
-      id: "2",
-      name: "BMW M4 Build",
-      thumbnail: null,
-      lastModified: "Yesterday",
-    },
-  ].slice(0, projectsUsed)
 
   return (
     <div className="py-10">
@@ -183,7 +168,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Tabs */}
-        <DashboardTabs projects={projects} isAtLimit={isAtLimit} isExpired={isExpired} userEmail={session.user.email} userName={session.user.name || 'User'} />
+        <DashboardTabs isAtLimit={isAtLimit} isExpired={isExpired} userEmail={session.user.email} userName={session.user.name || 'User'} />
       </div>
     </div>
   )

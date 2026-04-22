@@ -84,52 +84,46 @@ export function CreateCarProjectForm({ userEmail, userName, onProjectCreated }: 
 
     setIsSubmitting(true)
     try {
-      // Convert image to base64 or upload it
-      const reader = new FileReader()
-      reader.onload = async (event) => {
-        const imageData = event.target?.result as string
-
-        const response = await fetch('/api/projects', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            projectName,
-            description,
-            carDetails: {
-              make: carMake,
-              model: carModel,
-              year: parseInt(carYear),
-              color: carColor,
-            },
-            baseImage: imageData,
-          }),
-        })
-
-        if (response.ok) {
-          const data = await response.json()
-          setProjectName('')
-          setDescription('')
-          setCarMake('')
-          setCarModel('')
-          setCarYear(currentYear.toString())
-          setCarColor('')
-          setBaseImage(null)
-          setBaseImagePreview('')
-          
-          // Redirect to dashboard with project ID
-          const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'http://localhost:3000'
-          const projectId = data.projectId
-          const redirectUrl = `${dashboardUrl}?projectId=${projectId}&email=${userEmail}`
-          window.location.href = redirectUrl
-        } else {
-          const errorData = await response.json()
-          setError(errorData.error || 'Failed to create project')
-          setIsSubmitting(false)
-        }
+      // Create FormData for file upload
+      const formData = new FormData()
+      formData.append('projectName', projectName)
+      formData.append('description', description)
+      formData.append('carDetails', JSON.stringify({
+        make: carMake,
+        model: carModel,
+        year: parseInt(carYear),
+        color: carColor,
+      }))
+      if (baseImage) {
+        formData.append('baseImage', baseImage)
       }
-      reader.readAsDataURL(baseImage)
+
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        body: formData, // No Content-Type header for FormData
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setProjectName('')
+        setDescription('')
+        setCarMake('')
+        setCarModel('')
+        setCarYear(currentYear.toString())
+        setCarColor('')
+        setBaseImage(null)
+        setBaseImagePreview('')
+        
+        // Redirect to dashboard with project ID
+        const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'http://localhost:3000'
+        const projectId = data.projectId
+        const redirectUrl = `${dashboardUrl}?projectId=${projectId}&email=${userEmail}`
+        window.location.href = redirectUrl
+      } else {
+        const errorData = await response.json()
+        setError(errorData.error || 'Failed to create project')
+        setIsSubmitting(false)
+      }
     } catch (error) {
       console.error('Error creating project:', error)
       setError('Failed to create car project. Please try again.')

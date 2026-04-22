@@ -53,12 +53,13 @@ export function AdList({ advertisements }: AdListProps) {
     } else if (isExpired) {
       return <Badge variant="destructive">Expired</Badge>
     } else {
-      return <Badge variant="default" className="bg-green-500">Active</Badge>
+      return <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-white font-semibold">Active</Badge>
     }
   }
 
   const AdCard = ({ ad }: { ad: Advertisement }) => {
     const adType = getAdTypeById(ad.adType)
+    const isActive = ad.status === 'active' && new Date(ad.endDate) > new Date()
 
     return (
       <Card className="mb-4">
@@ -147,7 +148,7 @@ export function AdList({ advertisements }: AdListProps) {
       {/* Active Ads */}
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <CheckCircle className="h-5 w-5 text-green-500" />
+          <CheckCircle className="h-5 w-5 text-green-600" />
           <h3 className="text-lg font-semibold">Active Advertisements ({activeAds.length})</h3>
         </div>
         {activeAds.length === 0 ? (

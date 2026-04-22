@@ -8,6 +8,7 @@ export async function OPTIONS(request: NextRequest) {
 }
 import { auth } from "@/lib/auth"
 import { createCarProject, getCarProjectsByEmail, incrementProjectsUsed } from "@/lib/db"
+import { uploadImage } from "@/lib/cloudinary"
 import { NextRequest, NextResponse } from "next/server"
 
 export async function GET(request: NextRequest) {
@@ -57,7 +58,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { projectName, description, carDetails, baseImage } = await request.json()
+    // Parse form data using Next.js native formData()
+    const formData = await request.formData()
+    
+    const projectName = formData.get('projectName') as string
+    const description = formData.get('description') as string
+    const carDetailsStr = formData.get('carDetails') as string
+    const carDetails = carDetailsStr ? JSON.parse(carDetailsStr) : {}
+    const baseImageFile = formData.get('baseImage') as File
 
     if (!projectName || !carDetails) {
       return NextResponse.json(
@@ -66,13 +74,32 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    let imageUrl = ""
+    
+    // Upload image to Cloudinary if provided
+    if (baseImageFile) {
+      try {
+        const fileBuffer = Buffer.from(await baseImageFile.arrayBuffer())
+        const uploadResult = await uploadImage(fileBuffer, {
+          folder: 'auto-vision/car-projects',
+        })
+        imageUrl = uploadResult.secure_url
+      } catch (uploadError) {
+        console.error('Image upload error:', uploadError)
+        return NextResponse.json(
+          { error: "Failed to upload image" },
+          { status: 500 }
+        )
+      }
+    }
+
     // Create the car project
     const project = await createCarProject({
       email: session.user.email,
       projectName,
       description: description || "",
       carDetails,
-      baseImage: baseImage || "",
+      baseImage: imageUrl,
       modifications: [],
       canvasData: "",
       status: "draft",

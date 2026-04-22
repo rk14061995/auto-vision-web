@@ -54,22 +54,22 @@ export function CreateAdForm({ userEmail, userName, onAdCreated }: CreateAdFormP
   const handlePaymentSuccess = async (paymentId: string) => {
     setIsSubmitting(true)
     try {
-      // Upload images first (placeholder - would need actual upload logic)
-      const imageUrls = images.map((_, index) => `https://example.com/image-${index + 1}.jpg`)
+      // Create FormData for file upload
+      const formData = new FormData()
+      formData.append('shopName', shopName)
+      formData.append('shopDescription', shopDescription)
+      formData.append('contactInfo', contactInfo)
+      formData.append('adType', adType)
+      formData.append('paymentId', paymentId || '')
+      
+      // Add all image files
+      images.forEach((image) => {
+        formData.append('images', image)
+      })
 
       const response = await fetch('/api/ads', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          shopName,
-          shopDescription,
-          contactInfo,
-          adType,
-          images: imageUrls,
-          paymentId,
-        }),
+        body: formData, // No Content-Type header for FormData
       })
 
       if (response.ok) {

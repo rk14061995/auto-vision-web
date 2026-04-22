@@ -18,6 +18,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { createAdvertisement, getAdvertisementsByEmail } from "@/lib/db"
 import { getAdTypeById } from "@/lib/products"
+import { uploadImage } from "@/lib/cloudinary"
 
 export async function GET(request: NextRequest) {
   try {
@@ -44,16 +45,45 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const body = await request.json()
-    const { shopName, shopDescription, contactInfo, adType, images, paymentId } = body
+    // Parse form data using Next.js native formData()
+    const formData = await request.formData()
+    
+    const shopName = formData.get('shopName') as string
+    const shopDescription = formData.get('shopDescription') as string
+    const contactInfo = formData.get('contactInfo') as string
+    const adType = formData.get('adType') as "banner" | "horizontal" | "square" | "video"
+    const paymentId = formData.get('paymentId') as string
+    
+    // Get all image files with the same name
+    const imageFiles = formData.getAll('images') as File[]
 
-    if (!shopName || !shopDescription || !contactInfo || !adType || !images || images.length === 0) {
+    if (!shopName || !shopDescription || !contactInfo || !adType || !imageFiles || imageFiles.length === 0) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
     const adTypeConfig = getAdTypeById(adType)
     if (!adTypeConfig) {
       return NextResponse.json({ error: "Invalid ad type" }, { status: 400 })
+    }
+
+    // Upload images to Cloudinary
+    const uploadedImages: string[] = []
+    for (const imageFile of imageFiles) {
+      if (imageFile) {
+        try {
+          const fileBuffer = Buffer.from(await imageFile.arrayBuffer())
+          const uploadResult = await uploadImage(fileBuffer, {
+            folder: 'auto-vision/advertisements',
+          })
+          uploadedImages.push(uploadResult.secure_url)
+        } catch (uploadError) {
+          console.error('Image upload error:', uploadError)
+          return NextResponse.json(
+            { error: "Failed to upload advertisement images" },
+            { status: 500 }
+          )
+        }
+      }
     }
 
     // Determine currency based on user's country
@@ -69,13 +99,13 @@ export async function POST(request: NextRequest) {
       shopName,
       shopDescription,
       contactInfo,
-      images, // This would be URLs after uploading to cloud storage
+      images: uploadedImages,
       adType,
       startDate,
       endDate,
       paymentAmount: amount,
       paymentCurrency: currency,
-      paymentId: paymentId || null,
+      paymentId: null, // Will be set after payment verification
     })
 
     return NextResponse.json(advertisement, { status: 201 })

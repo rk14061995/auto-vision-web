@@ -262,6 +262,23 @@ export async function incrementAdClicks(adId: string): Promise<void> {
   )
 }
 
+export async function updateAdTracking(adId: string, action: 'click' | 'view'): Promise<Advertisement | null> {
+  const db = await getDb()
+  const updateField = action === 'click' ? 'clicks' : 'views'
+  
+  const result = await db
+    .collection<Advertisement>("advertisements")
+    .findOneAndUpdate(
+      { _id: new ObjectId(adId) },
+      { 
+        $inc: { [updateField]: 1 }, 
+        $set: { updatedAt: new Date() } 
+      },
+      { returnDocument: "after" }
+    )
+  return result
+}
+
 export async function getActiveAdvertisements(): Promise<Advertisement[]> {
   const db = await getDb()
   const now = new Date()
@@ -285,7 +302,7 @@ export async function createCarProject(
   }
 
   const result = await db.collection<CarProject>("car_projects").insertOne(document)
-  return { ...document, _id: result.insertedId }
+  return { ...document, _id: result.insertedId.toString() }
 }
 
 export async function getCarProjectById(projectId: string): Promise<CarProject | null> {

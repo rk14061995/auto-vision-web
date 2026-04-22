@@ -5,6 +5,7 @@ import {
   getPurchaseOrderByOrderId,
   markPurchaseOrderPaid,
   updateAdvertisement,
+  getAdvertisementsByEmail,
 } from "@/lib/db"
 import { verifyRazorpaySignature } from "@/lib/razorpay"
 import { getAdTypeById } from "@/lib/products"
@@ -64,8 +65,20 @@ export async function POST(request: Request) {
 
     if (isAdPayment) {
       // Handle advertisement payment verification
-      // For ads, we don't need to update user plan, just mark the order as paid
-      // The actual ad creation happens after payment success in the frontend
+      // Find the most recent pending advertisement for this user and mark it as active
+      const advertisements = await getAdvertisementsByEmail(session.user.email)
+      const pendingAd = advertisements.find(ad => 
+        ad.status === 'pending' && 
+        ad.email === session.user.email
+      )
+      
+      if (pendingAd) {
+        await updateAdvertisement(pendingAd._id?.toString() || '', { 
+          status: 'active',
+          paymentId: razorpay_payment_id 
+        })
+      }
+      
       await markPurchaseOrderPaid(razorpay_order_id, razorpay_payment_id)
 
       return NextResponse.json({
