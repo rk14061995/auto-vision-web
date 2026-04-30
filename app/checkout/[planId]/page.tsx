@@ -4,7 +4,7 @@ import Link from "next/link"
 import { auth } from "@/lib/auth"
 import { getPlanById, formatPrice } from "@/lib/products"
 import { type Country } from "@/lib/geo"
-import { LemonSqueezyButton } from "@/components/checkout/lemonsqueezy-button"
+import { LemonCheckout } from "@/components/checkout/lemon-checkout"
 import { RazorpayCheckout } from "@/components/checkout/razorpay-checkout"
 import { Button } from "@/components/ui/button"
 import { Car, ArrowLeft, Check, Shield } from "lucide-react"
@@ -120,63 +120,68 @@ export default async function CheckoutPage({
                 <span>Secure payment. Cancel anytime.</span>
               </div>
             </div>
+            </div>
 
             {/* Payment Form */}
             <div className="rounded-xl border border-border/50 bg-card p-6">
               <h2 className="text-lg font-semibold">Payment Details</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                {isIndianCheckout
-                  ? "Pay securely with Razorpay"
-                  : "Pay securely with Lemon Squeezy"}
+                Pay securely with Razorpay
               </p>
 
               <div className="mt-6">
-                {isIndianCheckout ? (
-                  <RazorpayCheckout
-                    plan={plan}
-                    userEmail={session.user.email}
-                    userName={session.user.name}
-                  />
-                ) : (
-                  <div className="space-y-6">
-                    <div className="rounded-lg border border-border/50 bg-secondary/30 p-4">
-                      <p className="text-sm text-muted-foreground">
-                        You will be redirected to Lemon Squeezy&apos;s secure
-                        checkout to complete your purchase.
-                      </p>
+                <RazorpayCheckout
+                  plan={plan}
+                  userEmail={session.user.email}
+                  userName={session.user.name}
+                  currency={pricing.currency}
+                />
+
+                {/* Alternative: Lemon Squeezy option */}
+                <div className="mt-6">
+                  <details className="group">
+                    <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground">
+                      + Or pay with Lemon Squeezy (International)
+                    </summary>
+                    <div className="mt-4 space-y-4">
+                      <div className="rounded-lg border border-border/50 bg-secondary/30 p-4">
+                        <p className="text-sm text-muted-foreground">
+                          You will be redirected to Lemon Squeezy&apos;s secure
+                          checkout to complete your purchase.
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between rounded-lg bg-secondary/30 p-3">
+                          <span className="text-sm">Email</span>
+                          <span className="font-medium">{session.user.email}</span>
+                        </div>
+                        <div className="flex items-center justify-between rounded-lg bg-secondary/30 p-3">
+                          <span className="text-sm">Plan</span>
+                          <span className="font-medium">{plan.name}</span>
+                        </div>
+                        <div className="flex items-center justify-between rounded-lg bg-secondary/30 p-3">
+                          <span className="text-sm">Amount</span>
+                          <span className="font-medium">
+                            {formatPrice(pricing.amount, pricing.currency)}/month
+                          </span>
+                        </div>
+                      </div>
+
+                      <LemonCheckout
+                        variantId={plan.pricing.US.lemonSqueezyVariantId}
+                        email={session.user.email}
+                        planName={plan.name}
+                      />
                     </div>
+                  </details>
+                </div>
 
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between rounded-lg bg-secondary/30 p-3">
-                        <span className="text-sm">Email</span>
-                        <span className="font-medium">{session.user.email}</span>
-                      </div>
-                      <div className="flex items-center justify-between rounded-lg bg-secondary/30 p-3">
-                        <span className="text-sm">Plan</span>
-                        <span className="font-medium">{plan.name}</span>
-                      </div>
-                      <div className="flex items-center justify-between rounded-lg bg-secondary/30 p-3">
-                        <span className="text-sm">Amount</span>
-                        <span className="font-medium">
-                          {formatPrice(pricing.amount, pricing.currency)}/month
-                        </span>
-                      </div>
-                    </div>
-
-                    <LemonSqueezyButton
-                      variantId={plan.pricing.US.lemonSqueezyVariantId}
-                      email={session.user.email}
-                      planName={plan.name}
-                    />
-
-                    <p className="text-center text-xs text-muted-foreground">
-                      By subscribing, you agree to our Terms of Service and
-                      Privacy Policy.
-                    </p>
-                  </div>
-                )}
+                <p className="mt-6 text-center text-xs text-muted-foreground">
+                  By subscribing, you agree to our Terms of Service and
+                  Privacy Policy.
+                </p>
               </div>
-            </div>
           </div>
         </div>
       </main>

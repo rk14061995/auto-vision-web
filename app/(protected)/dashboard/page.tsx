@@ -56,10 +56,12 @@ export default async function DashboardPage() {
               <Plus className="h-4 w-4" />
               New Project
             </Button>
-            <Button variant="outline" className="gap-2">
-              <Users className="h-4 w-4" />
-              Refer Now
-            </Button>
+            <Link href="/dashboard?tab=refer">
+              <Button variant="outline" className="gap-2">
+                <Users className="h-4 w-4" />
+                Refer Now
+              </Button>
+            </Link>
             <Link href="/dashboard?tab=create-ad">
               <Button variant="outline" className="gap-2">
                 <Megaphone className="h-4 w-4" />

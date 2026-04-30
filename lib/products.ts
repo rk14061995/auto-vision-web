@@ -37,7 +37,7 @@ export const PLANS: Plan[] = [
     projectLimit: 1,
     pricing: {
       IN: { amount: 499, currency: "INR" },
-      US: { amount: 9, currency: "USD", lemonSqueezyVariantId: "VARIANT_STARTER" },
+      US: { amount: 9, currency: "USD", lemonSqueezyVariantId: "1595234" },
     },
     features: [
       "1 Project",
@@ -55,7 +55,7 @@ export const PLANS: Plan[] = [
     projectLimit: 5,
     pricing: {
       IN: { amount: 1999, currency: "INR" },
-      US: { amount: 29, currency: "USD", lemonSqueezyVariantId: "VARIANT_PRO" },
+      US: { amount: 29, currency: "USD", lemonSqueezyVariantId: "1595234" },
     },
     features: [
       "5 Projects",
@@ -75,7 +75,7 @@ export const PLANS: Plan[] = [
     projectLimit: 50,
     pricing: {
       IN: { amount: 9999, currency: "INR" },
-      US: { amount: 149, currency: "USD", lemonSqueezyVariantId: "VARIANT_TEAM" },
+      US: { amount: 149, currency: "USD", lemonSqueezyVariantId: "1595261" },
     },
     features: [
       "50 Projects",
@@ -97,7 +97,7 @@ export const PLANS: Plan[] = [
     projectLimit: 100,
     pricing: {
       IN: { amount: 19999, currency: "INR" },
-      US: { amount: 299, currency: "USD", lemonSqueezyVariantId: "VARIANT_BUSINESS" },
+      US: { amount: 299, currency: "USD", lemonSqueezyVariantId: "1595265" },
     },
     features: [
       "100 Projects",
@@ -120,7 +120,7 @@ export const PLANS: Plan[] = [
     projectLimit: -1, // unlimited
     pricing: {
       IN: { amount: -1, currency: "INR" }, // Contact sales
-      US: { amount: -1, currency: "USD", lemonSqueezyVariantId: "" },
+      US: { amount: -1, currency: "USD", lemonSqueezyVariantId: "1595272" },
     },
     features: [
       "Unlimited Projects",

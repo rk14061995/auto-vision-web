@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Script from "next/script"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
@@ -15,6 +16,7 @@ interface RazorpayCheckoutProps {
   plan: Plan
   userEmail: string
   userName: string
+  currency?: "INR" | "USD"
 }
 
 type PaymentMethod = "card" | "upi" | "netbanking"
@@ -31,13 +33,52 @@ export function RazorpayCheckout({
   plan,
   userEmail,
   userName,
+  currency = "INR",
 }: RazorpayCheckoutProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card")
   const [isProcessing, setIsProcessing] = useState(false)
+  const [couponCode, setCouponCode] = useState("")
+  const [useCredits, setUseCredits] = useState(true)
+  const [quote, setQuote] = useState<null | {
+    baseAmount: number
+    couponCode: string | null
+    couponDiscount: number
+    referralDiscount: number
+    creditDiscount: number
+    finalAmount: number
+  }>(null)
 
-  const amount = plan.pricing.IN.amount
+  const amount = currency === "INR" ? plan.pricing.IN.amount : plan.pricing.US.amount
+
+  async function refreshQuote() {
+    try {
+      const res = await fetch("/api/checkout/quote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planId: plan.id,
+          couponCode: couponCode.trim() || undefined,
+          useCredits,
+          currency,
+        }),
+      })
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        setQuote(null)
+        if (body?.error) toast.error(body.error)
+        return
+      }
+
+      const data = (await res.json()) as any
+      setQuote(data)
+    } catch {
+      setQuote(null)
+      toast.error("Failed to calculate price")
+    }
+  }
 
   async function handlePayment() {
     setIsLoading(true)
@@ -47,7 +88,12 @@ export function RazorpayCheckout({
       const orderRes = await fetch("/api/razorpay/order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId: plan.id }),
+        body: JSON.stringify({
+          planId: plan.id,
+          couponCode: quote?.couponCode || undefined,
+          useCredits,
+          currency,
+        }),
       })
 
       if (!orderRes.ok) {
@@ -143,11 +189,78 @@ export function RazorpayCheckout({
             <p className="text-sm text-muted-foreground">Monthly subscription</p>
           </div>
           <p className="text-xl font-bold">
-            {formatPrice(amount, "INR")}
+            {formatPrice((quote?.finalAmount ?? amount), "INR")}
             <span className="text-sm font-normal text-muted-foreground">
               /month
             </span>
           </p>
+        </div>
+
+        <div className="mt-4 space-y-3">
+          <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end">
+            <div className="space-y-2">
+              <Label htmlFor="coupon">Coupon</Label>
+              <Input
+                id="coupon"
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value)}
+                placeholder="Enter coupon code"
+              />
+            </div>
+            <Button type="button" variant="outline" onClick={refreshQuote}>
+              Apply
+            </Button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Checkbox
+              checked={useCredits}
+              onCheckedChange={(v) => {
+                setUseCredits(v === true)
+              }}
+              id="useCredits"
+            />
+            <Label htmlFor="useCredits">Use referral credits</Label>
+            <Button
+              type="button"
+              variant="ghost"
+              className="ml-auto h-8 px-2"
+              onClick={refreshQuote}
+            >
+              Refresh
+            </Button>
+          </div>
+
+          {quote && (
+            <div className="space-y-1 text-sm text-muted-foreground">
+              <div className="flex items-center justify-between">
+                <span>Base</span>
+                <span>{formatPrice(quote.baseAmount, currency)}</span>
+              </div>
+              {quote.couponDiscount > 0 && (
+                <div className="flex items-center justify-between">
+                  <span>Coupon</span>
+                  <span>-{formatPrice(quote.couponDiscount, currency)}</span>
+                </div>
+              )}
+              {quote.referralDiscount > 0 && (
+                <div className="flex items-center justify-between">
+                  <span>Referral</span>
+                  <span>-{formatPrice(quote.referralDiscount, currency)}</span>
+                </div>
+              )}
+              {quote.creditDiscount > 0 && (
+                <div className="flex items-center justify-between">
+                  <span>Credits</span>
+                  <span>-{formatPrice(quote.creditDiscount, currency)}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between font-medium text-foreground">
+                <span>Total</span>
+                <span>{formatPrice(quote.finalAmount, currency)}</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -240,7 +353,7 @@ export function RazorpayCheckout({
         size="lg"
       >
         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        Pay {formatPrice(amount, "INR")}
+        Pay {formatPrice((quote?.finalAmount ?? amount), "INR")}
       </Button>
 
       <p className="text-center text-xs text-muted-foreground">

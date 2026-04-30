@@ -1,6 +1,8 @@
 "use server"
 
 import { hash } from "bcryptjs"
+import crypto from "node:crypto"
+import { cookies } from "next/headers"
 import { createUser, getUserByEmail } from "@/lib/db"
 import { signIn } from "@/lib/auth"
 
@@ -30,6 +32,10 @@ export async function signup(formData: FormData) {
 
     const hashedPassword = await hash(password, 12)
 
+    const cookieStore = await cookies()
+    const referredByCode = cookieStore.get("ref")?.value ?? null
+    const referralCode = crypto.randomBytes(5).toString("hex").toUpperCase()
+
     await createUser({
       email,
       password: hashedPassword,
@@ -42,6 +48,10 @@ export async function signup(formData: FormData) {
       lemonSqueezyCustomerId: null,
       lemonSqueezySubscriptionId: null,
       razorpayCustomerId: null,
+      referralCode,
+      referredByCode,
+      creditBalanceINR: 0,
+      creditBalanceUSD: 0,
       createdAt: new Date(),
       updatedAt: new Date(),
     })

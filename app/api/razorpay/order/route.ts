@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { planId, isAdPayment, adType } = await request.json()
+    const { planId, isAdPayment, adType, couponCode, useCredits, currency = "INR" } = await request.json()
 
     if (isAdPayment) {
       // Handle advertisement payment
@@ -33,8 +33,15 @@ export async function POST(request: Request) {
         )
       }
 
-      // Create real Razorpay order for advertisement
-      const order = await createRazorpayOrder(adTypeConfig.pricing.IN.amount, adType)
+      // Create real Razorpay order for advertisement with customer details
+      const order = await createRazorpayOrder(adTypeConfig.pricing.IN.amount, adType, {
+        customerName: session.user.name || undefined,
+        customerEmail: session.user.email,
+        notes: {
+          paymentType: "advertisement",
+          adType,
+        },
+      })
 
       // Persist order for advertisement
       await createPurchaseOrder({
@@ -42,10 +49,17 @@ export async function POST(request: Request) {
         email: session.user.email,
         planId: adType, // Use adType as planId for ads
         provider: "razorpay",
-        amount: order.amount,
+        amount: adTypeConfig.pricing.IN.amount,
         currency: order.currency,
         status: "created",
         paymentId: null,
+        couponCode: null,
+        couponDiscount: 0,
+        referralDiscount: 0,
+        creditDiscount: 0,
+        finalAmount: adTypeConfig.pricing.IN.amount,
+        appliedReferralCode: null,
+        referrerEmail: null,
       })
 
       return NextResponse.json({
@@ -75,8 +89,48 @@ export async function POST(request: Request) {
         )
       }
 
-      // Create real Razorpay order
-      const order = await createRazorpayOrder(plan.pricing.IN.amount, planId)
+      const quoteRes = await fetch(new URL("/api/checkout/quote", process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          cookie: request.headers.get("cookie") || "",
+        },
+        body: JSON.stringify({
+          planId,
+          couponCode: couponCode || undefined,
+          useCredits: !!useCredits,
+          currency,
+        }),
+      })
+
+      if (!quoteRes.ok) {
+        const body = await quoteRes.json().catch(() => ({}))
+        return NextResponse.json({ error: body.error || "Failed to apply discounts" }, { status: 400 })
+      }
+
+      const quote = (await quoteRes.json()) as {
+        baseAmount: number
+        couponCode: string | null
+        couponDiscount: number
+        referralDiscount: number
+        creditDiscount: number
+        finalAmount: number
+        appliedReferralCode: string | null
+        referrerEmail: string | null
+      }
+
+      // Create real Razorpay order with customer details and notes
+      const order = await createRazorpayOrder(quote.finalAmount, planId, {
+        currency,
+        customerName: session.user.name || undefined,
+        customerEmail: session.user.email,
+        notes: {
+          couponCode: quote.couponCode || "none",
+          referralDiscount: quote.referralDiscount.toString(),
+          creditDiscount: quote.creditDiscount.toString(),
+          appliedReferralCode: quote.appliedReferralCode || "none",
+        },
+      })
 
       // Persist order so verification can activate the right subscription safely
       await createPurchaseOrder({
@@ -84,10 +138,17 @@ export async function POST(request: Request) {
         email: session.user.email,
         planId,
         provider: "razorpay",
-        amount: order.amount,
+        amount: quote.baseAmount,
         currency: order.currency,
         status: "created",
         paymentId: null,
+        couponCode: quote.couponCode,
+        couponDiscount: quote.couponDiscount,
+        referralDiscount: quote.referralDiscount,
+        creditDiscount: quote.creditDiscount,
+        finalAmount: quote.finalAmount,
+        appliedReferralCode: quote.appliedReferralCode,
+        referrerEmail: quote.referrerEmail,
       })
 
       return NextResponse.json({
@@ -95,6 +156,14 @@ export async function POST(request: Request) {
         amount: order.amount,
         currency: order.currency,
         keyId: process.env.RAZORPAY_KEY_ID,
+        breakdown: {
+          baseAmount: quote.baseAmount,
+          couponCode: quote.couponCode,
+          couponDiscount: quote.couponDiscount,
+          referralDiscount: quote.referralDiscount,
+          creditDiscount: quote.creditDiscount,
+          finalAmount: quote.finalAmount,
+        },
       })
     }
   } catch (error) {

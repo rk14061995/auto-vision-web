@@ -54,10 +54,11 @@ export function mapVariantToPlan(variantId: string): {
   projectLimit: number
 } {
   const variantMap: Record<string, { planType: string; projectLimit: number }> = {
-    VARIANT_STARTER: { planType: "1-project", projectLimit: 1 },
-    VARIANT_PRO: { planType: "5-projects", projectLimit: 5 },
-    VARIANT_TEAM: { planType: "50-projects", projectLimit: 50 },
-    VARIANT_BUSINESS: { planType: "100-projects", projectLimit: 100 },
+    "1595234": { planType: "1-project", projectLimit: 1 }, // Starter
+    "PRO_VARIANT_ID": { planType: "5-projects", projectLimit: 5 }, // Pro - needs real variant ID
+    "1595261": { planType: "50-projects", projectLimit: 50 }, // Team
+    "1595265": { planType: "100-projects", projectLimit: 100 }, // Business
+    "1595272": { planType: "business", projectLimit: -1 }, // Enterprise
   }
   
   return variantMap[variantId] || { planType: "free", projectLimit: 1 }
