@@ -11,6 +11,7 @@ import {
   type LemonSqueezyWebhookPayload,
   mapVariantToPlan,
 } from "@/lib/lemonsqueezy"
+import { computeFreePlanExpiresAt } from "@/lib/subscription-access"
 
 export async function POST(request: Request) {
   const secret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET
@@ -108,7 +109,7 @@ export async function POST(request: Request) {
         await updateUser(user_email, {
           planType: "free",
           projectLimit: 1,
-          subscriptionExpiry: null,
+          subscriptionExpiry: computeFreePlanExpiresAt(),
           lemonSqueezySubscriptionId: null,
         })
         break

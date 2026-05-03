@@ -7,7 +7,13 @@ export async function OPTIONS(request: NextRequest) {
   return res
 }
 import { auth } from "@/lib/auth"
-import { createCarProject, getCarProjectsByEmail, incrementProjectsUsed } from "@/lib/db"
+import {
+  createCarProject,
+  getCarProjectsByEmail,
+  getUserByEmail,
+  incrementProjectsUsed,
+} from "@/lib/db"
+import { isSubscriptionAccessExpired } from "@/lib/subscription-access"
 import { uploadImage } from "@/lib/cloudinary"
 import { NextRequest, NextResponse } from "next/server"
 
@@ -55,6 +61,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
+      )
+    }
+
+    const dbUser = await getUserByEmail(session.user.email)
+    if (
+      !dbUser ||
+      isSubscriptionAccessExpired(dbUser.planType, dbUser.subscriptionExpiry)
+    ) {
+      return NextResponse.json(
+        { error: "Subscription inactive or trial ended. Upgrade to continue." },
+        { status: 403 }
       )
     }
 

@@ -180,6 +180,12 @@ export async function getUserByEmail(email: string): Promise<User | null> {
   return db.collection<User>("users").findOne({ email })
 }
 
+export async function getUserById(userId: string): Promise<User | null> {
+  if (!ObjectId.isValid(userId)) return null
+  const db = await getDb()
+  return db.collection<User>("users").findOne({ _id: new ObjectId(userId) })
+}
+
 export async function createUser(userData: Omit<User, "_id">): Promise<User> {
   const db = await getDb()
   const result = await db.collection<User>("users").insertOne(userData as User)

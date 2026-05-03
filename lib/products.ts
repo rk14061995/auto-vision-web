@@ -1,3 +1,5 @@
+import { FREE_PLAN_VALIDITY_DAYS } from "./subscription-access"
+
 export interface Plan {
   id: string
   name: string
@@ -16,13 +18,14 @@ export const PLANS: Plan[] = [
   {
     id: "free",
     name: "Free",
-    description: "Perfect for trying out the platform",
+    description: `Try the platform for ${FREE_PLAN_VALIDITY_DAYS} days`,
     projectLimit: 1,
     pricing: {
       IN: { amount: 0, currency: "INR" },
       US: { amount: 0, currency: "USD", lemonSqueezyVariantId: "" },
     },
     features: [
+      `Full access for ${FREE_PLAN_VALIDITY_DAYS} days`,
       "1 Project",
       "Basic customization tools",
       "Community support",

@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 import Script from "next/script"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -36,6 +37,7 @@ export function RazorpayCheckout({
   currency = "INR",
 }: RazorpayCheckoutProps) {
   const router = useRouter()
+  const { update: updateSession } = useSession()
   const [isLoading, setIsLoading] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card")
   const [isProcessing, setIsProcessing] = useState(false)
@@ -136,6 +138,7 @@ export function RazorpayCheckout({
               throw new Error("Payment verification failed")
             }
 
+            await updateSession()
             toast.success("Payment successful!")
             router.push("/dashboard")
             router.refresh()

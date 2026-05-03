@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 import { PricingTable } from "@/components/pricing/pricing-table"
+import { FREE_PLAN_VALIDITY_DAYS } from "@/lib/subscription-access"
 
 export const metadata: Metadata = {
   title: "Pricing - AutoVision Pro",
@@ -21,8 +22,8 @@ export default function PricingPage() {
               Plans and Pricing
             </h1>
             <p className="mt-4 text-pretty text-lg text-muted-foreground">
-              Get started immediately for free. Upgrade for more projects,
-              features, and support.
+              Start with a {FREE_PLAN_VALIDITY_DAYS}-day free trial. Upgrade for more
+              projects, features, and support.
             </p>
           </div>
 
@@ -48,7 +49,7 @@ export default function PricingPage() {
                 },
                 {
                   q: "Is there a free trial?",
-                  a: "Yes! Our Free plan gives you access to basic features with 1 project. No credit card required to get started.",
+                  a: `Yes. The Free plan includes basic features and 1 project for ${FREE_PLAN_VALIDITY_DAYS} days. No credit card is required to get started.`,
                 },
                 {
                   q: "What happens when I reach my project limit?",

@@ -120,7 +120,7 @@ export default async function ProfilePage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">
-                      Next billing date
+                      {planType === "free" ? "Trial ends" : "Next billing date"}
                     </p>
                     <p className="font-medium">
                       {new Date(subscriptionExpiry).toLocaleDateString("en-US", {
