@@ -15,7 +15,6 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json().catch(() => ({}))
-  console.log("[quote] request body:", body)
 
   const { planId, couponCode, useCredits, currency } = body as {
     planId?: string
@@ -43,7 +42,6 @@ export async function POST(request: Request) {
   let appliedCouponCode: string | null = null
 
   if (couponCode) {
-    console.log("[quote] validating coupon:", couponCode, "email:", session.user.email, "amount:", baseAmount, "currency:", currency)
     const result = await validateCoupon({
       code: couponCode,
       email: session.user.email,
@@ -51,15 +49,12 @@ export async function POST(request: Request) {
       currency,
     })
 
-    console.log("[quote] validateCoupon result:", result)
     if (!result.ok) {
-      console.log("[quote] coupon validation failed:", result.error)
       return NextResponse.json({ error: result.error }, { status: 400 })
     }
 
     couponDiscount = result.discount
     appliedCouponCode = result.coupon.code
-    console.log("[quote] coupon applied:", appliedCouponCode, "discount:", couponDiscount)
   }
 
   const afterCoupon = Math.max(0, Number((baseAmount - couponDiscount).toFixed(2)))

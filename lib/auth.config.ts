@@ -2,7 +2,7 @@ import type { NextAuthConfig } from "next-auth"
 
 // Edge-compatible auth config (no bcrypt or Node.js crypto)
 export const authConfig: NextAuthConfig = {
-  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "development-secret-change-in-production",
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
   providers: [], // Providers are added in auth.ts
   pages: {
     signIn: "/login",

@@ -35,7 +35,6 @@ export default async function DashboardPage() {
 
   const { projectLimit, projectsUsed, planType, subscriptionExpiry } = session.user
   const plan = getPlanById(planType)
-  const adRequests = [] // Placeholder for ad requests
   const isUnlimited = projectLimit === -1
   const usagePercent = isUnlimited ? 0 : (projectsUsed / projectLimit) * 100
   const isNearLimit = !isUnlimited && usagePercent >= 80

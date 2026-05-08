@@ -306,9 +306,7 @@ export async function validateCoupon(params: {
   currency: "INR" | "USD"
 }): Promise<{ ok: true; coupon: Coupon; discount: number } | { ok: false; error: string }> {
   const coupon = await getCouponByCode(params.code)
-  console.log("[validateCoupon] lookup result:", coupon ? `found ${coupon.code}` : "null")
   if (!coupon || !coupon.isActive) {
-    console.log("[validateCoupon] failed: coupon not found or inactive")
     return { ok: false, error: "Invalid coupon" }
   }
 
@@ -509,7 +507,7 @@ export async function createCarProject(
   }
 
   const result = await db.collection<CarProject>("car_projects").insertOne(document)
-  return { ...document, _id: result.insertedId.toString() }
+  return { ...document, _id: result.insertedId }
 }
 
 export async function getCarProjectById(projectId: string): Promise<CarProject | null> {
@@ -551,6 +549,136 @@ export async function incrementProjectsUsed(email: string): Promise<void> {
     { email },
     { $inc: { projectsUsed: 1 }, $set: { updatedAt: new Date() } }
   )
+}
+
+// ─── Car Catalog ────────────────────────────────────────────────────────────
+
+export interface CarCatalogImage2D {
+  id: string
+  label: string   // "Front View", "Side Left", etc.
+  url: string
+  angle: string   // "front" | "side-left" | "side-right" | "rear" | "top" | "3q-front" | "3q-rear"
+}
+
+export interface CarCatalog {
+  _id?: ObjectId
+  make: string
+  model: string
+  year?: string           // "2020" or "2019-2023"
+  slug: string            // "toyota-supra" — unique lookup key
+  thumbnailUrl: string
+  model3dUrl: string      // GLTF/GLB URL
+  images2d: CarCatalogImage2D[]
+  accessoryIds: string[]  // ObjectId strings referencing accessories_catalog
+  isActive: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface AccessoryCatalog {
+  _id?: ObjectId
+  name: string
+  category: string        // "Spoilers" | "Side Skirts" | "Front Lips" | "Antennas" | "Roof Racks" | "Other"
+  accessoryType: "3d" | "2d" | "both"
+  model3dUrl: string      // GLTF/GLB URL
+  image2dUrl: string      // PNG for 2D canvas overlay
+  thumbnailUrl: string
+  defaultPosition3d: [number, number, number]
+  isActive: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
+export function makeCarSlug(make: string, model: string): string {
+  return `${make}-${model}`.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")
+}
+
+export async function getCarCatalogList(activeOnly = false): Promise<CarCatalog[]> {
+  const db = await getDb()
+  const filter = activeOnly ? { isActive: true } : {}
+  return db.collection<CarCatalog>("car_catalog").find(filter).sort({ make: 1, model: 1 }).toArray()
+}
+
+export async function getCarCatalogBySlug(slug: string): Promise<CarCatalog | null> {
+  const db = await getDb()
+  return db.collection<CarCatalog>("car_catalog").findOne({ slug, isActive: true })
+}
+
+export async function getCarCatalogById(id: string): Promise<CarCatalog | null> {
+  if (!ObjectId.isValid(id)) return null
+  const db = await getDb()
+  return db.collection<CarCatalog>("car_catalog").findOne({ _id: new ObjectId(id) })
+}
+
+export async function createCarCatalog(data: Omit<CarCatalog, "_id" | "createdAt" | "updatedAt">): Promise<CarCatalog> {
+  const db = await getDb()
+  const now = new Date()
+  const doc: CarCatalog = { ...data, createdAt: now, updatedAt: now }
+  const result = await db.collection<CarCatalog>("car_catalog").insertOne(doc)
+  return { ...doc, _id: result.insertedId }
+}
+
+export async function updateCarCatalog(id: string, data: Partial<CarCatalog>): Promise<CarCatalog | null> {
+  if (!ObjectId.isValid(id)) return null
+  const db = await getDb()
+  const result = await db.collection<CarCatalog>("car_catalog").findOneAndUpdate(
+    { _id: new ObjectId(id) },
+    { $set: { ...data, updatedAt: new Date() } },
+    { returnDocument: "after" }
+  )
+  return result
+}
+
+export async function deleteCarCatalog(id: string): Promise<void> {
+  if (!ObjectId.isValid(id)) return
+  const db = await getDb()
+  await db.collection<CarCatalog>("car_catalog").deleteOne({ _id: new ObjectId(id) })
+}
+
+// ─── Accessories Catalog ─────────────────────────────────────────────────────
+
+export async function getAccessoriesList(activeOnly = false): Promise<AccessoryCatalog[]> {
+  const db = await getDb()
+  const filter = activeOnly ? { isActive: true } : {}
+  return db.collection<AccessoryCatalog>("accessories_catalog").find(filter).sort({ category: 1, name: 1 }).toArray()
+}
+
+export async function getAccessoriesByIds(ids: string[]): Promise<AccessoryCatalog[]> {
+  if (!ids.length) return []
+  const db = await getDb()
+  const objectIds = ids.filter((id) => ObjectId.isValid(id)).map((id) => new ObjectId(id))
+  return db.collection<AccessoryCatalog>("accessories_catalog").find({ _id: { $in: objectIds } }).toArray()
+}
+
+export async function getAccessoryById(id: string): Promise<AccessoryCatalog | null> {
+  if (!ObjectId.isValid(id)) return null
+  const db = await getDb()
+  return db.collection<AccessoryCatalog>("accessories_catalog").findOne({ _id: new ObjectId(id) })
+}
+
+export async function createAccessory(data: Omit<AccessoryCatalog, "_id" | "createdAt" | "updatedAt">): Promise<AccessoryCatalog> {
+  const db = await getDb()
+  const now = new Date()
+  const doc: AccessoryCatalog = { ...data, createdAt: now, updatedAt: now }
+  const result = await db.collection<AccessoryCatalog>("accessories_catalog").insertOne(doc)
+  return { ...doc, _id: result.insertedId }
+}
+
+export async function updateAccessory(id: string, data: Partial<AccessoryCatalog>): Promise<AccessoryCatalog | null> {
+  if (!ObjectId.isValid(id)) return null
+  const db = await getDb()
+  const result = await db.collection<AccessoryCatalog>("accessories_catalog").findOneAndUpdate(
+    { _id: new ObjectId(id) },
+    { $set: { ...data, updatedAt: new Date() } },
+    { returnDocument: "after" }
+  )
+  return result
+}
+
+export async function deleteAccessory(id: string): Promise<void> {
+  if (!ObjectId.isValid(id)) return
+  const db = await getDb()
+  await db.collection<AccessoryCatalog>("accessories_catalog").deleteOne({ _id: new ObjectId(id) })
 }
 
 export { getClientPromise as clientPromise }
