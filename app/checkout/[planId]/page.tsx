@@ -8,10 +8,12 @@ import { LemonCheckout } from "@/components/checkout/lemon-checkout"
 import { RazorpayCheckout } from "@/components/checkout/razorpay-checkout"
 import { Button } from "@/components/ui/button"
 import { Car, ArrowLeft, Check, Shield } from "lucide-react"
+import { getPlanByTier, getPlanPrice } from "@/lib/plans"
+import type { BillingCycle } from "@/lib/db"
 
 interface CheckoutPageProps {
   params: Promise<{ planId: string }>
-  searchParams: Promise<{ country?: string }>
+  searchParams: Promise<{ country?: string; cycle?: string }>
 }
 
 export async function generateMetadata({
@@ -32,9 +34,8 @@ export default async function CheckoutPage({
 }: CheckoutPageProps) {
   const session = await auth()
   const { planId } = await params
-  const { country: countryParam } = await searchParams
+  const { country: countryParam, cycle: cycleParam } = await searchParams
 
-  // Redirect to login if not authenticated
   if (!session?.user) {
     redirect(`/login?redirect=/checkout/${planId}`)
   }
@@ -45,12 +46,15 @@ export default async function CheckoutPage({
     notFound()
   }
 
-  // Determine country - from query param, session, or default to India
   const country: Country =
     (countryParam as Country) || session.user.country || "IN"
 
-  const isIndianCheckout = country === "IN"
-  const pricing = plan.pricing[country]
+  const cycle: BillingCycle = cycleParam === "annual" ? "annual" : "monthly"
+  const tierPlan = getPlanByTier(plan.id)
+  const pricing = tierPlan
+    ? getPlanPrice(tierPlan, country, cycle)
+    : { amount: plan.pricing[country].amount, currency: plan.pricing[country].currency }
+  const periodLabel = cycle === "annual" ? "/year" : "/month"
 
   return (
     <div className="min-h-screen bg-background">
@@ -82,7 +86,6 @@ export default async function CheckoutPage({
                 Complete your subscription to {plan.name}
               </p>
 
-              {/* Plan Card */}
               <div className="mt-8 rounded-xl border border-border/50 bg-card p-6">
                 <div className="flex items-start justify-between">
                   <div>
@@ -95,7 +98,7 @@ export default async function CheckoutPage({
                     <p className="text-2xl font-bold">
                       {formatPrice(pricing.amount, pricing.currency)}
                     </p>
-                    <p className="text-sm text-muted-foreground">/month</p>
+                    <p className="text-sm text-muted-foreground">{periodLabel}</p>
                   </div>
                 </div>
 
@@ -114,74 +117,71 @@ export default async function CheckoutPage({
                 </div>
               </div>
 
-              {/* Trust badges */}
               <div className="mt-6 flex items-center gap-2 text-sm text-muted-foreground">
                 <Shield className="h-4 w-4" />
                 <span>Secure payment. Cancel anytime.</span>
               </div>
-            </div>
             </div>
 
             {/* Payment Form */}
             <div className="rounded-xl border border-border/50 bg-card p-6">
               <h2 className="text-lg font-semibold">Payment Details</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Pay securely with Razorpay
+                {country === "IN"
+                  ? "Pay securely with Razorpay (UPI, cards, netbanking)"
+                  : "Pay securely with Lemon Squeezy (cards)"}
               </p>
 
-              <div className="mt-6">
-                <RazorpayCheckout
-                  plan={plan}
-                  userEmail={session.user.email}
-                  userName={session.user.name}
-                  currency={pricing.currency}
-                />
+              <div className="mt-6 space-y-6">
+                {country === "IN" ? (
+                  <RazorpayCheckout
+                    plan={plan}
+                    userEmail={session.user.email}
+                    userName={session.user.name}
+                    currency={pricing.currency}
+                  />
+                ) : (
+                  <LemonCheckout
+                    variantId={plan.pricing.US.lemonSqueezyVariantId}
+                    email={session.user.email}
+                    planName={plan.name}
+                    planId={plan.id}
+                    priceUSD={pricing.amount}
+                  />
+                )}
 
-                {/* Alternative: Lemon Squeezy option */}
-                <div className="mt-6">
-                  <details className="group">
-                    <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground">
-                      + Or pay with Lemon Squeezy (International)
-                    </summary>
-                    <div className="mt-4 space-y-4">
-                      <div className="rounded-lg border border-border/50 bg-secondary/30 p-4">
-                        <p className="text-sm text-muted-foreground">
-                          You will be redirected to Lemon Squeezy&apos;s secure
-                          checkout to complete your purchase.
-                        </p>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between rounded-lg bg-secondary/30 p-3">
-                          <span className="text-sm">Email</span>
-                          <span className="font-medium">{session.user.email}</span>
-                        </div>
-                        <div className="flex items-center justify-between rounded-lg bg-secondary/30 p-3">
-                          <span className="text-sm">Plan</span>
-                          <span className="font-medium">{plan.name}</span>
-                        </div>
-                        <div className="flex items-center justify-between rounded-lg bg-secondary/30 p-3">
-                          <span className="text-sm">Amount</span>
-                          <span className="font-medium">
-                            {formatPrice(pricing.amount, pricing.currency)}/month
-                          </span>
-                        </div>
-                      </div>
-
+                <details className="group">
+                  <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground">
+                    {country === "IN"
+                      ? "+ Or pay with Lemon Squeezy (International)"
+                      : "+ Or pay with Razorpay (India)"}
+                  </summary>
+                  <div className="mt-4 space-y-4">
+                    {country === "IN" ? (
                       <LemonCheckout
                         variantId={plan.pricing.US.lemonSqueezyVariantId}
                         email={session.user.email}
                         planName={plan.name}
+                        planId={plan.id}
+                        priceUSD={plan.pricing.US.amount}
                       />
-                    </div>
-                  </details>
-                </div>
+                    ) : (
+                      <RazorpayCheckout
+                        plan={plan}
+                        userEmail={session.user.email}
+                        userName={session.user.name}
+                        currency="INR"
+                      />
+                    )}
+                  </div>
+                </details>
 
-                <p className="mt-6 text-center text-xs text-muted-foreground">
+                <p className="text-center text-xs text-muted-foreground">
                   By subscribing, you agree to our Terms of Service and
                   Privacy Policy.
                 </p>
               </div>
+            </div>
           </div>
         </div>
       </main>

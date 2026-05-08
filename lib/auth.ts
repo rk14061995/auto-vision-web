@@ -1,9 +1,19 @@
 import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import { compare } from "bcryptjs"
-import { getUserByEmail, getUserById, updateUser, type User } from "./db"
+import {
+  getUserByEmail,
+  getUserById,
+  updateUser,
+  type BillingCycle,
+  type PlanTier,
+  type TeamRole,
+  type User,
+} from "./db"
 import { computeFreePlanExpiresAt } from "./subscription-access"
 import { authConfig } from "./auth.config"
+import { resolveTier } from "./feature-flags"
+import { migrateUserToNewPlans } from "./migrate-plans"
 
 declare module "next-auth" {
   interface Session {
@@ -13,9 +23,16 @@ declare module "next-auth" {
       name: string
       country: "IN" | "US" | null
       planType: string
+      planTier: PlanTier
+      billingCycle: BillingCycle | null
       projectLimit: number
       projectsUsed: number
       subscriptionExpiry: Date | null
+      aiCreditsMonthly: number
+      aiCreditsPurchased: number
+      teamId: string | null
+      teamRole: TeamRole | null
+      commercialLicense: boolean
     }
   }
 }
@@ -104,13 +121,29 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           dbUser = await getUserById(id)
         }
         if (dbUser) {
+          // Auto-migrate legacy users to new plan tiers on first JWT refresh.
+          if (!dbUser.legacyMigratedAt || !dbUser.planTier) {
+            try {
+              await migrateUserToNewPlans(dbUser)
+              dbUser = (await getUserByEmail(dbUser.email)) ?? dbUser
+            } catch (err) {
+              console.error("[auth jwt] auto-migrate failed:", err)
+            }
+          }
           if (!token.email) token.email = dbUser.email
           token.name = dbUser.name
           token.country = dbUser.country
           token.planType = dbUser.planType
+          token.planTier = dbUser.planTier ?? resolveTier(dbUser)
+          token.billingCycle = dbUser.billingCycle ?? null
           token.projectLimit = dbUser.projectLimit
           token.projectsUsed = dbUser.projectsUsed
           token.subscriptionExpiry = dbUser.subscriptionExpiry
+          token.aiCreditsMonthly = dbUser.aiCreditsMonthly ?? 0
+          token.aiCreditsPurchased = dbUser.aiCreditsPurchased ?? 0
+          token.teamId = dbUser.teamId ? dbUser.teamId.toString() : null
+          token.teamRole = dbUser.teamRole ?? null
+          token.commercialLicense = !!dbUser.commercialLicense
         }
       } catch (err) {
         console.error("[auth jwt] refresh user from db failed:", err)
@@ -129,9 +162,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
         session.user.country = token.country as "IN" | "US" | null
         session.user.planType = token.planType as string
+        session.user.planTier = (token.planTier as PlanTier) ?? "free"
+        session.user.billingCycle = (token.billingCycle as BillingCycle | null) ?? null
         session.user.projectLimit = token.projectLimit as number
         session.user.projectsUsed = token.projectsUsed as number
         session.user.subscriptionExpiry = token.subscriptionExpiry as Date | null
+        session.user.aiCreditsMonthly = (token.aiCreditsMonthly as number) ?? 0
+        session.user.aiCreditsPurchased = (token.aiCreditsPurchased as number) ?? 0
+        session.user.teamId = (token.teamId as string | null) ?? null
+        session.user.teamRole = (token.teamRole as TeamRole | null) ?? null
+        session.user.commercialLicense = !!token.commercialLicense
       }
       return session
     },

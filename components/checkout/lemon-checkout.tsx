@@ -10,10 +10,14 @@ export function LemonCheckout({
   variantId,
   email,
   planName,
+  planId,
+  priceUSD,
 }: {
   variantId: string
   email: string
   planName: string
+  planId: string
+  priceUSD: number
 }) {
   const [discountCode, setDiscountCode] = useState("")
   const [appliedCode, setAppliedCode] = useState<string | undefined>(undefined)
@@ -43,6 +47,8 @@ export function LemonCheckout({
         variantId={variantId}
         email={email}
         planName={planName}
+        planId={planId}
+        priceUSD={priceUSD}
         discountCode={appliedCode}
       />
 

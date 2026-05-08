@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Car, User, LogOut, LayoutDashboard } from "lucide-react"
+import { CreditsBadge } from "@/components/layout/credits-badge"
 
 export function Header() {
   const { data: session, status } = useSession()
@@ -50,6 +51,8 @@ export function Header() {
           {status === "loading" ? (
             <div className="h-9 w-20 animate-pulse rounded-md bg-secondary" />
           ) : session?.user ? (
+            <>
+              <CreditsBadge />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="gap-2">
@@ -80,6 +83,7 @@ export function Header() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            </>
           ) : (
             <>
               <Link href="/login">

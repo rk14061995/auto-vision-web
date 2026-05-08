@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-import { getAllCarProjects, getCarProjectsCount } from "@/lib/db"
+import { getCarProjectsAdminCount, getCarProjectsAdminQuery } from "@/lib/db"
 
 async function checkAdmin() {
   const session = await auth()
@@ -15,6 +15,10 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const skip = parseInt(searchParams.get("skip") || "0")
   const limit = parseInt(searchParams.get("limit") || "100")
-  const [projects, total] = await Promise.all([getAllCarProjects(skip, limit), getCarProjectsCount()])
+  const email = searchParams.get("email")?.trim() || undefined
+  const [projects, total] = await Promise.all([
+    getCarProjectsAdminQuery({ ownerEmail: email, skip, limit }),
+    getCarProjectsAdminCount(email),
+  ])
   return NextResponse.json({ projects, total })
 }

@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { getCarProjectById, updateCarProject } from "@/lib/db";
+import { writeUsageEvent } from "@/lib/usage";
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 
@@ -73,6 +74,12 @@ export async function GET(
         request
       );
     }
+
+    void writeUsageEvent(session.user.email, "project_opened", {
+      projectId,
+      make: project.carDetails?.make,
+      model: project.carDetails?.model,
+    });
 
     return setCorsHeaders(
       NextResponse.json({ success: true, project }),

@@ -151,6 +151,30 @@ export function trackCTAClick(label: string, location: 'hero' | 'cta_section' | 
   event('cta_click', { button_label: label, cta_location: location })
 }
 
-export function trackPricingView(planCount: number) {
-  event('pricing_page_viewed', { plan_count: planCount })
+export function trackPricingView(planCount?: number) {
+  event('pricing_page_viewed', { plan_count: planCount ?? 5 })
+}
+
+export function trackBillingCycleSwitch(cycle: 'monthly' | 'annual') {
+  event('billing_cycle_switch', { cycle })
+}
+
+export function trackAiCall(feature: string, cost: number) {
+  event('ai_call', { feature, cost })
+}
+
+export function trackCreditPackPurchase(packId: string, credits: number, currency: string) {
+  event('credit_pack_purchase', { pack_id: packId, credits, currency })
+}
+
+export function trackUpgradeIntent(targetPlan: string, trigger: string) {
+  event('upgrade_intent', { target_plan: targetPlan, trigger })
+}
+
+export function trackTeamInviteSent(role: string) {
+  event('team_invite_sent', { role })
+}
+
+export function trackMarketplaceAssetView(assetId: string, type: string) {
+  event('marketplace_asset_view', { asset_id: assetId, type })
 }

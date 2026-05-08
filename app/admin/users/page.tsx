@@ -11,6 +11,10 @@ export default async function UsersPage() {
     "50-projects": "admin-badge-purple",
     "100-projects": "admin-badge-purple",
     business: "admin-badge-green",
+    creator: "admin-badge-blue",
+    pro: "admin-badge-purple",
+    studio: "admin-badge-purple",
+    enterprise: "admin-badge-green",
   }
 
   return (
@@ -36,6 +40,7 @@ export default async function UsersPage() {
                 <th>Expiry</th>
                 <th>Credits (INR/USD)</th>
                 <th>Joined</th>
+                <th>Insights</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -55,8 +60,8 @@ export default async function UsersPage() {
                     </td>
                     <td><span className="admin-badge admin-badge-gray">{u.country || "—"}</span></td>
                     <td>
-                      <span className={`admin-badge ${PLAN_BADGE[u.planType] || "admin-badge-gray"}`}>
-                        {u.planType}
+                      <span className={`admin-badge ${PLAN_BADGE[u.planTier || u.planType] || PLAN_BADGE[u.planType] || "admin-badge-gray"}`}>
+                        {u.planTier || u.planType}
                       </span>
                     </td>
                     <td style={{ fontSize: 13 }}>
@@ -72,6 +77,15 @@ export default async function UsersPage() {
                       <span style={{ color: u.creditBalanceUSD > 0 ? "#059669" : "#94a3b8" }}>${u.creditBalanceUSD}</span>
                     </td>
                     <td style={{ fontSize: 12, color: "#64748b" }}>{new Date(u.createdAt).toLocaleDateString()}</td>
+                    <td>
+                      <a
+                        href={`/admin/users/${encodeURIComponent(u.email)}`}
+                        className="admin-nav-link"
+                        style={{ fontSize: 12 }}
+                      >
+                        Journey & projects
+                      </a>
+                    </td>
                     <td><UserActions user={serialized as any} /></td>
                   </tr>
                 )

@@ -1,4 +1,17 @@
-import { FREE_PLAN_VALIDITY_DAYS } from "./subscription-access"
+// Bridge module. The redesigned monetization system lives in lib/plans.ts.
+// This file keeps the legacy `Plan`/`PLANS`/`getPlanById` exports alive so
+// older callers don't break, plus continues to own the unrelated AD_TYPES
+// catalog used by the marketing-ad feature.
+
+import {
+  CREATOR_PLAN,
+  ENTERPRISE_PLAN,
+  FREE_PLAN,
+  PLAN_BY_TIER,
+  PRO_PLAN,
+  STUDIO_PLAN,
+  type Plan as TierPlan,
+} from "./plans"
 
 export interface Plan {
   id: string
@@ -14,137 +27,54 @@ export interface Plan {
   isMonthly: boolean
 }
 
-export const PLANS: Plan[] = [
-  {
-    id: "free",
-    name: "Free",
-    description: `Try the platform for ${FREE_PLAN_VALIDITY_DAYS} days`,
-    projectLimit: 1,
+function tierToLegacyPlan(plan: TierPlan): Plan {
+  return {
+    id: plan.id,
+    name: plan.name,
+    description: plan.description,
+    projectLimit: plan.projectLimit,
     pricing: {
-      IN: { amount: 0, currency: "INR" },
-      US: { amount: 0, currency: "USD", lemonSqueezyVariantId: "" },
+      IN: { amount: plan.pricing.IN.amount, currency: "INR" },
+      US: {
+        amount: plan.pricing.US.amount,
+        currency: "USD",
+        lemonSqueezyVariantId: plan.pricing.US.lemonSqueezyVariantId ?? "",
+      },
     },
-    features: [
-      `Full access for ${FREE_PLAN_VALIDITY_DAYS} days`,
-      "1 Project",
-      "Basic customization tools",
-      "Community support",
-      "720p exports",
-    ],
+    features: plan.highlights,
+    badge: plan.badge,
     isMonthly: true,
-  },
-  {
-    id: "1-project",
-    name: "Starter",
-    description: "For individuals getting started",
-    projectLimit: 1,
-    pricing: {
-      IN: { amount: 499, currency: "INR" },
-      US: { amount: 9, currency: "USD", lemonSqueezyVariantId: "1595234" },
-    },
-    features: [
-      "1 Project",
-      "All customization tools",
-      "Email support",
-      "1080p exports",
-      "Remove watermark",
-    ],
-    isMonthly: true,
-  },
-  {
-    id: "5-projects",
-    name: "Pro",
-    description: "For professionals and small teams",
-    projectLimit: 5,
-    pricing: {
-      IN: { amount: 1999, currency: "INR" },
-      US: { amount: 29, currency: "USD", lemonSqueezyVariantId: "1595234" },
-    },
-    features: [
-      "5 Projects",
-      "All customization tools",
-      "Priority email support",
-      "4K exports",
-      "Remove watermark",
-      "Custom branding",
-    ],
-    badge: "popular",
-    isMonthly: true,
-  },
-  {
-    id: "50-projects",
-    name: "Team",
-    description: "For growing teams and agencies",
-    projectLimit: 50,
-    pricing: {
-      IN: { amount: 9999, currency: "INR" },
-      US: { amount: 149, currency: "USD", lemonSqueezyVariantId: "1595261" },
-    },
-    features: [
-      "50 Projects",
-      "All customization tools",
-      "Priority support",
-      "4K exports",
-      "Remove watermark",
-      "Custom branding",
-      "Team collaboration",
-      "Analytics dashboard",
-    ],
-    badge: "best-value",
-    isMonthly: true,
-  },
-  {
-    id: "100-projects",
-    name: "Business",
-    description: "For large teams and enterprises",
-    projectLimit: 100,
-    pricing: {
-      IN: { amount: 19999, currency: "INR" },
-      US: { amount: 299, currency: "USD", lemonSqueezyVariantId: "1595265" },
-    },
-    features: [
-      "100 Projects",
-      "All customization tools",
-      "Dedicated support",
-      "8K exports",
-      "Remove watermark",
-      "Custom branding",
-      "Team collaboration",
-      "Analytics dashboard",
-      "API access",
-      "SSO integration",
-    ],
-    isMonthly: true,
-  },
-  {
-    id: "business",
-    name: "Enterprise",
-    description: "For organizations with custom needs",
-    projectLimit: -1, // unlimited
-    pricing: {
-      IN: { amount: -1, currency: "INR" }, // Contact sales
-      US: { amount: -1, currency: "USD", lemonSqueezyVariantId: "1595272" },
-    },
-    features: [
-      "Unlimited Projects",
-      "All customization tools",
-      "24/7 dedicated support",
-      "8K exports",
-      "Remove watermark",
-      "Custom branding",
-      "Team collaboration",
-      "Advanced analytics",
-      "API access",
-      "SSO integration",
-      "Custom contracts",
-      "On-premise option",
-    ],
-    isMonthly: true,
-  },
+  }
+}
+
+const TIER_PLANS: Plan[] = [
+  tierToLegacyPlan(FREE_PLAN),
+  tierToLegacyPlan(CREATOR_PLAN),
+  tierToLegacyPlan(PRO_PLAN),
+  tierToLegacyPlan(STUDIO_PLAN),
+  tierToLegacyPlan(ENTERPRISE_PLAN),
 ]
 
+const LEGACY_ID_TO_TIER: Record<string, keyof typeof PLAN_BY_TIER> = {
+  "1-project": "creator",
+  "5-projects": "creator",
+  "50-projects": "pro",
+  "100-projects": "studio",
+  business: "enterprise",
+}
+
+export const PLANS: Plan[] = TIER_PLANS
+
 export function getPlanById(id: string): Plan | undefined {
-  return PLANS.find((plan) => plan.id === id)
+  // Direct match against the new tier ids.
+  const direct = TIER_PLANS.find((p) => p.id === id)
+  if (direct) return direct
+  // Legacy id passthrough -> map to new tier.
+  const mappedTier = LEGACY_ID_TO_TIER[id]
+  if (mappedTier) {
+    return TIER_PLANS.find((p) => p.id === mappedTier)
+  }
+  return undefined
 }
 
 export interface AdType {
@@ -212,19 +142,19 @@ export const AD_TYPES: AdType[] = [
 ]
 
 export function getAdTypeById(id: string): AdType | undefined {
-  return AD_TYPES.find(ad => ad.id === id)
+  return AD_TYPES.find((ad) => ad.id === id)
 }
 
 export function formatPrice(amount: number, currency: "INR" | "USD"): string {
   if (amount === -1) return "Contact Sales"
   if (amount === 0) return "Free"
-  
+
   const formatter = new Intl.NumberFormat(currency === "INR" ? "en-IN" : "en-US", {
     style: "currency",
     currency,
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   })
-  
+
   return formatter.format(amount)
 }

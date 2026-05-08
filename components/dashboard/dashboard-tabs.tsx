@@ -7,6 +7,8 @@ import { CreateAdForm } from "./create-ad-form"
 import { CreateCarProjectForm } from "./create-car-form"
 import { AdList } from "./ad-list"
 import { ReferEarn } from "./refer-earn"
+import { CreditsTab } from "./credits-tab"
+import { UpgradeModal } from "@/components/billing/upgrade-modal"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ExternalLink } from "lucide-react"
 import {
@@ -21,20 +23,24 @@ interface DashboardTabsProps {
   isExpired: boolean | null
   userEmail: string
   userName: string
+  country?: "IN" | "US"
 }
 
-export function DashboardTabs({ isAtLimit, isExpired, userEmail, userName }: DashboardTabsProps) {
+export function DashboardTabs({ isAtLimit, isExpired, userEmail, userName, country = "IN" }: DashboardTabsProps) {
   const searchParams = useSearchParams()
   const tabParam = searchParams.get('tab')
   const [activeTab, setActiveTab] = useState(
     tabParam === 'refer'
       ? 'refer'
-      : tabParam === 'create-ad'
-        ? 'create-ad'
-        : tabParam === 'create-project'
-          ? 'create-project'
-          : 'projects'
+      : tabParam === 'credits'
+        ? 'credits'
+        : tabParam === 'create-ad'
+          ? 'create-ad'
+          : tabParam === 'create-project'
+            ? 'create-project'
+            : 'projects'
   )
+  const [upgradeOpen, setUpgradeOpen] = useState(false)
   const [advertisements, setAdvertisements] = useState<any[]>([])
   const [carProjects, setCarProjects] = useState<CarProject[]>([])
   const [loading, setLoading] = useState(true)
@@ -47,8 +53,16 @@ export function DashboardTabs({ isAtLimit, isExpired, userEmail, userName }: Das
       setActiveTab('create-project')
     } else if (tabParam === 'refer') {
       setActiveTab('refer')
+    } else if (tabParam === 'credits') {
+      setActiveTab('credits')
     }
   }, [tabParam])
+
+  useEffect(() => {
+    if (isAtLimit && activeTab === 'create-project') {
+      setUpgradeOpen(true)
+    }
+  }, [isAtLimit, activeTab])
 
   useEffect(() => {
     if (activeTab === 'create-ad') {
@@ -105,9 +119,18 @@ export function DashboardTabs({ isAtLimit, isExpired, userEmail, userName }: Das
       <TabsList>
         <TabsTrigger value="projects">Car Projects</TabsTrigger>
         <TabsTrigger value="create-project">New Project</TabsTrigger>
+        <TabsTrigger value="credits">AI Credits</TabsTrigger>
         <TabsTrigger value="create-ad">Create Ad</TabsTrigger>
         <TabsTrigger value="refer">Refer & Earn</TabsTrigger>
       </TabsList>
+
+      <UpgradeModal
+        open={upgradeOpen}
+        onClose={() => setUpgradeOpen(false)}
+        trigger="project_limit"
+        recommendedTier="pro"
+        country={country}
+      />
 
       <TabsContent value="projects" className="mt-6">
         {/* Car Projects List */}
@@ -195,6 +218,10 @@ export function DashboardTabs({ isAtLimit, isExpired, userEmail, userName }: Das
         />
       </TabsContent>
 
+      <TabsContent value="credits" className="mt-6">
+        <CreditsTab country={country} />
+      </TabsContent>
+
       <TabsContent value="create-ad" className="mt-6">
         <div className="space-y-6">
           <CreateAdForm
@@ -217,7 +244,7 @@ export function DashboardTabs({ isAtLimit, isExpired, userEmail, userName }: Das
       </TabsContent>
 
       <TabsContent value="refer" className="mt-6">
-        <ReferEarn userEmail={userEmail} />
+        <ReferEarn />
       </TabsContent>
     </Tabs>
   )

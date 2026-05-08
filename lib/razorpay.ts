@@ -36,8 +36,10 @@ export async function createRazorpayOrder(
   const receipt = `receipt_${planId}_${Date.now()}`
   const currency = options?.currency || "INR"
 
+  // Razorpay expects amounts in the smallest currency subunit (paise for INR,
+  // cents for USD). Both are multiplied by 100.
   const orderPayload: any = {
-    amount: amount * (currency === "INR" ? 100 : 1), // Razorpay expects paise for INR, but USD in dollars
+    amount: Math.round(amount * 100),
     currency,
     receipt,
     payment_capture: 1,

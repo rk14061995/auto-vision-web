@@ -26,14 +26,25 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <hr className="admin-nav-divider" />
           <span className="admin-nav-section">Users</span>
           <Link href="/admin/users" className="admin-nav-link">All Users</Link>
+          <Link href="/admin/analytics" className="admin-nav-link">Analytics & interests</Link>
           <Link href="/admin/projects" className="admin-nav-link">Projects</Link>
           <hr className="admin-nav-divider" />
           <span className="admin-nav-section">Marketing</span>
           <Link href="/admin/coupons" className="admin-nav-link">Coupons</Link>
           <Link href="/admin/ads" className="admin-nav-link">Advertisements</Link>
           <hr className="admin-nav-divider" />
+          <span className="admin-nav-section">Teams</span>
+          <Link href="/admin/teams" className="admin-nav-link">Teams</Link>
+          <hr className="admin-nav-divider" />
+          <span className="admin-nav-section">Marketplace</span>
+          <Link href="/admin/marketplace" className="admin-nav-link">Marketplace Assets</Link>
+          <Link href="/admin/templates" className="admin-nav-link">Template Drops</Link>
+          <hr className="admin-nav-divider" />
           <span className="admin-nav-section">Finance</span>
           <Link href="/admin/orders" className="admin-nav-link">Orders & Revenue</Link>
+          <Link href="/admin/revenue" className="admin-nav-link">Revenue by user</Link>
+          <Link href="/admin/referrals" className="admin-nav-link">Referrers & payouts</Link>
+          <Link href="/admin/migrate" className="admin-nav-link">Plan Migration</Link>
           <hr className="admin-nav-divider" />
           <Link href="/" className="admin-nav-link admin-nav-back">Back to App</Link>
         </nav>

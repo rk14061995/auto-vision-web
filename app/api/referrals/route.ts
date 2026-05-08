@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-import { getDb, type User } from "@/lib/db"
+import { getDb, type ReferralMilestone, type User } from "@/lib/db"
+import { REFERRAL_MILESTONES } from "@/lib/referrals-config"
 
 export async function GET() {
   const session = await auth()
@@ -18,16 +19,28 @@ export async function GET() {
   }
 
   const referralLink = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/signup?ref=${encodeURIComponent(
-    user.referralCode || ""
+    user.referralCode || "",
   )}`
 
-  const referredCount = await db
-    .collection<User>("users")
-    .countDocuments({ referredByCode: user.referralCode })
+  const [referredCount, totalRewards, milestones] = await Promise.all([
+    db.collection<User>("users").countDocuments({ referredByCode: user.referralCode }),
+    db.collection("referral_rewards").countDocuments({ referrerEmail: session.user.email }),
+    db
+      .collection<ReferralMilestone>("referral_milestones")
+      .find({ email: session.user.email })
+      .sort({ achievedAt: -1 })
+      .toArray(),
+  ])
 
-  const totalRewards = await db
-    .collection("referral_rewards")
-    .countDocuments({ referrerEmail: session.user.email })
+  const milestoneIds = new Set(milestones.map((m) => m.milestoneId))
+  const milestoneProgress = REFERRAL_MILESTONES.map((m) => ({
+    id: m.id,
+    label: m.label,
+    threshold: m.threshold,
+    bonusCredits: m.bonusCredits,
+    achieved: milestoneIds.has(m.id),
+    progress: Math.min(1, referredCount / m.threshold),
+  }))
 
   return NextResponse.json({
     referralCode: user.referralCode,
@@ -36,5 +49,6 @@ export async function GET() {
     rewardsCount: totalRewards,
     creditBalanceINR: user.creditBalanceINR,
     creditBalanceUSD: user.creditBalanceUSD,
+    milestones: milestoneProgress,
   })
 }

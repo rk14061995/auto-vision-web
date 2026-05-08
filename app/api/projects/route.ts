@@ -9,10 +9,11 @@ export async function OPTIONS(request: NextRequest) {
 import { auth } from "@/lib/auth"
 import {
   createCarProject,
-  getCarProjectsByEmail,
+  getCarProjectsForWorkspace,
   getUserByEmail,
   incrementProjectsUsed,
 } from "@/lib/db"
+import { writeUsageEvent } from "@/lib/usage"
 import { isSubscriptionAccessExpired } from "@/lib/subscription-access"
 import { uploadImage } from "@/lib/cloudinary"
 import { NextRequest, NextResponse } from "next/server"
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
         { status: 401 }
       );
     }
-    const projects = await getCarProjectsByEmail(session.user.email);
+    const projects = await getCarProjectsForWorkspace(session.user.email);
     const res = NextResponse.json({
       success: true,
       projects,
@@ -75,6 +76,20 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Enforce per-plan project limit. -1 means unlimited.
+    const limit = dbUser.projectLimit
+    if (limit !== -1 && dbUser.projectsUsed >= limit) {
+      return NextResponse.json(
+        {
+          error: "Project limit reached. Upgrade your plan to create more.",
+          code: "project_limit_reached",
+          projectLimit: limit,
+          projectsUsed: dbUser.projectsUsed,
+        },
+        { status: 403 }
+      )
+    }
+
     // Parse form data using Next.js native formData()
     const formData = await request.formData()
     
@@ -110,9 +125,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create the car project
+    // Create the car project (attach teamId if the user belongs to a team)
     const project = await createCarProject({
       email: session.user.email,
+      teamId: dbUser.teamId ?? null,
       projectName,
       description: description || "",
       carDetails,
@@ -124,6 +140,12 @@ export async function POST(request: NextRequest) {
 
     // Increment projects used
     await incrementProjectsUsed(session.user.email)
+
+    await writeUsageEvent(session.user.email, "project_created", {
+      projectId: project._id?.toString(),
+      make: carDetails?.make,
+      model: carDetails?.model,
+    })
 
     const res = NextResponse.json(
       {

@@ -7,6 +7,7 @@ import {
   validateCoupon,
 } from "@/lib/db"
 import { getPlanById } from "@/lib/products"
+import { getPlanByTier, getPlanPrice } from "@/lib/plans"
 
 export async function POST(request: Request) {
   const session = await auth()
@@ -16,23 +17,37 @@ export async function POST(request: Request) {
 
   const body = await request.json().catch(() => ({}))
 
-  const { planId, couponCode, useCredits, currency } = body as {
+  const { planId, couponCode, useCredits, currency, cycle } = body as {
     planId?: string
     couponCode?: string
     useCredits?: boolean
     currency?: "INR" | "USD"
+    cycle?: "monthly" | "annual"
   }
 
   if (!planId || !currency || !["INR", "USD"].includes(currency)) {
     return NextResponse.json({ error: "Invalid request payload" }, { status: 400 })
   }
 
+  const billingCycle: "monthly" | "annual" = cycle === "annual" ? "annual" : "monthly"
+
   const plan = getPlanById(planId)
   if (!plan) {
     return NextResponse.json({ error: "Invalid plan" }, { status: 400 })
   }
 
-  const baseAmount = currency === "INR" ? plan.pricing.IN.amount : plan.pricing.US.amount
+  const country: "IN" | "US" = currency === "USD" ? "US" : "IN"
+  const tierPlan = getPlanByTier(plan.id)
+  const baseAmount = tierPlan
+    ? getPlanPrice(tierPlan, country, billingCycle).amount
+    : currency === "INR"
+      ? plan.pricing.IN.amount
+      : plan.pricing.US.amount
+
+  if (baseAmount < 0) {
+    return NextResponse.json({ error: "This plan requires contacting sales" }, { status: 400 })
+  }
+
   const user = await getUserByEmail(session.user.email)
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 })
@@ -87,6 +102,7 @@ export async function POST(request: Request) {
   return NextResponse.json({
     baseAmount,
     currency,
+    cycle: billingCycle,
     couponCode: appliedCouponCode,
     couponDiscount,
     referralDiscount,

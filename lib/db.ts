@@ -7,10 +7,13 @@ const options = {}
 
 let client: MongoClient | null = null
 let clientPromise: Promise<MongoClient> | null = null
+let indexesEnsured = false
 
 declare global {
   // eslint-disable-next-line no-var
   var _mongoClientPromise: Promise<MongoClient> | undefined
+  // eslint-disable-next-line no-var
+  var _avIndexesEnsured: boolean | undefined
 }
 
 function getClientPromise(): Promise<MongoClient> {
@@ -35,12 +38,123 @@ function getClientPromise(): Promise<MongoClient> {
 
 export async function getDb(): Promise<Db> {
   const client = await getClientPromise()
-  return client.db("saas-platform")
+  const db = client.db("saas-platform")
+
+  if (!indexesEnsured && !global._avIndexesEnsured) {
+    indexesEnsured = true
+    global._avIndexesEnsured = true
+    ensureIndexes(db).catch((err) => {
+      indexesEnsured = false
+      global._avIndexesEnsured = false
+      console.error("[db] ensureIndexes failed:", err)
+    })
+  }
+
+  return db
+}
+
+async function ensureIndexes(db: Db): Promise<void> {
+  await Promise.all([
+    db.collection("users").createIndexes([
+      { key: { email: 1 }, unique: true, name: "users_email_unique" },
+      { key: { referralCode: 1 }, sparse: true, name: "users_referralCode" },
+      { key: { teamId: 1 }, sparse: true, name: "users_teamId" },
+    ]),
+    db.collection("purchase_orders").createIndexes([
+      { key: { orderId: 1 }, unique: true, name: "orders_orderId_unique" },
+      { key: { email: 1, createdAt: -1 }, name: "orders_email_created" },
+      { key: { status: 1, createdAt: -1 }, name: "orders_status_created" },
+    ]),
+    db.collection("coupons").createIndexes([
+      { key: { code: 1 }, unique: true, name: "coupons_code_unique" },
+    ]),
+    db.collection("coupon_redemptions").createIndexes([
+      { key: { code: 1, email: 1 }, name: "coupon_red_code_email" },
+    ]),
+    db.collection("car_projects").createIndexes([
+      { key: { email: 1, lastAccessedAt: -1 }, name: "projects_email_accessed" },
+      { key: { teamId: 1 }, sparse: true, name: "projects_teamId" },
+    ]),
+    db.collection("advertisements").createIndexes([
+      { key: { email: 1, createdAt: -1 }, name: "ads_email_created" },
+      { key: { status: 1, endDate: 1 }, name: "ads_status_end" },
+    ]),
+    db.collection("ai_credit_transactions").createIndexes([
+      { key: { email: 1, createdAt: -1 }, name: "aict_email_created" },
+      { key: { idempotencyKey: 1 }, unique: true, sparse: true, name: "aict_idempotency_unique" },
+    ]),
+    db.collection("usage_events").createIndexes([
+      { key: { email: 1, createdAt: -1 }, name: "usage_email_created" },
+      { key: { type: 1, createdAt: -1 }, name: "usage_type_created" },
+    ]),
+    db.collection("webhook_events").createIndexes([
+      { key: { provider: 1, eventId: 1 }, unique: true, name: "webhook_unique" },
+    ]),
+    db.collection("teams").createIndexes([
+      { key: { ownerEmail: 1 }, name: "teams_owner" },
+    ]),
+    db.collection("team_members").createIndexes([
+      { key: { teamId: 1, email: 1 }, unique: true, name: "tm_team_email_unique" },
+      { key: { email: 1 }, name: "tm_email" },
+    ]),
+    db.collection("team_invites").createIndexes([
+      { key: { token: 1 }, unique: true, name: "ti_token_unique" },
+      { key: { teamId: 1 }, name: "ti_team" },
+    ]),
+    db.collection("marketplace_assets").createIndexes([
+      { key: { creatorEmail: 1, createdAt: -1 }, name: "mp_creator" },
+      { key: { status: 1, type: 1 }, name: "mp_status_type" },
+    ]),
+    db.collection("marketplace_purchases").createIndexes([
+      { key: { buyerEmail: 1, createdAt: -1 }, name: "mpp_buyer" },
+      { key: { assetId: 1 }, name: "mpp_asset" },
+    ]),
+    db.collection("referral_milestones").createIndexes([
+      { key: { email: 1, milestoneId: 1 }, unique: true, name: "rm_email_milestone_unique" },
+    ]),
+    db.collection("referral_rewards").createIndexes([
+      { key: { referrerEmail: 1, createdAt: -1 }, name: "rr_referrer_created" },
+      { key: { paidOutAt: 1 }, sparse: true, name: "rr_paid_out" },
+    ]),
+    db.collection("referral_payouts").createIndexes([
+      { key: { referrerEmail: 1, paidAt: -1 }, name: "rp_referrer_paid" },
+    ]),
+    db.collection("template_drops").createIndexes([
+      { key: { publishedAt: -1 }, name: "td_published" },
+      { key: { isActive: 1 }, name: "td_active" },
+    ]),
+  ])
 }
 
 // Check if MongoDB is configured
 export function isDbConfigured(): boolean {
   return !!process.env.MONGODB_URI
+}
+
+// Plan tier identifiers used by the new monetization system. Legacy planType
+// strings (1-project, 5-projects, 50-projects, 100-projects, business) are
+// migrated to these via lib/migrate-plans.ts but remain valid until migration
+// completes.
+export type PlanTier = "free" | "creator" | "pro" | "studio" | "enterprise"
+export type LegacyPlanId =
+  | "free"
+  | "1-project"
+  | "5-projects"
+  | "50-projects"
+  | "100-projects"
+  | "business"
+  | "creator"
+  | "pro"
+  | "studio"
+  | "enterprise"
+export type BillingCycle = "monthly" | "annual"
+export type TeamRole = "owner" | "admin" | "member"
+
+export interface UserUsageMetrics {
+  projectsCreated: number
+  exports: number
+  aiCalls: number
+  sharesLastMonth: number
 }
 
 // User types
@@ -50,27 +164,58 @@ export interface User {
   password: string
   name: string
   country: "IN" | "US" | null
-  planType: "free" | "1-project" | "5-projects" | "50-projects" | "100-projects" | "business"
+  // Legacy field retained; values may be old IDs until migration runs.
+  planType: LegacyPlanId
+  // New canonical tier post-migration. Optional during the transition window.
+  planTier?: PlanTier
+  billingCycle?: BillingCycle | null
   projectLimit: number
   projectsUsed: number
   subscriptionExpiry: Date | null
+  pendingDowngradeTo?: PlanTier | null
+  pendingDowngradeAt?: Date | null
+  dunning?: boolean
   lemonSqueezyCustomerId: string | null
   lemonSqueezySubscriptionId: string | null
   razorpayCustomerId: string | null
+  // Razorpay payment id from latest successful order. (razorpayCustomerId is
+  // misnamed for legacy reasons and should be migrated to this field over time.)
+  razorpayLastPaymentId?: string | null
   referralCode: string | null
   referredByCode: string | null
   creditBalanceINR: number
   creditBalanceUSD: number
+  // AI credits (new monetization). monthly bucket resets per cycle, purchased
+  // bucket rolls over until consumed.
+  aiCreditsMonthly?: number
+  aiCreditsPurchased?: number
+  aiCreditsResetAt?: Date | null
+  teamId?: ObjectId | null
+  teamRole?: TeamRole | null
+  commercialLicense?: boolean
+  legacyGrandfathered?: boolean
+  legacyMigratedAt?: Date | null
+  usageMetrics?: UserUsageMetrics
   createdAt: Date
   updatedAt: Date
 }
+
+export type PurchaseOrderKind = "subscription" | "credit_pack" | "ad" | "marketplace"
 
 export interface PurchaseOrder {
   _id?: ObjectId
   orderId: string
   email: string
   planId: string
-  provider: "razorpay"
+  // Distinguishes subscription purchases from credit-pack / ad / marketplace.
+  // Defaults to "subscription" for legacy rows that don't have it.
+  kind?: PurchaseOrderKind
+  // For credit_pack purchases: the pack id (e.g. "pack_500") and credit count.
+  creditPackId?: string
+  creditAmount?: number
+  // For subscription purchases: monthly vs annual.
+  billingCycle?: BillingCycle
+  provider: "razorpay" | "lemonsqueezy"
   amount: number
   currency: "INR" | "USD"
   status: "created" | "paid" | "failed"
@@ -132,6 +277,32 @@ export interface ReferralReward {
   orderId: string
   rewardAmount: number
   currency: "INR" | "USD"
+  /** Set when an admin payout has covered this reward. */
+  paidOutAt?: Date | null
+  payoutId?: ObjectId | null
+  createdAt: Date
+}
+
+export type ReferralPayoutMethod =
+  | "manual"
+  | "bank"
+  | "upi"
+  | "paypal"
+  | "credit_topup"
+  | "other"
+
+export interface ReferralPayout {
+  _id?: ObjectId
+  referrerEmail: string
+  amount: number
+  currency: "INR" | "USD"
+  method: ReferralPayoutMethod
+  reference?: string
+  notes?: string
+  /** Reward documents this payout covered (for audit trail). */
+  rewardIdsCovered: ObjectId[]
+  paidBy: string
+  paidAt: Date
   createdAt: Date
 }
 
@@ -158,6 +329,8 @@ export interface Advertisement {
 export interface CarProject {
   _id?: ObjectId
   email: string
+  // Optional ownership by team (for studio/enterprise plans).
+  teamId?: ObjectId | null
   projectName: string
   description: string
   carDetails: {
@@ -173,6 +346,187 @@ export interface CarProject {
   createdAt: Date
   updatedAt: Date
   lastAccessedAt: Date
+}
+
+// ─── AI Credit Ledger ────────────────────────────────────────────────────────
+
+export type AICreditFeature =
+  | "ai_wrap_generate"
+  | "ai_background_remove"
+  | "ai_color_variants"
+  | "ai_wheel_suggest"
+  | "ai_enhance"
+  | "admin_grant"
+  | "credit_pack"
+  | "monthly_reset"
+  | "signup_bonus"
+
+export type AICreditBucket = "monthly" | "purchased"
+
+export interface AICreditTransaction {
+  _id?: ObjectId
+  email: string
+  feature: AICreditFeature
+  cost: number // positive for debit, negative for credit/grant
+  bucket: AICreditBucket | "mixed"
+  balanceBefore: { monthly: number; purchased: number }
+  balanceAfter: { monthly: number; purchased: number }
+  status: "debited" | "refunded" | "granted"
+  idempotencyKey?: string
+  providerRequestId?: string
+  refundedAt?: Date
+  refundReason?: string
+  metadata?: Record<string, unknown>
+  createdAt: Date
+}
+
+// ─── Usage Events (analytics + retention) ────────────────────────────────────
+
+export type UsageEventType =
+  | "project_created"
+  | "project_opened"
+  | "project_exported"
+  | "project_shared"
+  | "ai_call"
+  | "ai_call_refunded"
+  | "upgrade_modal_shown"
+  | "upgrade_modal_clicked"
+  | "checkout_started"
+  | "checkout_abandoned"
+  | "checkout_completed"
+  | "referral_converted"
+  | "asset_used"
+  | "marketplace_asset_view"
+  | "team_invite_sent"
+  | "team_member_joined"
+  | "credit_pack_purchased"
+
+export interface UsageEvent {
+  _id?: ObjectId
+  email: string
+  type: UsageEventType
+  metadata?: Record<string, unknown>
+  createdAt: Date
+}
+
+// ─── Webhook Idempotency ─────────────────────────────────────────────────────
+
+export interface WebhookEvent {
+  _id?: ObjectId
+  provider: "razorpay" | "lemonsqueezy"
+  eventId: string
+  eventName?: string
+  processedAt: Date
+}
+
+// ─── Teams ───────────────────────────────────────────────────────────────────
+
+export interface TeamBrandKit {
+  logoUrl?: string
+  primaryColor?: string
+  secondaryColor?: string
+  fontFamily?: string
+}
+
+export interface Team {
+  _id?: ObjectId
+  ownerEmail: string
+  name: string
+  brandKit?: TeamBrandKit
+  seatsAllowed: number
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface TeamMember {
+  _id?: ObjectId
+  teamId: ObjectId
+  email: string
+  role: TeamRole
+  invitedBy: string
+  joinedAt: Date
+}
+
+export interface TeamInvite {
+  _id?: ObjectId
+  teamId: ObjectId
+  email: string
+  token: string
+  role: TeamRole
+  invitedBy: string
+  expiresAt: Date
+  status: "pending" | "accepted" | "revoked" | "expired"
+  createdAt: Date
+}
+
+// ─── Marketplace Foundation ──────────────────────────────────────────────────
+
+export type MarketplaceAssetType =
+  | "wrap"
+  | "decal"
+  | "template"
+  | "wheel_preset"
+  | "body_kit"
+
+export type MarketplaceAssetStatus = "pending" | "approved" | "rejected" | "archived"
+
+export interface MarketplaceAsset {
+  _id?: ObjectId
+  creatorEmail: string
+  type: MarketplaceAssetType
+  title: string
+  description: string
+  thumbnailUrl: string
+  assetUrl: string
+  premium: boolean
+  priceIN: number
+  priceUS: number
+  commissionPct: number // platform cut, default 25
+  downloads: number
+  revenueIN: number
+  revenueUS: number
+  rating: number
+  ratingCount: number
+  status: MarketplaceAssetStatus
+  rejectionReason?: string
+  tags?: string[]
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface MarketplacePurchase {
+  _id?: ObjectId
+  buyerEmail: string
+  assetId: ObjectId
+  amount: number
+  currency: "INR" | "USD"
+  orderId: string
+  createdAt: Date
+}
+
+// ─── Referral Milestones ─────────────────────────────────────────────────────
+
+export interface ReferralMilestone {
+  _id?: ObjectId
+  email: string
+  milestoneId: "ref_3" | "ref_10" | "ref_25"
+  bonusCredits: number
+  achievedAt: Date
+}
+
+// ─── Template Drops (retention) ──────────────────────────────────────────────
+
+export interface TemplateDrop {
+  _id?: ObjectId
+  title: string
+  description: string
+  thumbnailUrl: string
+  assetUrl: string
+  tags: string[]
+  isActive: boolean
+  publishedAt: Date
+  createdAt: Date
+  updatedAt: Date
 }
 
 export async function getUserByEmail(email: string): Promise<User | null> {
@@ -249,28 +603,62 @@ export async function markPurchaseOrderPaid(
 export async function applyPlanPurchase(
   email: string,
   planId: string,
-  providerPaymentId: string
+  providerPaymentId: string,
+  options?: { provider?: "razorpay" | "lemonsqueezy"; cycle?: BillingCycle }
 ): Promise<User | null> {
   const user = await getUserByEmail(email)
   if (!user) return null
 
+  const { PLAN_BY_TIER, billingCycleMonths } = await import("./plans")
+  const { resolveTier } = await import("./feature-flags")
+
   const plan = getPlanById(planId)
   if (!plan) return null
 
+  const tier = resolveTier({ planType: plan.id })
+  const tierPlan = PLAN_BY_TIER[tier]
+
+  const cycle: BillingCycle = options?.cycle ?? "monthly"
   const now = new Date()
   const baseDate =
     user.subscriptionExpiry && user.subscriptionExpiry > now
       ? new Date(user.subscriptionExpiry)
       : now
+  baseDate.setMonth(baseDate.getMonth() + billingCycleMonths(cycle))
 
-  baseDate.setDate(baseDate.getDate() + 30)
+  // Reset monthly AI bucket on plan purchase.
+  const nextReset = new Date(now)
+  nextReset.setMonth(nextReset.getMonth() + 1)
 
-  return updateUser(email, {
-    planType: plan.id as User["planType"],
-    projectLimit: plan.projectLimit,
+  const newProjectLimit =
+    user.legacyGrandfathered && user.projectLimit && user.projectLimit > tierPlan.projectLimit
+      ? user.projectLimit
+      : tierPlan.projectLimit
+
+  const update: Partial<User> = {
+    planType: tier as LegacyPlanId,
+    planTier: tier,
+    billingCycle: cycle,
+    projectLimit: newProjectLimit,
+    projectsUsed: Math.min(user.projectsUsed, newProjectLimit === -1 ? user.projectsUsed : newProjectLimit),
     subscriptionExpiry: baseDate,
-    razorpayCustomerId: providerPaymentId,
-  })
+    pendingDowngradeTo: null,
+    pendingDowngradeAt: null,
+    dunning: false,
+    aiCreditsMonthly: tierPlan.monthlyAiCredits,
+    aiCreditsResetAt: nextReset,
+    commercialLicense: tierPlan.features.commercialLicense,
+  }
+
+  if (options?.provider === "lemonsqueezy") {
+    // lemonSqueezyCustomerId/SubscriptionId are set by the webhook handler.
+  } else {
+    update.razorpayLastPaymentId = providerPaymentId
+    // Keep legacy field populated for backward compatibility.
+    update.razorpayCustomerId = providerPaymentId
+  }
+
+  return updateUser(email, update)
 }
 
 export async function getUserByReferralCode(referralCode: string): Promise<User | null> {
@@ -523,6 +911,22 @@ export async function getCarProjectsByEmail(email: string): Promise<CarProject[]
     .toArray()
 }
 
+/**
+ * Fetch all projects visible to a user: those owned directly by their email
+ * AND any owned by their team (when they belong to one).
+ */
+export async function getCarProjectsForWorkspace(email: string): Promise<CarProject[]> {
+  const db = await getDb()
+  const user = await db.collection<User>("users").findOne({ email })
+  const filters: Record<string, unknown>[] = [{ email }]
+  if (user?.teamId) filters.push({ teamId: user.teamId })
+  return db
+    .collection<CarProject>("car_projects")
+    .find({ $or: filters })
+    .sort({ lastAccessedAt: -1 })
+    .toArray()
+}
+
 export async function updateCarProject(
   projectId: string,
   update: Partial<CarProject>
@@ -718,6 +1122,31 @@ export async function getAllCarProjects(skip = 0, limit = 100): Promise<CarProje
     .toArray()
 }
 
+/** Admin list with optional owner filter; sorted by last activity. */
+export async function getCarProjectsAdminQuery(params: {
+  ownerEmail?: string
+  skip?: number
+  limit?: number
+}): Promise<CarProject[]> {
+  const db = await getDb()
+  const filter = params.ownerEmail ? { email: params.ownerEmail } : {}
+  const skip = params.skip ?? 0
+  const limit = Math.min(params.limit ?? 100, 500)
+  return db
+    .collection<CarProject>("car_projects")
+    .find(filter)
+    .sort({ lastAccessedAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .toArray()
+}
+
+export async function getCarProjectsAdminCount(ownerEmail?: string): Promise<number> {
+  const db = await getDb()
+  const filter = ownerEmail ? { email: ownerEmail } : {}
+  return db.collection<CarProject>("car_projects").countDocuments(filter)
+}
+
 export async function getCarProjectsCount(): Promise<number> {
   const db = await getDb()
   return db.collection<CarProject>("car_projects").countDocuments()
@@ -731,6 +1160,64 @@ export async function getAllPurchaseOrders(skip = 0, limit = 200): Promise<Purch
     .skip(skip)
     .limit(limit)
     .toArray()
+}
+
+// ─── Webhook Idempotency Helpers ─────────────────────────────────────────────
+
+export async function isWebhookProcessed(
+  provider: WebhookEvent["provider"],
+  eventId: string,
+): Promise<boolean> {
+  const db = await getDb()
+  const found = await db
+    .collection<WebhookEvent>("webhook_events")
+    .findOne({ provider, eventId })
+  return !!found
+}
+
+export async function markWebhookProcessed(
+  provider: WebhookEvent["provider"],
+  eventId: string,
+  eventName?: string,
+): Promise<void> {
+  const db = await getDb()
+  try {
+    await db.collection<WebhookEvent>("webhook_events").insertOne({
+      provider,
+      eventId,
+      eventName,
+      processedAt: new Date(),
+    })
+  } catch (err: unknown) {
+    // Duplicate key errors are expected on retries; ignore.
+    const code = (err as { code?: number })?.code
+    if (code !== 11000) throw err
+  }
+}
+
+// ─── Project + project counter helpers (for plan enforcement) ────────────────
+
+export async function getCarProjectsCountForEmail(email: string): Promise<number> {
+  const db = await getDb()
+  return db.collection<CarProject>("car_projects").countDocuments({ email })
+}
+
+export async function decrementProjectsUsed(email: string): Promise<void> {
+  const db = await getDb()
+  await db.collection<User>("users").updateOne(
+    { email, projectsUsed: { $gt: 0 } },
+    { $inc: { projectsUsed: -1 }, $set: { updatedAt: new Date() } },
+  )
+}
+
+export async function syncProjectsUsedFromCount(email: string): Promise<number> {
+  const db = await getDb()
+  const count = await getCarProjectsCountForEmail(email)
+  await db.collection<User>("users").updateOne(
+    { email },
+    { $set: { projectsUsed: count, updatedAt: new Date() } },
+  )
+  return count
 }
 
 export { getClientPromise as clientPromise }

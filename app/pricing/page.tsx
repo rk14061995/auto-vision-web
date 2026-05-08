@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 import { PricingTable } from "@/components/pricing/pricing-table"
-import { FREE_PLAN_VALIDITY_DAYS } from "@/lib/subscription-access"
+import { PricingFAQ } from "@/components/pricing/pricing-faq"
 
 export const metadata: Metadata = {
   title: "Pricing - AutoVision Pro",
@@ -16,51 +16,49 @@ export default function PricingPage() {
       <Header />
       <main className="flex-1 py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          {/* Header */}
-          <div className="mx-auto max-w-2xl text-center">
-            <h1 className="text-balance text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
-              Plans and Pricing
+          <div className="mx-auto max-w-3xl text-center">
+            <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
+              For creators, shops, and brands
+            </span>
+            <h1 className="mt-5 text-balance text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
+              The visual platform for automotive customization
             </h1>
             <p className="mt-4 text-pretty text-lg text-muted-foreground">
-              Start with a {FREE_PLAN_VALIDITY_DAYS}-day free trial. Upgrade for more
-              projects, features, and support.
+              Start free, scale to studio. Each tier includes monthly AI credits
+              for wraps, color variants, background removal, and more — failed
+              generations are auto-refunded.
             </p>
           </div>
 
-          {/* Pricing Table */}
-          <div className="mt-16">
+          <div className="mt-14">
             <PricingTable />
           </div>
 
-          {/* FAQ Section */}
           <div className="mt-24">
-            <h2 className="text-center text-2xl font-bold">
-              Frequently Asked Questions
+            <PricingFAQ />
+          </div>
+
+          <div className="mt-20 rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 via-background to-background p-10 text-center">
+            <h2 className="text-2xl font-semibold sm:text-3xl">
+              Built for the automotive industry
             </h2>
-            <div className="mx-auto mt-12 grid max-w-3xl gap-8">
-              {[
-                {
-                  q: "Can I change my plan later?",
-                  a: "Yes, you can upgrade or downgrade your plan at any time. Changes take effect immediately, and you will be charged or credited the prorated amount.",
-                },
-                {
-                  q: "What payment methods do you accept?",
-                  a: "We accept all major credit cards for international payments. For India, we also support UPI, net banking, and popular wallets via Razorpay.",
-                },
-                {
-                  q: "Is there a free trial?",
-                  a: `Yes. The Free plan includes basic features and 1 project for ${FREE_PLAN_VALIDITY_DAYS} days. No credit card is required to get started.`,
-                },
-                {
-                  q: "What happens when I reach my project limit?",
-                  a: "You will be prompted to upgrade to a higher tier plan. Your existing projects remain accessible, but you cannot create new ones until you upgrade.",
-                },
-              ].map((faq) => (
-                <div key={faq.q}>
-                  <h3 className="font-semibold">{faq.q}</h3>
-                  <p className="mt-2 text-muted-foreground">{faq.a}</p>
-                </div>
-              ))}
+            <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">
+              Wrap shops, dealerships, garages, and OEM teams use AutoVision Pro
+              to pitch designs, win clients, and ship faster than the competition.
+            </p>
+            <div className="mt-6 flex flex-wrap justify-center gap-4">
+              <a
+                href="/signup"
+                className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              >
+                Start Free
+              </a>
+              <a
+                href="mailto:sales@autovision.pro"
+                className="inline-flex h-11 items-center justify-center rounded-md border border-border bg-secondary px-6 text-sm font-medium text-foreground hover:bg-secondary/80"
+              >
+                Talk to Sales
+              </a>
             </div>
           </div>
         </div>

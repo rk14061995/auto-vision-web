@@ -1,22 +1,27 @@
 import "server-only"
 
+import type { PlanTier } from "./db"
+import { CREATOR_PLAN, PRO_PLAN, STUDIO_PLAN, ENTERPRISE_PLAN } from "./plans"
+
 export function getLemonSqueezyCheckoutUrl(
   variantId: string,
-  email?: string
+  email?: string,
 ): string {
   const storeId = process.env.LEMONSQUEEZY_STORE_ID || "your-store"
   const baseUrl = `https://${storeId}.lemonsqueezy.com/checkout/buy/${variantId}`
-  
+
   if (email) {
     return `${baseUrl}?checkout[email]=${encodeURIComponent(email)}`
   }
-  
+
   return baseUrl
 }
 
-// Webhook event types
+// Webhook event types we explicitly understand. Any event not in this union is
+// logged as an unhandled event by the webhook handler.
 export type LemonSqueezyEventName =
   | "order_created"
+  | "order_refunded"
   | "subscription_created"
   | "subscription_updated"
   | "subscription_cancelled"
@@ -24,13 +29,18 @@ export type LemonSqueezyEventName =
   | "subscription_expired"
   | "subscription_paused"
   | "subscription_unpaused"
+  | "subscription_payment_success"
+  | "subscription_payment_failed"
 
 export interface LemonSqueezyWebhookPayload {
   meta: {
     event_name: LemonSqueezyEventName
+    event_id?: string
     custom_data?: {
       user_id?: string
       email?: string
+      kind?: "subscription" | "credit_pack"
+      creditPackId?: string
     }
   }
   data: {
@@ -49,17 +59,32 @@ export interface LemonSqueezyWebhookPayload {
   }
 }
 
+interface VariantMapping {
+  tier: PlanTier
+  projectLimit: number
+}
+
+/**
+ * Build the variant id -> plan tier map dynamically from the new plans
+ * catalog so price changes don't drift from this lookup.
+ */
+function buildVariantMap(): Record<string, VariantMapping> {
+  const map: Record<string, VariantMapping> = {}
+  for (const plan of [CREATOR_PLAN, PRO_PLAN, STUDIO_PLAN, ENTERPRISE_PLAN]) {
+    const variantId = plan.pricing.US.lemonSqueezyVariantId
+    if (variantId) {
+      map[variantId] = { tier: plan.id, projectLimit: plan.projectLimit }
+    }
+  }
+  return map
+}
+
 export function mapVariantToPlan(variantId: string): {
-  planType: string
+  planType: PlanTier
   projectLimit: number
 } {
-  const variantMap: Record<string, { planType: string; projectLimit: number }> = {
-    "1595234": { planType: "1-project", projectLimit: 1 }, // Starter
-    "PRO_VARIANT_ID": { planType: "5-projects", projectLimit: 5 }, // Pro - needs real variant ID
-    "1595261": { planType: "50-projects", projectLimit: 50 }, // Team
-    "1595265": { planType: "100-projects", projectLimit: 100 }, // Business
-    "1595272": { planType: "business", projectLimit: -1 }, // Enterprise
-  }
-  
-  return variantMap[variantId] || { planType: "free", projectLimit: 1 }
+  const map = buildVariantMap()
+  const found = map[variantId]
+  if (found) return { planType: found.tier, projectLimit: found.projectLimit }
+  return { planType: "free", projectLimit: 1 }
 }

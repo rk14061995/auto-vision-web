@@ -38,22 +38,45 @@ export async function signup(formData: FormData) {
     const referralCode = crypto.randomBytes(5).toString("hex").toUpperCase()
     const now = new Date()
 
+    const monthlyResetAt = new Date(now)
+    monthlyResetAt.setMonth(monthlyResetAt.getMonth() + 1)
+
     await createUser({
       email,
       password: hashedPassword,
       name,
       country: null,
       planType: "free",
-      projectLimit: 1,
+      planTier: "free",
+      billingCycle: null,
+      projectLimit: 3,
       projectsUsed: 0,
       subscriptionExpiry: computeFreePlanExpiresAt(now),
+      pendingDowngradeTo: null,
+      pendingDowngradeAt: null,
+      dunning: false,
       lemonSqueezyCustomerId: null,
       lemonSqueezySubscriptionId: null,
       razorpayCustomerId: null,
+      razorpayLastPaymentId: null,
       referralCode,
       referredByCode,
       creditBalanceINR: 0,
       creditBalanceUSD: 0,
+      aiCreditsMonthly: 5, // free tier default
+      aiCreditsPurchased: 0,
+      aiCreditsResetAt: monthlyResetAt,
+      teamId: null,
+      teamRole: null,
+      commercialLicense: false,
+      legacyGrandfathered: false,
+      legacyMigratedAt: now,
+      usageMetrics: {
+        projectsCreated: 0,
+        exports: 0,
+        aiCalls: 0,
+        sharesLastMonth: 0,
+      },
       createdAt: new Date(),
       updatedAt: new Date(),
     })

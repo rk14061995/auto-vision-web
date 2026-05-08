@@ -178,7 +178,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Tabs */}
-        <DashboardTabs isAtLimit={isAtLimit} isExpired={isExpired} userEmail={session.user.email} userName={session.user.name || 'User'} />
+        <DashboardTabs isAtLimit={isAtLimit} isExpired={isExpired} userEmail={session.user.email} userName={session.user.name || 'User'} country={session.user.country === 'US' ? 'US' : 'IN'} />
       </div>
     </div>
   )
