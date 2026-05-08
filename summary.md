@@ -34,6 +34,3 @@ Drag/drop, resize, rotate, delete; layer management; PNG export
 
 
 
-//
-
-i will create 3d models for cars and accessories. so i want a admin type module from where i can map for which car i created 3d model and what accessores i have created for. so when user creates any project from app-vision-web and selects car. so all the mapped accessories to that car and and 3d car of that model will be shown in app-vision-dashboard. and in 2d view, same i need a section where i can map png images of that that particluar car and those images will be shown in left side accessores in 2d view. also image view in 2d view is not coming in central.

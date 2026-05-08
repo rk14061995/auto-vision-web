@@ -76,7 +76,17 @@
 .admin-nav-divider {
   border: none;
   border-top: 1px solid rgba(255,255,255,0.08);
-  margin: 8px 0;
+  margin: 6px 0;
+}
+
+.admin-nav-section {
+  display: block;
+  padding: 4px 12px 2px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #334155;
 }
 
 .admin-nav-back {

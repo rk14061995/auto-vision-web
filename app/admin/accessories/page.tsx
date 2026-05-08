@@ -1,4 +1,3 @@
-"use server"
 import Link from "next/link"
 import { getAccessoriesList } from "@/lib/db"
 

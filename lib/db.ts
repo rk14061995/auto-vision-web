@@ -681,4 +681,56 @@ export async function deleteAccessory(id: string): Promise<void> {
   await db.collection<AccessoryCatalog>("accessories_catalog").deleteOne({ _id: new ObjectId(id) })
 }
 
+// ─── Admin Helpers ────────────────────────────────────────────────────────────
+
+export async function getUsersList(skip = 0, limit = 100): Promise<User[]> {
+  const db = await getDb()
+  return db.collection<User>("users")
+    .find({}, { projection: { password: 0 } })
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .toArray()
+}
+
+export async function getUsersCount(): Promise<number> {
+  const db = await getDb()
+  return db.collection<User>("users").countDocuments()
+}
+
+export async function deleteUser(email: string): Promise<void> {
+  const db = await getDb()
+  await db.collection<User>("users").deleteOne({ email })
+}
+
+export async function getAllAdvertisements(): Promise<Advertisement[]> {
+  const db = await getDb()
+  return db.collection<Advertisement>("advertisements").find({}).sort({ createdAt: -1 }).toArray()
+}
+
+export async function getAllCarProjects(skip = 0, limit = 100): Promise<CarProject[]> {
+  const db = await getDb()
+  return db.collection<CarProject>("car_projects")
+    .find({})
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .toArray()
+}
+
+export async function getCarProjectsCount(): Promise<number> {
+  const db = await getDb()
+  return db.collection<CarProject>("car_projects").countDocuments()
+}
+
+export async function getAllPurchaseOrders(skip = 0, limit = 200): Promise<PurchaseOrder[]> {
+  const db = await getDb()
+  return db.collection<PurchaseOrder>("purchase_orders")
+    .find({})
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .toArray()
+}
+
 export { getClientPromise as clientPromise }
