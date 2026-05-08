@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { getRevenuePerUser } from "@/lib/admin-revenue"
+import { getAdminCountry, currencyForCountry } from "@/lib/admin-country"
 
 const PAGE_SIZE = 50
 
@@ -27,11 +28,15 @@ export default async function RevenueByUserPage({
     ? (sortRaw as SortKey)
     : "revenueINR"
 
+  const country = await getAdminCountry()
+  const currency = currencyForCountry(country)
+
   const { rows, totalUsers, totals } = await getRevenuePerUser({
     skip: (page - 1) * PAGE_SIZE,
     limit: PAGE_SIZE,
     search,
     sortBy,
+    currency,
   })
 
   const totalPages = Math.max(Math.ceil(totalUsers / PAGE_SIZE), 1)
@@ -50,6 +55,7 @@ export default async function RevenueByUserPage({
           <h1 className="admin-page-title">Revenue by user</h1>
           <p className="admin-page-sub">
             Per-user totals from paid <code>purchase_orders</code>, broken down by kind.
+            {country && <span className="admin-badge admin-badge-blue" style={{ marginLeft: 8 }}>{country === "IN" ? "India" : "United States"}</span>}
           </p>
         </div>
       </div>

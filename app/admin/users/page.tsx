@@ -1,8 +1,14 @@
 import { getUsersList, getUsersCount } from "@/lib/db"
+import { getAdminCountry } from "@/lib/admin-country"
 import UserActions from "./UserActions"
 
 export default async function UsersPage() {
-  const [users, total] = await Promise.all([getUsersList(0, 200), getUsersCount()])
+  const country = await getAdminCountry()
+
+  const [users, total] = await Promise.all([
+    getUsersList(0, 200, country),
+    getUsersCount(country),
+  ])
 
   const PLAN_BADGE: Record<string, string> = {
     free: "admin-badge-gray",
@@ -22,13 +28,16 @@ export default async function UsersPage() {
       <div className="admin-page-header">
         <div>
           <h1 className="admin-page-title">Users</h1>
-          <p className="admin-page-sub">{total} registered user{total !== 1 ? "s" : ""}</p>
+          <p className="admin-page-sub">
+            {total} registered user{total !== 1 ? "s" : ""}
+            {country && <span className="admin-badge admin-badge-blue" style={{ marginLeft: 8 }}>{country === "IN" ? "India" : "United States"}</span>}
+          </p>
         </div>
       </div>
 
       <div className="admin-table-card">
         {users.length === 0 ? (
-          <div className="admin-empty"><p className="admin-empty-title">No users yet</p></div>
+          <div className="admin-empty"><p className="admin-empty-title">No users found</p></div>
         ) : (
           <table className="admin-table">
             <thead>

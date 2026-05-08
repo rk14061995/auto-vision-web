@@ -1,7 +1,10 @@
 import { getAllPurchaseOrders } from "@/lib/db"
+import { getAdminCountry, currencyForCountry } from "@/lib/admin-country"
 
 export default async function OrdersPage() {
-  const orders = await getAllPurchaseOrders(0, 500)
+  const country = await getAdminCountry()
+  const currency = currencyForCountry(country)
+  const orders = await getAllPurchaseOrders(0, 500, currency)
 
   const paid = orders.filter((o) => o.status === "paid")
   const revenueINR = paid.filter((o) => o.currency === "INR").reduce((s, o) => s + o.finalAmount, 0)
@@ -18,7 +21,10 @@ export default async function OrdersPage() {
       <div className="admin-page-header">
         <div>
           <h1 className="admin-page-title">Orders & Revenue</h1>
-          <p className="admin-page-sub">All purchase orders and payment history</p>
+          <p className="admin-page-sub">
+            All purchase orders and payment history
+            {country && <span className="admin-badge admin-badge-blue" style={{ marginLeft: 8 }}>{country === "IN" ? "India" : "United States"}</span>}
+          </p>
         </div>
       </div>
 

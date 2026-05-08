@@ -9,16 +9,20 @@ import {
   getDb,
   type Coupon,
 } from "@/lib/db"
+import { getAdminCountry, currencyForCountry } from "@/lib/admin-country"
 import SeedButton from "./SeedButton"
 
 export default async function AdminDashboardPage() {
+  const country = await getAdminCountry()
+  const currency = currencyForCountry(country)
+
   const [cars, accessories, userCount, projectCount, ads, orders, coupons] = await Promise.all([
     getCarCatalogList(false),
     getAccessoriesList(false),
-    getUsersCount(),
+    getUsersCount(country),
     getCarProjectsCount(),
     getAllAdvertisements(),
-    getAllPurchaseOrders(0, 500),
+    getAllPurchaseOrders(0, 500, currency),
     getDb().then((db) => db.collection<Coupon>("coupons").find({}).toArray()),
   ])
 
@@ -35,7 +39,10 @@ export default async function AdminDashboardPage() {
       <div className="admin-page-header">
         <div>
           <h1 className="admin-page-title">Admin Dashboard</h1>
-          <p className="admin-page-sub">AutoVision Pro — manage catalog, users, ads, and revenue</p>
+          <p className="admin-page-sub">
+            AutoVision Pro — manage catalog, users, ads, and revenue
+            {country && <span className="admin-badge admin-badge-blue" style={{ marginLeft: 8 }}>{country === "IN" ? "India" : "United States"}</span>}
+          </p>
         </div>
         <SeedButton />
       </div>

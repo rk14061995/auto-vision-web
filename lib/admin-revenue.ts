@@ -53,6 +53,7 @@ export async function getRevenuePerUser(opts?: {
   skip?: number
   limit?: number
   sortBy?: "revenueINR" | "revenueUSD" | "ordersPaid" | "lastPaidAt"
+  currency?: "INR" | "USD"
 }): Promise<RevenuePerUserPage> {
   const db = await getDb()
   const search = opts?.search?.trim().toLowerCase()
@@ -63,6 +64,9 @@ export async function getRevenuePerUser(opts?: {
   const matchPaid: Record<string, unknown> = { status: "paid" }
   if (search) {
     matchPaid.email = { $regex: search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" }
+  }
+  if (opts?.currency) {
+    matchPaid.currency = opts.currency
   }
 
   const sumIfKindCurrency = (kind: PurchaseOrderKind, currency: "INR" | "USD") => ({
@@ -169,10 +173,12 @@ export async function getRevenuePerUser(opts?: {
   })
 
   // Aggregate global totals across all paid orders (for header strip).
+  const totalsFilter: Record<string, unknown> = { status: "paid" }
+  if (opts?.currency) totalsFilter.currency = opts.currency
   const totalsAgg = await db
     .collection<PurchaseOrder>("purchase_orders")
     .aggregate([
-      { $match: { status: "paid" } },
+      { $match: totalsFilter },
       {
         $group: {
           _id: null,
@@ -187,7 +193,7 @@ export async function getRevenuePerUser(opts?: {
   // Distinct buyers with paid orders (used as totalUsers for pagination context).
   const distinctEmails = await db
     .collection<PurchaseOrder>("purchase_orders")
-    .distinct("email", { status: "paid" })
+    .distinct("email", totalsFilter as any)
 
   return {
     rows,

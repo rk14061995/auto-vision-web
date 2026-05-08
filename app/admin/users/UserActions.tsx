@@ -8,6 +8,7 @@ interface User {
   name: string
   country: string | null
   planType: string
+  planTier?: string | null
   projectLimit: number
   projectsUsed: number
   subscriptionExpiry: string | null
@@ -17,7 +18,7 @@ interface User {
 }
 
 export default function UserActions({ user }: { user: User }) {
-  const [plan, setPlan] = useState(user.planType)
+  const [plan, setPlan] = useState(user.planTier || user.planType)
   const [limit, setLimit] = useState(String(user.projectLimit))
   const [saving, setSaving] = useState(false)
   const [open, setOpen] = useState(false)
@@ -27,7 +28,7 @@ export default function UserActions({ user }: { user: User }) {
     await fetch(`/api/admin/users/${encodeURIComponent(user.email)}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ planType: plan, projectLimit: Number(limit) }),
+      body: JSON.stringify({ planTier: plan, projectLimit: Number(limit) }),
     })
     setSaving(false)
     setOpen(false)
@@ -43,11 +44,10 @@ export default function UserActions({ user }: { user: User }) {
     <div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 180 }}>
       <select className="admin-form-select" style={{ padding: "4px 6px", fontSize: 12 }} value={plan} onChange={(e) => setPlan(e.target.value)}>
         <option value="free">Free</option>
-        <option value="1-project">1 Project</option>
-        <option value="5-projects">5 Projects</option>
-        <option value="50-projects">50 Projects</option>
-        <option value="100-projects">100 Projects</option>
-        <option value="business">Business</option>
+        <option value="creator">Creator</option>
+        <option value="pro">Pro</option>
+        <option value="studio">Studio</option>
+        <option value="enterprise">Enterprise</option>
       </select>
       <input className="admin-form-input" style={{ padding: "4px 6px", fontSize: 12 }} type="number" min={0} value={limit} onChange={(e) => setLimit(e.target.value)} placeholder="Project limit" />
       <div style={{ display: "flex", gap: 4 }}>

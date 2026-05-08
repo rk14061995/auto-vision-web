@@ -17,6 +17,8 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const skip = parseInt(searchParams.get("skip") || "0")
   const limit = parseInt(searchParams.get("limit") || "100")
-  const [users, total] = await Promise.all([getUsersList(skip, limit), getUsersCount()])
+  const countryRaw = searchParams.get("country")
+  const country = countryRaw === "IN" || countryRaw === "US" ? countryRaw : undefined
+  const [users, total] = await Promise.all([getUsersList(skip, limit, country), getUsersCount(country)])
   return NextResponse.json({ users, total })
 }

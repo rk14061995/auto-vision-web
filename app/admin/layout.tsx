@@ -1,7 +1,9 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import Link from "next/link"
+import { cookies } from "next/headers"
 import "./admin.css"
+import CountryFilter from "./CountryFilter"
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
@@ -9,6 +11,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   const adminEmails = (process.env.ADMIN_EMAILS || "").split(",").map((e) => e.trim())
   if (!adminEmails.includes(session.user.email)) redirect("/")
+
+  const cookieStore = await cookies()
+  const activeCountry = cookieStore.get("admin-country")?.value ?? ""
 
   return (
     <div className="admin-shell">
@@ -48,6 +53,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <hr className="admin-nav-divider" />
           <Link href="/" className="admin-nav-link admin-nav-back">Back to App</Link>
         </nav>
+        <CountryFilter current={activeCountry} />
         <div className="admin-nav-user">{session.user.email}</div>
       </aside>
       <main className="admin-main">{children}</main>

@@ -1087,19 +1087,21 @@ export async function deleteAccessory(id: string): Promise<void> {
 
 // ─── Admin Helpers ────────────────────────────────────────────────────────────
 
-export async function getUsersList(skip = 0, limit = 100): Promise<User[]> {
+export async function getUsersList(skip = 0, limit = 100, country?: "IN" | "US"): Promise<User[]> {
   const db = await getDb()
+  const filter: Record<string, unknown> = country ? { country } : {}
   return db.collection<User>("users")
-    .find({}, { projection: { password: 0 } })
+    .find(filter as any, { projection: { password: 0 } })
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit)
     .toArray()
 }
 
-export async function getUsersCount(): Promise<number> {
+export async function getUsersCount(country?: "IN" | "US"): Promise<number> {
   const db = await getDb()
-  return db.collection<User>("users").countDocuments()
+  const filter: Record<string, unknown> = country ? { country } : {}
+  return db.collection<User>("users").countDocuments(filter as any)
 }
 
 export async function deleteUser(email: string): Promise<void> {
@@ -1152,10 +1154,11 @@ export async function getCarProjectsCount(): Promise<number> {
   return db.collection<CarProject>("car_projects").countDocuments()
 }
 
-export async function getAllPurchaseOrders(skip = 0, limit = 200): Promise<PurchaseOrder[]> {
+export async function getAllPurchaseOrders(skip = 0, limit = 200, currency?: "INR" | "USD"): Promise<PurchaseOrder[]> {
   const db = await getDb()
+  const filter = currency ? { currency } : {}
   return db.collection<PurchaseOrder>("purchase_orders")
-    .find({})
+    .find(filter)
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit)
