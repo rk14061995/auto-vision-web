@@ -10,6 +10,15 @@ import { toast } from "sonner"
 import { Loader2, CreditCard, Smartphone, Building } from "lucide-react"
 import { type Plan, formatPrice } from "@/lib/products"
 import { cn } from "@/lib/utils"
+import {
+  trackBeginCheckout,
+  trackAddPaymentInfo,
+  trackPurchase,
+  trackPaymentInitiated,
+  trackPaymentCancelled,
+  trackPaymentFailed,
+  type GA4Item,
+} from "@/lib/gtag"
 
 interface RazorpayCheckoutProps {
   plan: Plan
@@ -39,11 +48,29 @@ export function RazorpayCheckout({
 
   const amount = plan.pricing.IN.amount
 
+  const ga4Item: GA4Item = {
+    item_id: plan.id,
+    item_name: plan.name,
+    item_category: "subscription",
+    price: amount,
+    currency: "INR",
+    quantity: 1,
+  }
+
+  // Fire begin_checkout once when the component mounts (user landed on checkout)
+  useState(() => {
+    trackBeginCheckout(ga4Item)
+  })
+
+  function handlePaymentMethodChange(method: PaymentMethod) {
+    setPaymentMethod(method)
+    trackAddPaymentInfo(ga4Item, method)
+  }
+
   async function handlePayment() {
     setIsLoading(true)
 
     try {
-      // Create order
       const orderRes = await fetch("/api/razorpay/order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -59,7 +86,9 @@ export function RazorpayCheckout({
         throw new Error("Razorpay SDK not loaded")
       }
 
+      trackPaymentInitiated(plan.id, amount, "INR")
       setIsProcessing(true)
+
       const razorpay = new window.Razorpay({
         key: orderData.keyId,
         amount: orderData.amount,
@@ -90,11 +119,19 @@ export function RazorpayCheckout({
               throw new Error("Payment verification failed")
             }
 
+            trackPurchase({
+              transaction_id: response.razorpay_payment_id,
+              value: amount,
+              currency: "INR",
+              item: ga4Item,
+            })
+
             toast.success("Payment successful!")
             router.push("/dashboard")
             router.refresh()
           } catch (verifyError) {
             console.error("Payment verification error:", verifyError)
+            trackPaymentFailed(plan.id, "verification_failed")
             toast.error("Payment verification failed.")
             setIsProcessing(false)
             setIsLoading(false)
@@ -102,6 +139,7 @@ export function RazorpayCheckout({
         },
         modal: {
           ondismiss: () => {
+            trackPaymentCancelled(plan.id, amount, "INR")
             setIsProcessing(false)
             setIsLoading(false)
             toast.error("Payment cancelled")
@@ -112,11 +150,10 @@ export function RazorpayCheckout({
       razorpay.open()
     } catch (error) {
       console.error("Payment error:", error)
+      trackPaymentFailed(plan.id, error instanceof Error ? error.message : "unknown_error")
       toast.error("Payment failed. Please try again.")
       setIsProcessing(false)
       setIsLoading(false)
-    } finally {
-      // Controlled in handler/modal callbacks.
     }
   }
 
@@ -162,7 +199,7 @@ export function RazorpayCheckout({
           ].map((method) => (
             <button
               key={method.id}
-              onClick={() => setPaymentMethod(method.id as PaymentMethod)}
+              onClick={() => handlePaymentMethodChange(method.id as PaymentMethod)}
               className={cn(
                 "flex flex-col items-center gap-2 rounded-lg border p-4 transition-all",
                 paymentMethod === method.id

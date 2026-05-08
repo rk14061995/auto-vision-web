@@ -1,11 +1,13 @@
 "use client"
 
+import { useEffect, useRef } from "react"
 import Link from "next/link"
 import { Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { type Plan, formatPrice } from "@/lib/products"
 import { type Country } from "@/lib/geo"
 import { cn } from "@/lib/utils"
+import { trackViewItem, trackBeginCheckout, trackSelectItem, type GA4Item } from "@/lib/gtag"
 
 interface PricingCardProps {
   plan: Plan
@@ -18,9 +20,47 @@ export function PricingCard({ plan, country, isHighlighted }: PricingCardProps) 
   const priceDisplay = formatPrice(pricing.amount, pricing.currency)
   const isEnterprise = pricing.amount === -1
   const isFree = pricing.amount === 0
+  const cardRef = useRef<HTMLDivElement>(null)
+
+  const ga4Item: GA4Item = {
+    item_id: plan.id,
+    item_name: plan.name,
+    item_category: "subscription",
+    price: pricing.amount > 0 ? pricing.amount : 0,
+    currency: pricing.currency,
+    quantity: 1,
+  }
+
+  // Fire view_item once when the card scrolls into the viewport
+  useEffect(() => {
+    const el = cardRef.current
+    if (!el) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          trackViewItem(ga4Item)
+          observer.disconnect()
+        }
+      },
+      { threshold: 0.5 }
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [plan.id])
+
+  function handleCTAClick() {
+    trackSelectItem(ga4Item)
+    if (!isEnterprise && !isFree) {
+      trackBeginCheckout(ga4Item)
+    }
+  }
 
   return (
     <div
+      ref={cardRef}
       className={cn(
         "relative flex flex-col rounded-xl border p-6 transition-all",
         isHighlighted
@@ -76,7 +116,10 @@ export function PricingCard({ plan, country, isHighlighted }: PricingCardProps) 
       </ul>
 
       {/* CTA */}
-      <Link href={isEnterprise ? "#contact" : `/checkout/${plan.id}?country=${country}`}>
+      <Link
+        href={isEnterprise ? "#contact" : `/checkout/${plan.id}?country=${country}`}
+        onClick={handleCTAClick}
+      >
         <Button
           className="w-full"
           variant={isHighlighted ? "default" : "outline"}

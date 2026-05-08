@@ -3,6 +3,9 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { SessionProvider } from '@/components/providers/session-provider'
 import { Toaster } from '@/components/ui/sonner'
+import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics'
+import { RouteChangeTracker } from '@/components/analytics/RouteChangeTracker'
+import { Suspense } from 'react'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
@@ -46,6 +49,11 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className="font-sans antialiased min-h-screen">
+        <GoogleAnalytics />
+        {/* RouteChangeTracker needs Suspense because it reads useSearchParams */}
+        <Suspense fallback={null}>
+          <RouteChangeTracker />
+        </Suspense>
         <SessionProvider>
           {children}
           <Toaster />

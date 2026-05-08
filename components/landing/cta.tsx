@@ -1,6 +1,9 @@
+"use client"
+
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowRight } from "lucide-react"
+import { trackCTAClick } from "@/lib/gtag"
 
 export function CTA() {
   return (
@@ -15,13 +18,13 @@ export function CTA() {
               Start your free trial today. No credit card required.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link href="/signup">
+              <Link href="/signup" onClick={() => trackCTAClick("Get Started Free", "cta_section")}>
                 <Button size="lg" className="gap-2">
                   Get Started Free
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
-              <Link href="/pricing">
+              <Link href="/pricing" onClick={() => trackCTAClick("Compare Plans", "cta_section")}>
                 <Button size="lg" variant="outline">
                   Compare Plans
                 </Button>

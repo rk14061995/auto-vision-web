@@ -8,6 +8,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Upload, X, ArrowRight } from "lucide-react"
+import {
+  trackCarMakeSelected,
+  trackCarModelSelected,
+  trackCarImageUploaded,
+  trackCreateProject,
+} from "@/lib/gtag"
 
 const CAR_MAKES = [
   "Tesla", "BMW", "Mercedes-Benz", "Audi", "Porsche",
@@ -30,7 +36,7 @@ const CAR_MODELS = {
 }
 
 const COLORS = [
-  "Black", "White", "Red", "Blue", "Silver", "Gray", "Yellow", 
+  "Black", "White", "Red", "Blue", "Silver", "Gray", "Yellow",
   "Green", "Orange", "Purple", "Gold", "Bronze"
 ]
 
@@ -56,10 +62,22 @@ export function CreateCarProjectForm({ userEmail, userName, onProjectCreated }: 
   const currentYear = new Date().getFullYear()
   const years = Array.from({ length: 50 }, (_, i) => currentYear - i)
 
+  function handleCarMakeChange(make: string) {
+    setCarMake(make)
+    setCarModel('')
+    trackCarMakeSelected(make)
+  }
+
+  function handleCarModelChange(model: string) {
+    setCarModel(model)
+    trackCarModelSelected(carMake, model)
+  }
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       setBaseImage(file)
+      trackCarImageUploaded(file.size, file.type)
       const reader = new FileReader()
       reader.onload = (e) => {
         setBaseImagePreview(e.target?.result as string)
@@ -76,7 +94,7 @@ export function CreateCarProjectForm({ userEmail, userName, onProjectCreated }: 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    
+
     if (!projectName || !carMake || !carModel || !carYear || !carColor || !baseImage) {
       setError('Please fill in all fields and upload a car image')
       return
@@ -84,7 +102,6 @@ export function CreateCarProjectForm({ userEmail, userName, onProjectCreated }: 
 
     setIsSubmitting(true)
     try {
-      // Create FormData for file upload
       const formData = new FormData()
       formData.append('projectName', projectName)
       formData.append('description', description)
@@ -100,11 +117,20 @@ export function CreateCarProjectForm({ userEmail, userName, onProjectCreated }: 
 
       const response = await fetch('/api/projects', {
         method: 'POST',
-        body: formData, // No Content-Type header for FormData
+        body: formData,
       })
 
       if (response.ok) {
         const data = await response.json()
+
+        trackCreateProject({
+          car_make: carMake,
+          car_model: carModel,
+          car_year: carYear,
+          car_color: carColor,
+          project_name: projectName,
+        })
+
         setProjectName('')
         setDescription('')
         setCarMake('')
@@ -113,8 +139,7 @@ export function CreateCarProjectForm({ userEmail, userName, onProjectCreated }: 
         setCarColor('')
         setBaseImage(null)
         setBaseImagePreview('')
-        
-        // Redirect to dashboard with project ID
+
         const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'http://localhost:3000'
         const projectId = data.projectId
         const redirectUrl = `${dashboardUrl}?projectId=${projectId}&email=${userEmail}`
@@ -169,7 +194,7 @@ export function CreateCarProjectForm({ userEmail, userName, onProjectCreated }: 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="carMake">Car Make</Label>
-              <Select value={carMake} onValueChange={setCarMake} required>
+              <Select value={carMake} onValueChange={handleCarMakeChange} required>
                 <SelectTrigger>
                   <SelectValue placeholder="Select make" />
                 </SelectTrigger>
@@ -185,7 +210,7 @@ export function CreateCarProjectForm({ userEmail, userName, onProjectCreated }: 
 
             <div className="space-y-2">
               <Label htmlFor="carModel">Car Model</Label>
-              <Select value={carModel} onValueChange={setCarModel} required disabled={!carMake}>
+              <Select value={carModel} onValueChange={handleCarModelChange} required disabled={!carMake}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select model" />
                 </SelectTrigger>

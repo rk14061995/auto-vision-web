@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
 import { signup } from "@/app/actions/auth"
+import { trackSignUp, trackSignUpError } from "@/lib/gtag"
 
 export function SignupForm() {
   const router = useRouter()
@@ -24,12 +25,14 @@ export function SignupForm() {
     const confirmPassword = formData.get("confirmPassword") as string
 
     if (password !== confirmPassword) {
+      trackSignUpError("passwords_do_not_match")
       toast.error("Passwords do not match")
       setIsLoading(false)
       return
     }
 
     if (password.length < 8) {
+      trackSignUpError("password_too_short")
       toast.error("Password must be at least 8 characters")
       setIsLoading(false)
       return
@@ -39,11 +42,11 @@ export function SignupForm() {
       const result = await signup(formData)
 
       if (result.error) {
+        trackSignUpError(result.error)
         toast.error(result.error)
         return
       }
 
-      // Auto sign in after signup
       const signInResult = await signIn("credentials", {
         email: formData.get("email") as string,
         password,
@@ -56,10 +59,12 @@ export function SignupForm() {
         return
       }
 
+      trackSignUp("email")
       toast.success("Account created successfully!")
       router.push("/dashboard")
       router.refresh()
     } catch {
+      trackSignUpError("unexpected_error")
       toast.error("Something went wrong. Please try again.")
     } finally {
       setIsLoading(false)

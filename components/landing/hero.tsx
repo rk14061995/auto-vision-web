@@ -1,6 +1,9 @@
+"use client"
+
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Sparkles } from "lucide-react"
+import { trackCTAClick } from "@/lib/gtag"
 
 export function Hero() {
   return (
@@ -34,13 +37,13 @@ export function Hero() {
 
           {/* CTAs */}
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Link href="/signup">
+            <Link href="/signup" onClick={() => trackCTAClick("Start Free Trial", "hero")}>
               <Button size="lg" className="gap-2">
                 Start Free Trial
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
-            <Link href="/pricing">
+            <Link href="/pricing" onClick={() => trackCTAClick("View Pricing", "hero")}>
               <Button size="lg" variant="outline">
                 View Pricing
               </Button>

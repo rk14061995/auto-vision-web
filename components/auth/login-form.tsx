@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
+import { trackLogin, trackLoginError } from "@/lib/gtag"
 
 export function LoginForm() {
   const router = useRouter()
@@ -30,14 +31,17 @@ export function LoginForm() {
       })
 
       if (result?.error) {
+        trackLoginError("invalid_credentials")
         toast.error("Invalid email or password")
         return
       }
 
+      trackLogin("email")
       toast.success("Welcome back!")
       router.push("/dashboard")
       router.refresh()
     } catch {
+      trackLoginError("unexpected_error")
       toast.error("Something went wrong. Please try again.")
     } finally {
       setIsLoading(false)
