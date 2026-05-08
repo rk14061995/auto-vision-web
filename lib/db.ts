@@ -57,6 +57,10 @@ export interface User {
   lemonSqueezyCustomerId: string | null
   lemonSqueezySubscriptionId: string | null
   razorpayCustomerId: string | null
+  referralCode: string | null
+  referredByCode: string | null
+  creditBalanceINR: number
+  creditBalanceUSD: number
   createdAt: Date
   updatedAt: Date
 }
@@ -71,8 +75,64 @@ export interface PurchaseOrder {
   currency: "INR" | "USD"
   status: "created" | "paid" | "failed"
   paymentId: string | null
+  couponCode: string | null
+  couponDiscount: number
+  referralDiscount: number
+  creditDiscount: number
+  finalAmount: number
+  appliedReferralCode: string | null
+  referrerEmail: string | null
   createdAt: Date
   updatedAt: Date
+}
+
+export type CouponDiscountType = "percent" | "flat"
+
+export interface Coupon {
+  _id?: ObjectId
+  code: string
+  isActive: boolean
+  discountType: CouponDiscountType
+  discountValue: number
+  currency: "INR" | "USD" | "ANY"
+  minAmount?: number
+  maxUses?: number
+  perUserLimit?: number
+  startsAt?: Date
+  expiresAt?: Date
+  usedCount: number
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface CouponRedemption {
+  _id?: ObjectId
+  code: string
+  email: string
+  orderId: string
+  amountDiscounted: number
+  currency: "INR" | "USD"
+  createdAt: Date
+}
+
+export interface CreditTransaction {
+  _id?: ObjectId
+  email: string
+  amount: number
+  currency: "INR" | "USD"
+  type: "referral_reward" | "credit_spent"
+  referenceOrderId?: string
+  createdAt: Date
+}
+
+export interface ReferralReward {
+  _id?: ObjectId
+  referrerEmail: string
+  referredEmail: string
+  orderId: string
+  rewardAmount: number
+  currency: "INR" | "USD"
+  createdAt: Date
 }
 
 export interface Advertisement {
@@ -118,6 +178,12 @@ export interface CarProject {
 export async function getUserByEmail(email: string): Promise<User | null> {
   const db = await getDb()
   return db.collection<User>("users").findOne({ email })
+}
+
+export async function getUserById(userId: string): Promise<User | null> {
+  if (!ObjectId.isValid(userId)) return null
+  const db = await getDb()
+  return db.collection<User>("users").findOne({ _id: new ObjectId(userId) })
 }
 
 export async function createUser(userData: Omit<User, "_id">): Promise<User> {
@@ -204,6 +270,147 @@ export async function applyPlanPurchase(
     projectLimit: plan.projectLimit,
     subscriptionExpiry: baseDate,
     razorpayCustomerId: providerPaymentId,
+  })
+}
+
+export async function getUserByReferralCode(referralCode: string): Promise<User | null> {
+  const db = await getDb()
+  return db.collection<User>("users").findOne({ referralCode })
+}
+
+export async function getPaidPurchaseCountByEmail(email: string): Promise<number> {
+  const db = await getDb()
+  return db.collection<PurchaseOrder>("purchase_orders").countDocuments({
+    email,
+    status: "paid",
+  })
+}
+
+export async function getCouponByCode(code: string): Promise<Coupon | null> {
+  const db = await getDb()
+  return db.collection<Coupon>("coupons").findOne({ code: code.toUpperCase() })
+}
+
+export async function countCouponRedemptionsByUser(code: string, email: string): Promise<number> {
+  const db = await getDb()
+  return db.collection<CouponRedemption>("coupon_redemptions").countDocuments({
+    code: code.toUpperCase(),
+    email,
+  })
+}
+
+export async function validateCoupon(params: {
+  code: string
+  email: string
+  amount: number
+  currency: "INR" | "USD"
+}): Promise<{ ok: true; coupon: Coupon; discount: number } | { ok: false; error: string }> {
+  const coupon = await getCouponByCode(params.code)
+  console.log("[validateCoupon] lookup result:", coupon ? `found ${coupon.code}` : "null")
+  if (!coupon || !coupon.isActive) {
+    console.log("[validateCoupon] failed: coupon not found or inactive")
+    return { ok: false, error: "Invalid coupon" }
+  }
+
+  const now = new Date()
+  if (coupon.startsAt && coupon.startsAt > now) {
+    return { ok: false, error: "Coupon not active yet" }
+  }
+  if (coupon.expiresAt && coupon.expiresAt < now) {
+    return { ok: false, error: "Coupon expired" }
+  }
+  if (coupon.currency !== "ANY" && coupon.currency !== params.currency) {
+    return { ok: false, error: "Coupon not valid for this currency" }
+  }
+  if (coupon.minAmount && params.amount < coupon.minAmount) {
+    return { ok: false, error: "Order amount too low for this coupon" }
+  }
+  if (typeof coupon.maxUses === "number" && coupon.usedCount >= coupon.maxUses) {
+    return { ok: false, error: "Coupon usage limit reached" }
+  }
+
+  if (typeof coupon.perUserLimit === "number") {
+    const userUses = await countCouponRedemptionsByUser(coupon.code, params.email)
+    if (userUses >= coupon.perUserLimit) {
+      return { ok: false, error: "Coupon usage limit reached for this user" }
+    }
+  }
+
+  const discountRaw =
+    coupon.discountType === "percent"
+      ? (params.amount * coupon.discountValue) / 100
+      : coupon.discountValue
+
+  const discount = Math.max(0, Math.min(params.amount, Number(discountRaw.toFixed(2))))
+
+  return { ok: true, coupon, discount }
+}
+
+export async function redeemCoupon(params: {
+  code: string
+  email: string
+  orderId: string
+  amountDiscounted: number
+  currency: "INR" | "USD"
+}): Promise<void> {
+  const db = await getDb()
+  const code = params.code.toUpperCase()
+
+  await db.collection<CouponRedemption>("coupon_redemptions").insertOne({
+    code,
+    email: params.email,
+    orderId: params.orderId,
+    amountDiscounted: params.amountDiscounted,
+    currency: params.currency,
+    createdAt: new Date(),
+  })
+
+  await db.collection<Coupon>("coupons").updateOne(
+    { code },
+    { $inc: { usedCount: 1 }, $set: { updatedAt: new Date() } }
+  )
+}
+
+export async function addUserCredit(params: {
+  email: string
+  amount: number
+  currency: "INR" | "USD"
+  type: CreditTransaction["type"]
+  referenceOrderId?: string
+}): Promise<void> {
+  const db = await getDb()
+
+  const incField = params.currency === "INR" ? "creditBalanceINR" : "creditBalanceUSD"
+  await db.collection<User>("users").updateOne(
+    { email: params.email },
+    { $inc: { [incField]: params.amount }, $set: { updatedAt: new Date() } }
+  )
+
+  await db.collection<CreditTransaction>("credit_transactions").insertOne({
+    email: params.email,
+    amount: params.amount,
+    currency: params.currency,
+    type: params.type,
+    referenceOrderId: params.referenceOrderId,
+    createdAt: new Date(),
+  })
+}
+
+export async function recordReferralReward(params: {
+  referrerEmail: string
+  referredEmail: string
+  orderId: string
+  rewardAmount: number
+  currency: "INR" | "USD"
+}): Promise<void> {
+  const db = await getDb()
+  await db.collection<ReferralReward>("referral_rewards").insertOne({
+    referrerEmail: params.referrerEmail,
+    referredEmail: params.referredEmail,
+    orderId: params.orderId,
+    rewardAmount: params.rewardAmount,
+    currency: params.currency,
+    createdAt: new Date(),
   })
 }
 

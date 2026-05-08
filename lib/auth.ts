@@ -1,7 +1,8 @@
 import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import { compare } from "bcryptjs"
-import { getUserByEmail, type User } from "./db"
+import { getUserByEmail, getUserById, updateUser, type User } from "./db"
+import { computeFreePlanExpiresAt } from "./subscription-access"
 import { authConfig } from "./auth.config"
 
 declare module "next-auth" {
@@ -47,6 +48,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null
         }
 
+        let subscriptionExpiry = user.subscriptionExpiry
+        if (user.planType === "free" && !subscriptionExpiry) {
+          const next = computeFreePlanExpiresAt()
+          const updated = await updateUser(user.email, { subscriptionExpiry: next })
+          subscriptionExpiry = updated?.subscriptionExpiry ?? next
+        }
+
         return {
           id: user._id?.toString() ?? "",
           email: user.email,
@@ -55,7 +63,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           planType: user.planType,
           projectLimit: user.projectLimit,
           projectsUsed: user.projectsUsed,
-          subscriptionExpiry: user.subscriptionExpiry,
+          subscriptionExpiry,
         }
       },
     }),
@@ -64,18 +72,61 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     ...authConfig.callbacks,
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id
-        token.country = (user as User).country
-        token.planType = (user as User).planType
-        token.projectLimit = (user as User).projectLimit
-        token.projectsUsed = (user as User).projectsUsed
-        token.subscriptionExpiry = (user as User).subscriptionExpiry
+        const u = user as {
+          id: string
+          email: string
+          name: string
+          country: User["country"]
+          planType: string
+          projectLimit: number
+          projectsUsed: number
+          subscriptionExpiry: Date | null
+        }
+        token.id = u.id
+        token.email = u.email
+        token.name = u.name
+        token.country = u.country
+        token.planType = u.planType
+        token.projectLimit = u.projectLimit
+        token.projectsUsed = u.projectsUsed
+        token.subscriptionExpiry = u.subscriptionExpiry
       }
+
+      const email =
+        typeof token.email === "string" ? token.email : undefined
+      const id = typeof token.id === "string" ? token.id : undefined
+
+      try {
+        let dbUser: User | null = null
+        if (email) {
+          dbUser = await getUserByEmail(email)
+        } else if (id) {
+          dbUser = await getUserById(id)
+        }
+        if (dbUser) {
+          if (!token.email) token.email = dbUser.email
+          token.name = dbUser.name
+          token.country = dbUser.country
+          token.planType = dbUser.planType
+          token.projectLimit = dbUser.projectLimit
+          token.projectsUsed = dbUser.projectsUsed
+          token.subscriptionExpiry = dbUser.subscriptionExpiry
+        }
+      } catch (err) {
+        console.error("[auth jwt] refresh user from db failed:", err)
+      }
+
       return token
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string
+        if (typeof token.email === "string") {
+          session.user.email = token.email
+        }
+        if (typeof token.name === "string") {
+          session.user.name = token.name
+        }
         session.user.country = token.country as "IN" | "US" | null
         session.user.planType = token.planType as string
         session.user.projectLimit = token.projectLimit as number

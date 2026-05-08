@@ -1,3 +1,5 @@
+import { FREE_PLAN_VALIDITY_DAYS } from "./subscription-access"
+
 export interface Plan {
   id: string
   name: string
@@ -16,13 +18,14 @@ export const PLANS: Plan[] = [
   {
     id: "free",
     name: "Free",
-    description: "Perfect for trying out the platform",
+    description: `Try the platform for ${FREE_PLAN_VALIDITY_DAYS} days`,
     projectLimit: 1,
     pricing: {
       IN: { amount: 0, currency: "INR" },
       US: { amount: 0, currency: "USD", lemonSqueezyVariantId: "" },
     },
     features: [
+      `Full access for ${FREE_PLAN_VALIDITY_DAYS} days`,
       "1 Project",
       "Basic customization tools",
       "Community support",
@@ -37,7 +40,7 @@ export const PLANS: Plan[] = [
     projectLimit: 1,
     pricing: {
       IN: { amount: 499, currency: "INR" },
-      US: { amount: 9, currency: "USD", lemonSqueezyVariantId: "VARIANT_STARTER" },
+      US: { amount: 9, currency: "USD", lemonSqueezyVariantId: "1595234" },
     },
     features: [
       "1 Project",
@@ -55,7 +58,7 @@ export const PLANS: Plan[] = [
     projectLimit: 5,
     pricing: {
       IN: { amount: 1999, currency: "INR" },
-      US: { amount: 29, currency: "USD", lemonSqueezyVariantId: "VARIANT_PRO" },
+      US: { amount: 29, currency: "USD", lemonSqueezyVariantId: "1595234" },
     },
     features: [
       "5 Projects",
@@ -75,7 +78,7 @@ export const PLANS: Plan[] = [
     projectLimit: 50,
     pricing: {
       IN: { amount: 9999, currency: "INR" },
-      US: { amount: 149, currency: "USD", lemonSqueezyVariantId: "VARIANT_TEAM" },
+      US: { amount: 149, currency: "USD", lemonSqueezyVariantId: "1595261" },
     },
     features: [
       "50 Projects",
@@ -97,7 +100,7 @@ export const PLANS: Plan[] = [
     projectLimit: 100,
     pricing: {
       IN: { amount: 19999, currency: "INR" },
-      US: { amount: 299, currency: "USD", lemonSqueezyVariantId: "VARIANT_BUSINESS" },
+      US: { amount: 299, currency: "USD", lemonSqueezyVariantId: "1595265" },
     },
     features: [
       "100 Projects",
@@ -120,7 +123,7 @@ export const PLANS: Plan[] = [
     projectLimit: -1, // unlimited
     pricing: {
       IN: { amount: -1, currency: "INR" }, // Contact sales
-      US: { amount: -1, currency: "USD", lemonSqueezyVariantId: "" },
+      US: { amount: -1, currency: "USD", lemonSqueezyVariantId: "1595272" },
     },
     features: [
       "Unlimited Projects",

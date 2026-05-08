@@ -3,7 +3,7 @@ import crypto from "node:crypto"
 export interface RazorpayOrder {
   id: string
   amount: number
-  currency: "INR"
+  currency: "INR" | "USD"
   receipt: string
   status: "created" | "attempted" | "paid"
   created_at: number
@@ -17,7 +17,14 @@ export interface RazorpayPaymentResponse {
 
 export async function createRazorpayOrder(
   amount: number,
-  planId: string
+  planId: string,
+  options?: {
+    currency?: "INR" | "USD"
+    customerName?: string
+    customerEmail?: string
+    customerPhone?: string
+    notes?: Record<string, string>
+  }
 ): Promise<RazorpayOrder> {
   const keyId = process.env.RAZORPAY_KEY_ID
   const keySecret = process.env.RAZORPAY_KEY_SECRET
@@ -27,6 +34,21 @@ export async function createRazorpayOrder(
 
   const auth = Buffer.from(`${keyId}:${keySecret}`).toString("base64")
   const receipt = `receipt_${planId}_${Date.now()}`
+  const currency = options?.currency || "INR"
+
+  const orderPayload: any = {
+    amount: amount * (currency === "INR" ? 100 : 1), // Razorpay expects paise for INR, but USD in dollars
+    currency,
+    receipt,
+    payment_capture: 1,
+    notes: {
+      planId,
+      customerName: options?.customerName || "",
+      customerEmail: options?.customerEmail || "",
+      customerPhone: options?.customerPhone || "",
+      ...(options?.notes || {}),
+    },
+  }
 
   const response = await fetch("https://api.razorpay.com/v1/orders", {
     method: "POST",
@@ -34,12 +56,7 @@ export async function createRazorpayOrder(
       Authorization: `Basic ${auth}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      amount: amount * 100,
-      currency: "INR",
-      receipt,
-      payment_capture: 1,
-    }),
+    body: JSON.stringify(orderPayload),
   })
 
   if (!response.ok) {

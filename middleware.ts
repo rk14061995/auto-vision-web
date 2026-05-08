@@ -1,10 +1,22 @@
 import NextAuth from "next-auth"
 import { authConfig } from "@/lib/auth.config"
+import { NextResponse } from "next/server"
 
 const { auth } = NextAuth(authConfig)
 
 export default auth((req) => {
-  return undefined
+  const ref = req.nextUrl.searchParams.get("ref")
+  if (ref) {
+    const response = NextResponse.next()
+    response.cookies.set("ref", ref, {
+      path: "/",
+      httpOnly: true,
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 30,
+    })
+    return response
+  }
+  return NextResponse.next()
 })
 
 export const config = {

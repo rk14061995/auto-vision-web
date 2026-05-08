@@ -1,10 +1,17 @@
 import { NextResponse } from "next/server"
 import crypto from "node:crypto"
-import { updateUser } from "@/lib/db"
+import {
+  addUserCredit,
+  getUserByEmail,
+  getUserByReferralCode,
+  recordReferralReward,
+  updateUser,
+} from "@/lib/db"
 import {
   type LemonSqueezyWebhookPayload,
   mapVariantToPlan,
 } from "@/lib/lemonsqueezy"
+import { computeFreePlanExpiresAt } from "@/lib/subscription-access"
 
 export async function POST(request: Request) {
   const secret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET
@@ -46,6 +53,7 @@ export async function POST(request: Request) {
     switch (eventName) {
       case "order_created":
       case "subscription_created": {
+        const existingUser = await getUserByEmail(user_email)
         const { planType, projectLimit } = mapVariantToPlan(variantId)
         const renewsAt = payload.data.attributes.renews_at
         
@@ -56,6 +64,31 @@ export async function POST(request: Request) {
           lemonSqueezySubscriptionId: payload.data.id,
           subscriptionExpiry: renewsAt ? new Date(renewsAt) : null,
         })
+
+        if (
+          existingUser?.referredByCode &&
+          existingUser.planType === "free" &&
+          existingUser.referredByCode
+        ) {
+          const referrer = await getUserByReferralCode(existingUser.referredByCode)
+          if (referrer?.email && referrer.email !== user_email) {
+            const rewardAmount = 5
+            await addUserCredit({
+              email: referrer.email,
+              amount: rewardAmount,
+              currency: "USD",
+              type: "referral_reward",
+            })
+            await recordReferralReward({
+              referrerEmail: referrer.email,
+              referredEmail: user_email,
+              orderId: payload.data.id,
+              rewardAmount,
+              currency: "USD",
+            })
+            await updateUser(user_email, { referredByCode: null })
+          }
+        }
         break
       }
 
@@ -76,7 +109,7 @@ export async function POST(request: Request) {
         await updateUser(user_email, {
           planType: "free",
           projectLimit: 1,
-          subscriptionExpiry: null,
+          subscriptionExpiry: computeFreePlanExpiresAt(),
           lemonSqueezySubscriptionId: null,
         })
         break

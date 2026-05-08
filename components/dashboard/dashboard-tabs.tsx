@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { CreateAdForm } from "./create-ad-form"
 import { CreateCarProjectForm } from "./create-car-form"
 import { AdList } from "./ad-list"
+import { ReferEarn } from "./refer-earn"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ExternalLink } from "lucide-react"
 import {
@@ -13,7 +14,7 @@ import {
   Folder,
   Clock,
 } from "lucide-react"
-import type { Advertisement, CarProject } from '@/lib/db'
+import type { CarProject } from '@/lib/db'
 
 interface DashboardTabsProps {
   isAtLimit: boolean
@@ -26,7 +27,13 @@ export function DashboardTabs({ isAtLimit, isExpired, userEmail, userName }: Das
   const searchParams = useSearchParams()
   const tabParam = searchParams.get('tab')
   const [activeTab, setActiveTab] = useState(
-    tabParam === 'create-ad' ? 'create-ad' : tabParam === 'create-project' ? 'create-project' : 'projects'
+    tabParam === 'refer'
+      ? 'refer'
+      : tabParam === 'create-ad'
+        ? 'create-ad'
+        : tabParam === 'create-project'
+          ? 'create-project'
+          : 'projects'
   )
   const [advertisements, setAdvertisements] = useState<any[]>([])
   const [carProjects, setCarProjects] = useState<CarProject[]>([])
@@ -38,6 +45,8 @@ export function DashboardTabs({ isAtLimit, isExpired, userEmail, userName }: Das
       setActiveTab('create-ad')
     } else if (tabParam === 'create-project') {
       setActiveTab('create-project')
+    } else if (tabParam === 'refer') {
+      setActiveTab('refer')
     }
   }, [tabParam])
 
@@ -97,6 +106,7 @@ export function DashboardTabs({ isAtLimit, isExpired, userEmail, userName }: Das
         <TabsTrigger value="projects">Car Projects</TabsTrigger>
         <TabsTrigger value="create-project">New Project</TabsTrigger>
         <TabsTrigger value="create-ad">Create Ad</TabsTrigger>
+        <TabsTrigger value="refer">Refer & Earn</TabsTrigger>
       </TabsList>
 
       <TabsContent value="projects" className="mt-6">
@@ -204,6 +214,10 @@ export function DashboardTabs({ isAtLimit, isExpired, userEmail, userName }: Das
             )}
           </div>
         </div>
+      </TabsContent>
+
+      <TabsContent value="refer" className="mt-6">
+        <ReferEarn userEmail={userEmail} />
       </TabsContent>
     </Tabs>
   )

@@ -1,8 +1,11 @@
 "use server"
 
 import { hash } from "bcryptjs"
+import crypto from "node:crypto"
+import { cookies } from "next/headers"
 import { createUser, getUserByEmail } from "@/lib/db"
 import { signIn } from "@/lib/auth"
+import { computeFreePlanExpiresAt } from "@/lib/subscription-access"
 
 export async function signup(formData: FormData) {
   const email = formData.get("email") as string
@@ -30,6 +33,11 @@ export async function signup(formData: FormData) {
 
     const hashedPassword = await hash(password, 12)
 
+    const cookieStore = await cookies()
+    const referredByCode = cookieStore.get("ref")?.value ?? null
+    const referralCode = crypto.randomBytes(5).toString("hex").toUpperCase()
+    const now = new Date()
+
     await createUser({
       email,
       password: hashedPassword,
@@ -38,10 +46,14 @@ export async function signup(formData: FormData) {
       planType: "free",
       projectLimit: 1,
       projectsUsed: 0,
-      subscriptionExpiry: null,
+      subscriptionExpiry: computeFreePlanExpiresAt(now),
       lemonSqueezyCustomerId: null,
       lemonSqueezySubscriptionId: null,
       razorpayCustomerId: null,
+      referralCode,
+      referredByCode,
+      creditBalanceINR: 0,
+      creditBalanceUSD: 0,
       createdAt: new Date(),
       updatedAt: new Date(),
     })

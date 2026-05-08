@@ -15,6 +15,10 @@ import {
   Megaphone,
 } from "lucide-react"
 import { getPlanById, formatPrice } from "@/lib/products"
+import {
+  FREE_PLAN_VALIDITY_DAYS,
+  isSubscriptionAccessExpired,
+} from "@/lib/subscription-access"
 import { getCarProjectsByEmail } from "@/lib/db"
 
 export const metadata: Metadata = {
@@ -37,8 +41,7 @@ export default async function DashboardPage() {
   const isNearLimit = !isUnlimited && usagePercent >= 80
   const isAtLimit = !isUnlimited && projectsUsed >= projectLimit
 
-  // Check if subscription is expired
-  const isExpired = subscriptionExpiry && new Date(subscriptionExpiry) < new Date()
+  const isExpired = isSubscriptionAccessExpired(planType, subscriptionExpiry)
 
   return (
     <div className="py-10">
@@ -56,10 +59,12 @@ export default async function DashboardPage() {
               <Plus className="h-4 w-4" />
               New Project
             </Button>
-            <Button variant="outline" className="gap-2">
-              <Users className="h-4 w-4" />
-              Refer Now
-            </Button>
+            <Link href="/dashboard?tab=refer">
+              <Button variant="outline" className="gap-2">
+                <Users className="h-4 w-4" />
+                Refer Now
+              </Button>
+            </Link>
             <Link href="/dashboard?tab=create-ad">
               <Button variant="outline" className="gap-2">
                 <Megaphone className="h-4 w-4" />
@@ -79,11 +84,13 @@ export default async function DashboardPage() {
                   Your subscription has expired
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Renew your subscription to continue creating new projects.
+                  {planType === "free"
+                    ? "Your free trial has ended. Upgrade to continue creating new projects."
+                    : "Renew your subscription to continue creating new projects."}
                 </p>
                 <Link href="/pricing">
                   <Button size="sm" variant="destructive" className="mt-3">
-                    Renew Now
+                    {planType === "free" ? "View plans" : "Renew Now"}
                   </Button>
                 </Link>
               </div>
@@ -150,7 +157,9 @@ export default async function DashboardPage() {
             </p>
             {subscriptionExpiry && !isExpired && (
               <p className="mt-2 text-sm text-muted-foreground">
-                Renews {new Date(subscriptionExpiry).toLocaleDateString()}
+                {planType === "free"
+                  ? `Trial ends ${new Date(subscriptionExpiry).toLocaleDateString()}`
+                  : `Renews ${new Date(subscriptionExpiry).toLocaleDateString()}`}
               </p>
             )}
           </div>
@@ -162,7 +171,9 @@ export default async function DashboardPage() {
               {plan ? formatPrice(plan.pricing.US.amount, "USD") : "Free"}
             </p>
             <p className="mt-2 text-sm text-muted-foreground">
-              {plan?.pricing.US.amount === 0 ? "Forever free" : "Billed monthly"}
+              {plan?.pricing.US.amount === 0
+                ? `${FREE_PLAN_VALIDITY_DAYS}-day trial access`
+                : "Billed monthly"}
             </p>
           </div>
         </div>

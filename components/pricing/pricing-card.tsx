@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { type Plan, formatPrice } from "@/lib/products"
+import { FREE_PLAN_VALIDITY_DAYS } from "@/lib/subscription-access"
 import { type Country } from "@/lib/geo"
 import { cn } from "@/lib/utils"
 import { trackViewItem, trackBeginCheckout, trackSelectItem, type GA4Item } from "@/lib/gtag"
@@ -98,6 +99,11 @@ export function PricingCard({ plan, country, isHighlighted }: PricingCardProps) 
             <span className="ml-1 text-muted-foreground">/month</span>
           )}
         </div>
+        {isFree && (
+          <p className="mt-1 text-xs text-muted-foreground">
+            {FREE_PLAN_VALIDITY_DAYS}-day access, then upgrade to continue.
+          </p>
+        )}
         {!isFree && !isEnterprise && (
           <p className="mt-1 text-xs text-muted-foreground">
             Billed monthly. Cancel anytime.

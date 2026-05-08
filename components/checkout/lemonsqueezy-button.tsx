@@ -11,6 +11,7 @@ interface LemonSqueezyButtonProps {
   planName: string
   planId: string
   priceUSD: number
+  discountCode?: string
 }
 
 export function LemonSqueezyButton({
@@ -19,10 +20,15 @@ export function LemonSqueezyButton({
   planName,
   planId,
   priceUSD,
+  discountCode,
 }: LemonSqueezyButtonProps) {
   const storeId = process.env.NEXT_PUBLIC_LEMONSQUEEZY_STORE_ID || "your-store"
+  const params = new URLSearchParams()
+  if (email) params.set("checkout[email]", email)
+  if (discountCode) params.set("discount_code", discountCode)
+  const query = params.toString()
   const checkoutUrl = `https://${storeId}.lemonsqueezy.com/checkout/buy/${variantId}${
-    email ? `?checkout[email]=${encodeURIComponent(email)}` : ""
+    query ? `?${query}` : ""
   }`
 
   const ga4Item: GA4Item = {

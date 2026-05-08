@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import {
+  addUserCredit,
   applyPlanPurchase,
   getPurchaseOrderByOrderId,
+  getPaidPurchaseCountByEmail,
   markPurchaseOrderPaid,
+  recordReferralReward,
+  redeemCoupon,
+  updateUser,
   updateAdvertisement,
   getAdvertisementsByEmail,
 } from "@/lib/db"
@@ -88,6 +93,7 @@ export async function POST(request: Request) {
       })
     } else {
       // Handle regular plan payment
+      const paidCountBefore = await getPaidPurchaseCountByEmail(session.user.email)
       const updatedUser = await applyPlanPurchase(
         session.user.email,
         order.planId,
@@ -101,6 +107,50 @@ export async function POST(request: Request) {
       }
 
       await markPurchaseOrderPaid(razorpay_order_id, razorpay_payment_id)
+
+      if (order.couponCode && order.couponDiscount > 0) {
+        await redeemCoupon({
+          code: order.couponCode,
+          email: session.user.email,
+          orderId: razorpay_order_id,
+          amountDiscounted: order.couponDiscount,
+          currency: "INR",
+        })
+      }
+
+      if (order.creditDiscount > 0) {
+        await addUserCredit({
+          email: session.user.email,
+          amount: -order.creditDiscount,
+          currency: "INR",
+          type: "credit_spent",
+          referenceOrderId: razorpay_order_id,
+        })
+      }
+
+      if (
+        paidCountBefore === 0 &&
+        order.appliedReferralCode &&
+        order.referrerEmail &&
+        order.referrerEmail !== session.user.email
+      ) {
+        const rewardAmount = 200
+        await addUserCredit({
+          email: order.referrerEmail,
+          amount: rewardAmount,
+          currency: "INR",
+          type: "referral_reward",
+          referenceOrderId: razorpay_order_id,
+        })
+        await recordReferralReward({
+          referrerEmail: order.referrerEmail,
+          referredEmail: session.user.email,
+          orderId: razorpay_order_id,
+          rewardAmount,
+          currency: "INR",
+        })
+        await updateUser(session.user.email, { referredByCode: null })
+      }
 
       return NextResponse.json({
         success: true,
