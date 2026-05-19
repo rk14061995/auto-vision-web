@@ -175,6 +175,8 @@ export interface User {
   pendingDowngradeTo?: PlanTier | null
   pendingDowngradeAt?: Date | null
   dunning?: boolean
+  paddleCustomerId: string | null
+  paddleSubscriptionId: string | null
   lemonSqueezyCustomerId: string | null
   lemonSqueezySubscriptionId: string | null
   razorpayCustomerId: string | null
@@ -215,7 +217,7 @@ export interface PurchaseOrder {
   creditAmount?: number
   // For subscription purchases: monthly vs annual.
   billingCycle?: BillingCycle
-  provider: "razorpay" | "lemonsqueezy"
+  provider: "razorpay" | "paddle" | "lemonsqueezy"
   amount: number
   currency: "INR" | "USD"
   status: "created" | "paid" | "failed"
@@ -356,6 +358,9 @@ export type AICreditFeature =
   | "ai_color_variants"
   | "ai_wheel_suggest"
   | "ai_enhance"
+  | "detect_parts"
+  | "background_remove"
+  | "color_theme"
   | "admin_grant"
   | "credit_pack"
   | "monthly_reset"
@@ -413,7 +418,7 @@ export interface UsageEvent {
 
 export interface WebhookEvent {
   _id?: ObjectId
-  provider: "razorpay" | "lemonsqueezy"
+  provider: "razorpay" | "paddle" | "lemonsqueezy"
   eventId: string
   eventName?: string
   processedAt: Date
@@ -604,7 +609,7 @@ export async function applyPlanPurchase(
   email: string,
   planId: string,
   providerPaymentId: string,
-  options?: { provider?: "razorpay" | "lemonsqueezy"; cycle?: BillingCycle }
+  options?: { provider?: "razorpay" | "paddle" | "lemonsqueezy"; cycle?: BillingCycle }
 ): Promise<User | null> {
   const user = await getUserByEmail(email)
   if (!user) return null
@@ -650,8 +655,9 @@ export async function applyPlanPurchase(
     commercialLicense: tierPlan.features.commercialLicense,
   }
 
-  if (options?.provider === "lemonsqueezy") {
-    // lemonSqueezyCustomerId/SubscriptionId are set by the webhook handler.
+  if (options?.provider === "paddle" || options?.provider === "lemonsqueezy") {
+    // paddleCustomerId/SubscriptionId and lemonSqueezyCustomerId/SubscriptionId
+    // are set by their respective webhook handlers.
   } else {
     update.razorpayLastPaymentId = providerPaymentId
     // Keep legacy field populated for backward compatibility.

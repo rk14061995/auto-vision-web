@@ -19,12 +19,20 @@ import { trackPricingView } from "@/lib/gtag"
 
 const GRID_PLANS = [FREE_PLAN, CREATOR_PLAN, PRO_PLAN, STUDIO_PLAN]
 
-export function PricingTable() {
-  const [country, setCountry] = useState<Country>("IN")
+interface PricingTableProps {
+  // When provided (regional pages), skip geo-detection and use this country directly.
+  initialCountry?: Country
+}
+
+export function PricingTable({ initialCountry }: PricingTableProps = {}) {
+  const [country, setCountry] = useState<Country>(initialCountry ?? "IN")
   const [cycle, setCycle] = useState<BillingCycle>("monthly")
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(!initialCountry)
 
   useEffect(() => {
+    // Skip geo detection when the page already knows the region (e.g. /in/pricing).
+    if (initialCountry) return
+
     let cancelled = false
     async function detect() {
       try {
@@ -43,7 +51,7 @@ export function PricingTable() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [initialCountry])
 
   useEffect(() => {
     trackPricingView()

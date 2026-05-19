@@ -3,6 +3,7 @@ import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 import { PricingTable } from "@/components/pricing/pricing-table"
 import { PricingFAQ } from "@/components/pricing/pricing-faq"
+import { PricingTracker } from "@/components/pricing/pricing-tracker"
 
 export const metadata: Metadata = {
   title: "Pricing - AutoVision Pro",
@@ -64,6 +65,7 @@ export default function PricingPage() {
         </div>
       </main>
       <Footer />
+      <PricingTracker />
     </div>
   )
 }

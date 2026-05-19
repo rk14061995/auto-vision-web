@@ -1,3 +1,8 @@
+// ─── DISABLED — LemonSqueezy checkout button ─────────────────────────────────
+// Active payment processor: Paddle (components/checkout/paddle-button.tsx)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/*
 "use client"
 
 import Script from "next/script"
@@ -75,3 +80,4 @@ export function LemonSqueezyButtonLoading() {
     </Button>
   )
 }
+*/

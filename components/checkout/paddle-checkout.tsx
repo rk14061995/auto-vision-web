@@ -1,24 +1,19 @@
-// ─── DISABLED — LemonSqueezy checkout wrapper ────────────────────────────────
-// Active payment processor: Paddle (components/checkout/paddle-checkout.tsx)
-// ─────────────────────────────────────────────────────────────────────────────
-
-/*
 "use client"
 
 import { useState } from "react"
-import { LemonSqueezyButton } from "@/components/checkout/lemonsqueezy-button"
+import { PaddleButton } from "@/components/checkout/paddle-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 
-export function LemonCheckout({
-  variantId,
+export function PaddleCheckout({
+  priceId,
   email,
   planName,
   planId,
   priceUSD,
 }: {
-  variantId: string
+  priceId: string
   email: string
   planName: string
   planId: string
@@ -48,8 +43,8 @@ export function LemonCheckout({
         </Button>
       </div>
 
-      <LemonSqueezyButton
-        variantId={variantId}
+      <PaddleButton
+        priceId={priceId}
         email={email}
         planName={planName}
         planId={planId}
@@ -58,9 +53,8 @@ export function LemonCheckout({
       />
 
       <p className="text-center text-xs text-muted-foreground">
-        If your coupon is valid, Lemon Squeezy will apply it on the hosted checkout.
+        If your coupon is valid, Paddle will apply it at checkout.
       </p>
     </div>
   )
 }
-*/

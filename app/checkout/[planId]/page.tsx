@@ -4,7 +4,7 @@ import Link from "next/link"
 import { auth } from "@/lib/auth"
 import { getPlanById, formatPrice } from "@/lib/products"
 import { type Country } from "@/lib/geo"
-import { LemonCheckout } from "@/components/checkout/lemon-checkout"
+import { PaddleCheckout } from "@/components/checkout/paddle-checkout"
 import { RazorpayCheckout } from "@/components/checkout/razorpay-checkout"
 import { Button } from "@/components/ui/button"
 import { Car, ArrowLeft, Check, Shield } from "lucide-react"
@@ -129,7 +129,7 @@ export default async function CheckoutPage({
               <p className="mt-1 text-sm text-muted-foreground">
                 {country === "IN"
                   ? "Pay securely with Razorpay (UPI, cards, netbanking)"
-                  : "Pay securely with Lemon Squeezy (cards)"}
+                  : "Pay securely with Paddle (cards)"}
               </p>
 
               <div className="mt-6 space-y-6">
@@ -141,8 +141,8 @@ export default async function CheckoutPage({
                     currency={pricing.currency}
                   />
                 ) : (
-                  <LemonCheckout
-                    variantId={plan.pricing.US.lemonSqueezyVariantId}
+                  <PaddleCheckout
+                    priceId={plan.pricing.US.paddlePriceId}
                     email={session.user.email}
                     planName={plan.name}
                     planId={plan.id}
@@ -153,13 +153,13 @@ export default async function CheckoutPage({
                 <details className="group">
                   <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground">
                     {country === "IN"
-                      ? "+ Or pay with Lemon Squeezy (International)"
+                      ? "+ Or pay with Paddle (International)"
                       : "+ Or pay with Razorpay (India)"}
                   </summary>
                   <div className="mt-4 space-y-4">
                     {country === "IN" ? (
-                      <LemonCheckout
-                        variantId={plan.pricing.US.lemonSqueezyVariantId}
+                      <PaddleCheckout
+                        priceId={plan.pricing.US.paddlePriceId}
                         email={session.user.email}
                         planName={plan.name}
                         planId={plan.id}

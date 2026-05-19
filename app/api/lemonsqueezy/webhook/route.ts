@@ -1,3 +1,18 @@
+// ─── DISABLED — LemonSqueezy webhook handler ─────────────────────────────────
+// Active payment processor: Paddle (app/api/paddle/webhook/route.ts)
+// To re-enable: remove block comment, restore env vars, update checkout page.
+// ─────────────────────────────────────────────────────────────────────────────
+
+import { NextResponse } from "next/server"
+
+export async function POST() {
+  return NextResponse.json(
+    { error: "LemonSqueezy integration is currently disabled" },
+    { status: 404 },
+  )
+}
+
+/*
 import { NextResponse } from "next/server"
 import crypto from "node:crypto"
 import {
@@ -65,8 +80,6 @@ export async function POST(request: Request) {
   const { user_email, customer_id } = payload.data.attributes
   const variantId = payload.data.attributes.variant_id?.toString()
   const customData = payload.meta.custom_data
-
-  console.log(`Lemon Squeezy webhook: ${eventName} for ${user_email}`)
 
   try {
     switch (eventName) {
@@ -145,7 +158,7 @@ export async function POST(request: Request) {
           orderId: payload.data.id,
           newPaidUserEmail: user_email,
           appliedReferralCode: userBefore?.referredByCode ?? null,
-          referrerEmail: null, // resolved inside referrals service via referralCode
+          referrerEmail: null,
           currency: "USD",
           paidCountBefore,
         })
@@ -225,7 +238,6 @@ export async function POST(request: Request) {
       default: {
         const _exhaustive: never = eventName as never
         void _exhaustive
-        console.log(`Unhandled event: ${eventName}`)
       }
     }
 
@@ -239,3 +251,4 @@ export async function POST(request: Request) {
     )
   }
 }
+*/

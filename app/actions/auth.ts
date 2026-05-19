@@ -11,9 +11,14 @@ export async function signup(formData: FormData) {
   const email = formData.get("email") as string
   const password = formData.get("password") as string
   const name = formData.get("name") as string
+  const country = (formData.get("country") as "IN" | "US" | null) || null
 
   if (!email || !password || !name) {
     return { error: "All fields are required" }
+  }
+
+  if (country && country !== "IN" && country !== "US") {
+    return { error: "Invalid country selected" }
   }
 
   if (password.length < 8) {
@@ -45,7 +50,7 @@ export async function signup(formData: FormData) {
       email,
       password: hashedPassword,
       name,
-      country: null,
+      country,
       planType: "free",
       planTier: "free",
       billingCycle: null,
@@ -55,6 +60,8 @@ export async function signup(formData: FormData) {
       pendingDowngradeTo: null,
       pendingDowngradeAt: null,
       dunning: false,
+      paddleCustomerId: null,
+      paddleSubscriptionId: null,
       lemonSqueezyCustomerId: null,
       lemonSqueezySubscriptionId: null,
       razorpayCustomerId: null,

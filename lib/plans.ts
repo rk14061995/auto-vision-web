@@ -33,7 +33,12 @@ export interface PlanFeatures {
 
 export interface PlanPriceRule {
   IN: { amount: number; currency: "INR" }
-  US: { amount: number; currency: "USD"; lemonSqueezyVariantId?: string }
+  US: {
+    amount: number
+    currency: "USD"
+    paddlePriceId?: string
+    // lemonSqueezyVariantId?: string  // DISABLED — kept for future re-enable
+  }
 }
 
 export interface Plan {
@@ -142,7 +147,8 @@ export const CREATOR_PLAN: Plan = {
     US: {
       amount: 9,
       currency: "USD",
-      lemonSqueezyVariantId: process.env.LS_VARIANT_CREATOR ?? "1595234",
+      paddlePriceId: process.env.PADDLE_PRICE_CREATOR ?? "",
+      // lemonSqueezyVariantId: process.env.LS_VARIANT_CREATOR ?? "1595234",
     },
   },
   isPurchasable: true,
@@ -192,7 +198,8 @@ export const PRO_PLAN: Plan = {
     US: {
       amount: 24,
       currency: "USD",
-      lemonSqueezyVariantId: process.env.LS_VARIANT_PRO ?? "lspro_placeholder",
+      paddlePriceId: process.env.PADDLE_PRICE_PRO ?? "",
+      // lemonSqueezyVariantId: process.env.LS_VARIANT_PRO ?? "lspro_placeholder",
     },
   },
   badge: "popular",
@@ -244,7 +251,8 @@ export const STUDIO_PLAN: Plan = {
     US: {
       amount: 99,
       currency: "USD",
-      lemonSqueezyVariantId: process.env.LS_VARIANT_STUDIO ?? "1595261",
+      paddlePriceId: process.env.PADDLE_PRICE_STUDIO ?? "",
+      // lemonSqueezyVariantId: process.env.LS_VARIANT_STUDIO ?? "1595261",
     },
   },
   badge: "best-value",

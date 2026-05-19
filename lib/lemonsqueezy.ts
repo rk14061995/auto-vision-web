@@ -1,3 +1,9 @@
+// ─── DISABLED — LemonSqueezy integration ────────────────────────────────────
+// Active payment processor: Paddle (lib/paddle.ts, app/api/paddle/webhook/)
+// To re-enable: remove the block comment, update lib/plans.ts and checkout page.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/*
 import "server-only"
 
 import type { PlanTier } from "./db"
@@ -64,10 +70,6 @@ interface VariantMapping {
   projectLimit: number
 }
 
-/**
- * Build the variant id -> plan tier map dynamically from the new plans
- * catalog so price changes don't drift from this lookup.
- */
 function buildVariantMap(): Record<string, VariantMapping> {
   const map: Record<string, VariantMapping> = {}
   for (const plan of [CREATOR_PLAN, PRO_PLAN, STUDIO_PLAN, ENTERPRISE_PLAN]) {
@@ -88,3 +90,4 @@ export function mapVariantToPlan(variantId: string): {
   if (found) return { planType: found.tier, projectLimit: found.projectLimit }
   return { planType: "free", projectLimit: 1 }
 }
+*/

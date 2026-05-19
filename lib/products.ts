@@ -20,7 +20,12 @@ export interface Plan {
   projectLimit: number
   pricing: {
     IN: { amount: number; currency: "INR" }
-    US: { amount: number; currency: "USD"; lemonSqueezyVariantId: string }
+    US: {
+      amount: number
+      currency: "USD"
+      paddlePriceId: string
+      // lemonSqueezyVariantId: string  // DISABLED
+    }
   }
   features: string[]
   badge?: "popular" | "best-value"
@@ -38,7 +43,8 @@ function tierToLegacyPlan(plan: TierPlan): Plan {
       US: {
         amount: plan.pricing.US.amount,
         currency: "USD",
-        lemonSqueezyVariantId: plan.pricing.US.lemonSqueezyVariantId ?? "",
+        paddlePriceId: plan.pricing.US.paddlePriceId ?? "",
+        // lemonSqueezyVariantId: plan.pricing.US.lemonSqueezyVariantId ?? "",
       },
     },
     features: plan.highlights,

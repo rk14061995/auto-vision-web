@@ -178,3 +178,52 @@ export function trackTeamInviteSent(role: string) {
 export function trackMarketplaceAssetView(assetId: string, type: string) {
   event('marketplace_asset_view', { asset_id: assetId, type })
 }
+
+// ─── Pricing Engagement ───────────────────────────────────────────────────────
+
+export function trackScrollDepth(depth: 25 | 50 | 75 | 100, page: string) {
+  event('scroll_depth', { depth_percent: depth, page })
+}
+
+export function trackExitIntent(page: string) {
+  event('exit_intent', { page, non_interaction: true })
+}
+
+// ─── Lead Form ────────────────────────────────────────────────────────────────
+
+export type LeadFormTrigger = 'exit_intent' | 'scroll_depth' | 'timer'
+
+export function trackLeadFormOpen(trigger: LeadFormTrigger) {
+  event('lead_form_open', { trigger })
+}
+
+export function trackLeadFormSubmit(budgetRange: string, interestedPlan: string) {
+  event('generate_lead', {
+    lead_source: 'pricing_page',
+    budget_range: budgetRange,
+    interested_plan: interestedPlan,
+    currency: 'USD',
+  })
+  event('price_sensitive_lead', {
+    budget_range: budgetRange,
+    interested_plan: interestedPlan,
+  })
+}
+
+export function trackLeadFormDismiss(trigger: LeadFormTrigger) {
+  event('lead_form_dismiss', { trigger })
+}
+
+// ─── Web Vitals ───────────────────────────────────────────────────────────────
+
+export type WebVitalName = 'LCP' | 'CLS' | 'FCP' | 'TTFB' | 'INP'
+export type WebVitalRating = 'good' | 'needs-improvement' | 'poor'
+
+export function trackWebVital(name: WebVitalName, value: number, rating: WebVitalRating) {
+  event('web_vitals', {
+    metric_name: name,
+    metric_value: Math.round(name === 'CLS' ? value * 1000 : value),
+    metric_rating: rating,
+    non_interaction: true,
+  })
+}

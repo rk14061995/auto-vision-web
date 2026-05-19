@@ -13,6 +13,9 @@ export const CREDIT_COSTS: Record<AICreditableFeature, number> = {
   ai_color_variants: 3,
   ai_wheel_suggest: 2,
   ai_enhance: 4,
+  detect_parts: 3,
+  background_remove: 2,
+  color_theme: 2,
 }
 
 export interface CreditPack {
@@ -20,7 +23,12 @@ export interface CreditPack {
   credits: number
   pricing: {
     IN: { amount: number; currency: "INR" }
-    US: { amount: number; currency: "USD"; lemonSqueezyVariantId?: string }
+    US: {
+      amount: number
+      currency: "USD"
+      paddlePriceId?: string
+      // lemonSqueezyVariantId?: string  // DISABLED
+    }
   }
   highlight?: string
 }

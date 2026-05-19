@@ -7,6 +7,7 @@ import { signIn } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
 import { signup } from "@/app/actions/auth"
@@ -15,6 +16,7 @@ import { trackSignUp, trackSignUpError } from "@/lib/gtag"
 export function SignupForm() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [country, setCountry] = useState<"IN" | "US" | "">()
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -37,6 +39,14 @@ export function SignupForm() {
       setIsLoading(false)
       return
     }
+
+    if (!country) {
+      toast.error("Please select your country")
+      setIsLoading(false)
+      return
+    }
+
+    formData.set("country", country)
 
     try {
       const result = await signup(formData)
@@ -84,6 +94,19 @@ export function SignupForm() {
           autoComplete="name"
           disabled={isLoading}
         />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="country">Country</Label>
+        <Select value={country} onValueChange={(val) => setCountry(val as "IN" | "US")} disabled={isLoading}>
+          <SelectTrigger id="country">
+            <SelectValue placeholder="Select your country" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="IN">India</SelectItem>
+            <SelectItem value="US">United States</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="space-y-2">
