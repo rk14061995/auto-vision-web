@@ -77,7 +77,7 @@ export default async function RegionalPricingPage({
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-4">
               <a
-                href="mailto:sales@autovision-pro.com"
+                href="mailto:autovisionpro07@gmail.com"
                 className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground hover:bg-primary/90"
               >
                 Get Notified
@@ -136,7 +136,7 @@ export default async function RegionalPricingPage({
                 Free mein Shuru Karein
               </a>
               <a
-                href="mailto:sales@autovision-pro.com"
+                href="mailto:autovisionpro07@gmail.com"
                 className="inline-flex h-11 items-center justify-center rounded-md border border-border bg-secondary px-6 text-sm font-medium text-foreground hover:bg-secondary/80"
               >
                 Talk to Sales
