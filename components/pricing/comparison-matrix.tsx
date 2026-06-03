@@ -1,5 +1,6 @@
 "use client"
 
+import { Fragment } from "react"
 import { Check, Minus } from "lucide-react"
 import type { Plan } from "@/lib/plans"
 
@@ -102,8 +103,8 @@ export function ComparisonMatrix({ plans }: ComparisonMatrixProps) {
         </thead>
         <tbody>
           {SECTIONS.map((section) => (
-            <tbody key={section.label} className="border-t border-border/50">
-              <tr>
+            <Fragment key={section.label}>
+              <tr className="border-t border-border/50">
                 <td
                   colSpan={plans.length + 1}
                   className="bg-secondary/30 px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground"
@@ -121,7 +122,7 @@ export function ComparisonMatrix({ plans }: ComparisonMatrixProps) {
                   ))}
                 </tr>
               ))}
-            </tbody>
+            </Fragment>
           ))}
         </tbody>
       </table>
