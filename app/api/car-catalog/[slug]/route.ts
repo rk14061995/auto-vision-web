@@ -14,10 +14,11 @@ export async function OPTIONS() {
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
+  const { slug } = await params
   try {
-    const car = await getCarCatalogBySlug(params.slug)
+    const car = await getCarCatalogBySlug(slug)
     if (!car) {
       return cors(NextResponse.json({ success: false, error: "Not found" }, { status: 404 }))
     }

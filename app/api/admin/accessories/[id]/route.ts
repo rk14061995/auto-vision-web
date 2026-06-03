@@ -10,16 +10,18 @@ async function requireAdmin(req: NextRequest) {
   return { email: session.user.email }
 }
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const check = await requireAdmin(req)
   if ("error" in check) return NextResponse.json({ error: check.error }, { status: check.status })
 
-  const accessory = await getAccessoryById(params.id)
+  const accessory = await getAccessoryById(id)
   if (!accessory) return NextResponse.json({ error: "Not found" }, { status: 404 })
   return NextResponse.json({ success: true, accessory })
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const check = await requireAdmin(req)
   if ("error" in check) return NextResponse.json({ error: check.error }, { status: check.status })
 
@@ -38,7 +40,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     if (name) updates.name = name.trim()
     if (category) updates.category = category.trim()
 
-    const accessory = await updateAccessory(params.id, updates)
+    const accessory = await updateAccessory(id, updates)
     if (!accessory) return NextResponse.json({ error: "Not found" }, { status: 404 })
     return NextResponse.json({ success: true, accessory })
   } catch {
@@ -46,10 +48,11 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const check = await requireAdmin(req)
   if ("error" in check) return NextResponse.json({ error: check.error }, { status: check.status })
 
-  await deleteAccessory(params.id)
+  await deleteAccessory(id)
   return NextResponse.json({ success: true })
 }

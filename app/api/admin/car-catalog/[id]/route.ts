@@ -10,16 +10,18 @@ async function requireAdmin(req: NextRequest) {
   return { email: session.user.email }
 }
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const check = await requireAdmin(req)
   if ("error" in check) return NextResponse.json({ error: check.error }, { status: check.status })
 
-  const car = await getCarCatalogById(params.id)
+  const car = await getCarCatalogById(id)
   if (!car) return NextResponse.json({ error: "Not found" }, { status: 404 })
   return NextResponse.json({ success: true, car })
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const check = await requireAdmin(req)
   if ("error" in check) return NextResponse.json({ error: check.error }, { status: check.status })
 
@@ -40,7 +42,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     if (model) updates.model = model.trim()
     if (make && model) updates.slug = makeCarSlug(make, model)
 
-    const car = await updateCarCatalog(params.id, updates)
+    const car = await updateCarCatalog(id, updates)
     if (!car) return NextResponse.json({ error: "Not found" }, { status: 404 })
     return NextResponse.json({ success: true, car })
   } catch {
@@ -48,10 +50,11 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const check = await requireAdmin(req)
   if ("error" in check) return NextResponse.json({ error: check.error }, { status: check.status })
 
-  await deleteCarCatalog(params.id)
+  await deleteCarCatalog(id)
   return NextResponse.json({ success: true })
 }
