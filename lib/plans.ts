@@ -36,7 +36,8 @@ export interface PlanPriceRule {
   US: {
     amount: number
     currency: "USD"
-    paddlePriceId?: string
+    paypalPlanId?: string
+    // paddlePriceId?: string          // DISABLED — replaced by PayPal, kept for future re-enable
     // lemonSqueezyVariantId?: string  // DISABLED — kept for future re-enable
   }
 }
@@ -147,7 +148,8 @@ export const CREATOR_PLAN: Plan = {
     US: {
       amount: 9,
       currency: "USD",
-      paddlePriceId: process.env.PADDLE_PRICE_CREATOR ?? "",
+      paypalPlanId: process.env.PAYPAL_PLAN_CREATOR ?? "P-1T3224896V352081BNIUCZ5A",
+      // paddlePriceId: process.env.PADDLE_PRICE_CREATOR ?? "",  // DISABLED
       // lemonSqueezyVariantId: process.env.LS_VARIANT_CREATOR ?? "1595234",
     },
   },
@@ -198,7 +200,8 @@ export const PRO_PLAN: Plan = {
     US: {
       amount: 24,
       currency: "USD",
-      paddlePriceId: process.env.PADDLE_PRICE_PRO ?? "",
+      paypalPlanId: process.env.PAYPAL_PLAN_PRO ?? "P-776515316J001500NNIUC3BY",
+      // paddlePriceId: process.env.PADDLE_PRICE_PRO ?? "",  // DISABLED
       // lemonSqueezyVariantId: process.env.LS_VARIANT_PRO ?? "lspro_placeholder",
     },
   },
@@ -251,7 +254,8 @@ export const STUDIO_PLAN: Plan = {
     US: {
       amount: 99,
       currency: "USD",
-      paddlePriceId: process.env.PADDLE_PRICE_STUDIO ?? "",
+      paypalPlanId: process.env.PAYPAL_PLAN_STUDIO ?? "P-8E040559X6354990TNIUC3ZQ",
+      // paddlePriceId: process.env.PADDLE_PRICE_STUDIO ?? "",  // DISABLED
       // lemonSqueezyVariantId: process.env.LS_VARIANT_STUDIO ?? "1595261",
     },
   },

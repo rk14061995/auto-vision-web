@@ -214,6 +214,68 @@ export function trackLeadFormDismiss(trigger: LeadFormTrigger) {
   event('lead_form_dismiss', { trigger })
 }
 
+// ─── PayPal detailed event tracking ──────────────────────────────────────────
+//
+// Fine-grained events throughout the PayPal subscription flow. These complement
+// the standard GA4 e-commerce events (begin_checkout, add_payment_info, etc.)
+// with PayPal-specific lifecycle signals for funnel analysis.
+
+export function trackPayPalButtonRendered(p: {
+  planId: string
+  planName: string
+  priceUSD: number
+}) {
+  event("paypal_button_rendered", {
+    plan_id: p.planId,
+    plan_name: p.planName,
+    value: p.priceUSD,
+    currency: "USD",
+  })
+}
+
+export function trackPayPalButtonClicked(p: {
+  planId: string
+  planName: string
+  priceUSD: number
+}) {
+  event("paypal_button_clicked", {
+    plan_id: p.planId,
+    plan_name: p.planName,
+    value: p.priceUSD,
+    currency: "USD",
+  })
+}
+
+export function trackPayPalSubscriptionCreating(p: {
+  planId: string
+  planName: string
+  paypalPlanId: string
+  priceUSD: number
+}) {
+  event("paypal_subscription_creating", {
+    plan_id: p.planId,
+    plan_name: p.planName,
+    paypal_plan_id: p.paypalPlanId,
+    value: p.priceUSD,
+    currency: "USD",
+  })
+}
+
+export function trackPayPalPaymentApproved(p: {
+  planId: string
+  planName: string
+  subscriptionId: string
+  priceUSD: number
+}) {
+  event("paypal_payment_approved", {
+    plan_id: p.planId,
+    plan_name: p.planName,
+    paypal_subscription_id: p.subscriptionId,
+    value: p.priceUSD,
+    currency: "USD",
+  })
+}
+
 // ─── Web Vitals ───────────────────────────────────────────────────────────────
 
 export type WebVitalName = 'LCP' | 'CLS' | 'FCP' | 'TTFB' | 'INP'

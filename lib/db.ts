@@ -175,8 +175,12 @@ export interface User {
   pendingDowngradeTo?: PlanTier | null
   pendingDowngradeAt?: Date | null
   dunning?: boolean
+  // PayPal (international — active)
+  paypalSubscriptionId?: string | null
+  // Paddle (international — DISABLED, replaced by PayPal)
   paddleCustomerId: string | null
   paddleSubscriptionId: string | null
+  // LemonSqueezy (DISABLED)
   lemonSqueezyCustomerId: string | null
   lemonSqueezySubscriptionId: string | null
   razorpayCustomerId: string | null
@@ -217,7 +221,7 @@ export interface PurchaseOrder {
   creditAmount?: number
   // For subscription purchases: monthly vs annual.
   billingCycle?: BillingCycle
-  provider: "razorpay" | "paddle" | "lemonsqueezy"
+  provider: "razorpay" | "paypal" | "paddle" | "lemonsqueezy"
   amount: number
   currency: "INR" | "USD"
   status: "created" | "paid" | "failed"
@@ -405,6 +409,10 @@ export type UsageEventType =
   | "team_invite_sent"
   | "team_member_joined"
   | "credit_pack_purchased"
+  | "subscription_updated"
+  | "subscription_suspended"
+  | "subscription_cancelled"
+  | "payment_received"
 
 export interface UsageEvent {
   _id?: ObjectId
@@ -418,7 +426,7 @@ export interface UsageEvent {
 
 export interface WebhookEvent {
   _id?: ObjectId
-  provider: "razorpay" | "paddle" | "lemonsqueezy"
+  provider: "razorpay" | "paypal" | "paddle" | "lemonsqueezy"
   eventId: string
   eventName?: string
   processedAt: Date
@@ -609,7 +617,7 @@ export async function applyPlanPurchase(
   email: string,
   planId: string,
   providerPaymentId: string,
-  options?: { provider?: "razorpay" | "paddle" | "lemonsqueezy"; cycle?: BillingCycle }
+  options?: { provider?: "razorpay" | "paypal" | "paddle" | "lemonsqueezy"; cycle?: BillingCycle }
 ): Promise<User | null> {
   const user = await getUserByEmail(email)
   if (!user) return null

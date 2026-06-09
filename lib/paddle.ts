@@ -1,8 +1,11 @@
+// DISABLED — Paddle replaced by PayPal for new international subscriptions.
+// This file is kept to handle webhooks for existing Paddle subscribers.
+// Price IDs now read directly from env vars to avoid dependency on plans.ts.
+
 import "server-only"
 
 import crypto from "node:crypto"
 import type { PlanTier } from "./db"
-import { CREATOR_PLAN, PRO_PLAN, STUDIO_PLAN, ENTERPRISE_PLAN } from "./plans"
 
 export type PaddleEventName =
   | "transaction.completed"
@@ -51,12 +54,15 @@ interface PriceMapping {
 }
 
 function buildPriceMap(): Record<string, PriceMapping> {
+  // Read Paddle price IDs directly from env vars — plans.ts no longer has paddlePriceId.
+  const entries: Array<[string | undefined, PlanTier, number]> = [
+    [process.env.PADDLE_PRICE_CREATOR, "creator", 15],
+    [process.env.PADDLE_PRICE_PRO, "pro", -1],
+    [process.env.PADDLE_PRICE_STUDIO, "studio", -1],
+  ]
   const map: Record<string, PriceMapping> = {}
-  for (const plan of [CREATOR_PLAN, PRO_PLAN, STUDIO_PLAN, ENTERPRISE_PLAN]) {
-    const priceId = plan.pricing.US.paddlePriceId
-    if (priceId) {
-      map[priceId] = { tier: plan.id, projectLimit: plan.projectLimit }
-    }
+  for (const [priceId, tier, projectLimit] of entries) {
+    if (priceId) map[priceId] = { tier, projectLimit }
   }
   return map
 }

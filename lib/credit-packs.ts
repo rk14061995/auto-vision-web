@@ -26,7 +26,7 @@ export interface CreditPack {
     US: {
       amount: number
       currency: "USD"
-      paddlePriceId?: string
+      // paddlePriceId?: string          // DISABLED — replaced by PayPal
       // lemonSqueezyVariantId?: string  // DISABLED
     }
   }

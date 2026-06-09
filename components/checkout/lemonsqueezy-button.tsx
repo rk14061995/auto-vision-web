@@ -1,5 +1,5 @@
 // ─── DISABLED — LemonSqueezy checkout button ─────────────────────────────────
-// Active payment processor: Paddle (components/checkout/paddle-button.tsx)
+// Active payment processor: PayPal (components/checkout/paypal-button.tsx)
 // ─────────────────────────────────────────────────────────────────────────────
 
 /*

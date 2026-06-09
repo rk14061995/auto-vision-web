@@ -23,8 +23,9 @@ export interface Plan {
     US: {
       amount: number
       currency: "USD"
-      paddlePriceId: string
-      // lemonSqueezyVariantId: string  // DISABLED
+      paypalPlanId: string
+      // paddlePriceId: string           // DISABLED — replaced by PayPal
+      // lemonSqueezyVariantId: string   // DISABLED
     }
   }
   features: string[]
@@ -43,7 +44,8 @@ function tierToLegacyPlan(plan: TierPlan): Plan {
       US: {
         amount: plan.pricing.US.amount,
         currency: "USD",
-        paddlePriceId: plan.pricing.US.paddlePriceId ?? "",
+        paypalPlanId: plan.pricing.US.paypalPlanId ?? "",
+        // paddlePriceId: plan.pricing.US.paddlePriceId ?? "",
         // lemonSqueezyVariantId: plan.pricing.US.lemonSqueezyVariantId ?? "",
       },
     },
