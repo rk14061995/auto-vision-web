@@ -60,7 +60,7 @@ export default async function RegionalPricingPage({
   const content = REGION_CONTENT[r]
   const initialCountry = REGION_TO_COUNTRY[r]
 
-  if (r === "us") {
+  if (r != "us") {
     return (
       <div className="flex min-h-screen flex-col">
         <Header />

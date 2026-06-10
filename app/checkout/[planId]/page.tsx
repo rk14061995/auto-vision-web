@@ -150,32 +150,6 @@ export default async function CheckoutPage({
                   />
                 )}
 
-                <details className="group">
-                  <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground">
-                    {country === "IN"
-                      ? "+ Or pay with PayPal (International)"
-                      : "+ Or pay with Razorpay (India)"}
-                  </summary>
-                  <div className="mt-4 space-y-4">
-                    {country === "IN" ? (
-                      <PayPalCheckout
-                        paypalPlanId={tierPlan?.pricing.US.paypalPlanId ?? ""}
-                        email={session.user.email}
-                        planName={plan.name}
-                        planId={plan.id}
-                        priceUSD={plan.pricing.US.amount}
-                      />
-                    ) : (
-                      <RazorpayCheckout
-                        plan={plan}
-                        userEmail={session.user.email}
-                        userName={session.user.name}
-                        currency="INR"
-                      />
-                    )}
-                  </div>
-                </details>
-
                 <p className="text-center text-xs text-muted-foreground">
                   By subscribing, you agree to our Terms of Service and
                   Privacy Policy.

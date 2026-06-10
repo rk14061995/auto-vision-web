@@ -160,7 +160,7 @@ export function PayPalButton({
   return (
     <>
       <Script
-        src={`https://www.paypal.com/sdk/js?client-id=${clientId}&vault=true&intent=subscription&currency=USD`}
+        src={`https://www.paypal.com/sdk/js?client-id=${clientId}&vault=true&intent=subscription&currency=USD&components=buttons`}
         strategy="lazyOnload"
         onLoad={handleSdkLoad}
         onError={() => {
