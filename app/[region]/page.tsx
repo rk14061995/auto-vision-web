@@ -7,6 +7,8 @@ import { RegionalHero } from "@/components/landing/regional-hero"
 import { Features } from "@/components/landing/features"
 import { Testimonials } from "@/components/landing/testimonials"
 import { RegionalCTA } from "@/components/landing/regional-cta"
+import { LandingAdsSection } from "@/components/landing/landing-ads"
+import { AdvertiseSection } from "@/components/landing/advertise-section"
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://auto-vision-pro.com"
 
@@ -71,9 +73,12 @@ export default async function RegionalHomePage({
       <Header />
       <main className="flex-1">
         <RegionalHero region={r} content={content} />
+        <LandingAdsSection />
         <Features />
         <Testimonials />
+        <AdvertiseSection region={r} />
         <RegionalCTA region={r} content={content} />
+        <LandingAdsSection />
       </main>
       <Footer />
     </div>

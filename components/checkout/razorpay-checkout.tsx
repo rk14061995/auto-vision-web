@@ -9,18 +9,21 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
-import { Loader2, CreditCard, Smartphone, Building } from "lucide-react"
+import { Loader2, CreditCard } from "lucide-react"
 import { type Plan, formatPrice } from "@/lib/products"
-import { cn } from "@/lib/utils"
 import {
   trackBeginCheckout,
-  trackAddPaymentInfo,
   trackPurchase,
   trackPaymentInitiated,
   trackPaymentCancelled,
   trackPaymentFailed,
   type GA4Item,
 } from "@/lib/gtag"
+import {
+  IndiaGatewaySelector,
+  submitPayUForm,
+  type IndiaGateway,
+} from "@/components/payment/india-gateway"
 
 interface RazorpayCheckoutProps {
   plan: Plan
@@ -28,8 +31,6 @@ interface RazorpayCheckoutProps {
   userName: string
   currency?: "INR" | "USD"
 }
-
-type PaymentMethod = "card" | "upi" | "netbanking"
 
 declare global {
   interface Window {
@@ -48,10 +49,10 @@ export function RazorpayCheckout({
   const router = useRouter()
   const { update: updateSession } = useSession()
   const [isLoading, setIsLoading] = useState(false)
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card")
   const [isProcessing, setIsProcessing] = useState(false)
   const [couponCode, setCouponCode] = useState("")
   const [useCredits, setUseCredits] = useState(true)
+  const [gateway, setGateway] = useState<IndiaGateway>("razorpay")
   const [quote, setQuote] = useState<null | {
     baseAmount: number
     couponCode: string | null
@@ -105,12 +106,28 @@ export function RazorpayCheckout({
     trackBeginCheckout(ga4Item)
   })
 
-  function handlePaymentMethodChange(method: PaymentMethod) {
-    setPaymentMethod(method)
-    trackAddPaymentInfo(ga4Item, method)
+  async function handlePayU() {
+    setIsLoading(true)
+    try {
+      const res = await fetch("/api/payu/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          kind: "subscription",
+          planId: plan.id,
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok || !json.fields) throw new Error(json.error || "Could not start PayU checkout")
+      submitPayUForm(json.fields, json.formUrl)
+    } catch (error) {
+      toast.error((error as Error).message || "Payment failed. Please try again.")
+      setIsLoading(false)
+    }
   }
 
   async function handlePayment() {
+    if (gateway === "payu") return handlePayU()
     setIsLoading(true)
 
     try {
@@ -303,74 +320,8 @@ export function RazorpayCheckout({
         </div>
       </div>
 
-      {/* Payment Method Selection */}
-      <div className="space-y-3">
-        <Label>Payment Method</Label>
-        <div className="grid grid-cols-3 gap-3">
-          {[
-            { id: "card", label: "Card", icon: CreditCard },
-            { id: "upi", label: "UPI", icon: Smartphone },
-            { id: "netbanking", label: "Net Banking", icon: Building },
-          ].map((method) => (
-            <button
-              key={method.id}
-              onClick={() => handlePaymentMethodChange(method.id as PaymentMethod)}
-              className={cn(
-                "flex flex-col items-center gap-2 rounded-lg border p-4 transition-all",
-                paymentMethod === method.id
-                  ? "border-primary bg-primary/10"
-                  : "border-border hover:border-primary/50"
-              )}
-            >
-              <method.icon className="h-5 w-5" />
-              <span className="text-sm font-medium">{method.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Payment Form - Mocked */}
-      {paymentMethod === "card" && (
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="cardNumber">Card Number</Label>
-            <Input
-              id="cardNumber"
-              placeholder="4111 1111 1111 1111"
-              defaultValue="4111 1111 1111 1111"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="expiry">Expiry</Label>
-              <Input id="expiry" placeholder="MM/YY" defaultValue="12/28" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="cvv">CVV</Label>
-              <Input id="cvv" placeholder="123" defaultValue="123" />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {paymentMethod === "upi" && (
-        <div className="space-y-2">
-          <Label htmlFor="upiId">UPI ID</Label>
-          <Input
-            id="upiId"
-            placeholder="yourname@upi"
-            defaultValue="test@upi"
-          />
-        </div>
-      )}
-
-      {paymentMethod === "netbanking" && (
-        <div className="rounded-lg border border-border/50 bg-secondary/30 p-4 text-center">
-          <p className="text-sm text-muted-foreground">
-            You will be redirected to your bank&apos;s website
-          </p>
-        </div>
-      )}
+      {/* Gateway selector */}
+      <IndiaGatewaySelector selected={gateway} onChange={setGateway} />
 
       {/* Billing Info */}
       <div className="space-y-4 border-t border-border pt-4">
@@ -391,12 +342,16 @@ export function RazorpayCheckout({
         className="w-full"
         size="lg"
       >
-        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        Pay {formatPrice((quote?.finalAmount ?? amount), "INR")}
+        {isLoading
+          ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{gateway === "payu" ? "Redirecting to PayU…" : "Processing…"}</>
+          : <><CreditCard className="mr-2 h-4 w-4" />Pay {formatPrice((quote?.finalAmount ?? amount), "INR")}</>
+        }
       </Button>
 
       <p className="text-center text-xs text-muted-foreground">
-        You will be redirected to Razorpay&apos;s secure checkout.
+        {gateway === "payu"
+          ? "You will be redirected to PayU's secure checkout."
+          : "You will be redirected to Razorpay's secure checkout."}
       </p>
     </div>
   )

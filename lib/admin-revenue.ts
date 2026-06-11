@@ -236,6 +236,7 @@ export async function getUserRevenueDetail(email: string): Promise<UserRevenueDe
     subscription: { INR: 0, USD: 0, count: 0 },
     credit_pack: { INR: 0, USD: 0, count: 0 },
     ad: { INR: 0, USD: 0, count: 0 },
+    ad_free: { INR: 0, USD: 0, count: 0 },
     marketplace: { INR: 0, USD: 0, count: 0 },
   }
   let revenueINR = 0

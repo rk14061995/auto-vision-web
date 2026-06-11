@@ -35,28 +35,28 @@ export interface CreditPack {
 
 export const CREDIT_PACKS: CreditPack[] = [
   {
-    id: "pack_100",
-    credits: 100,
+    id: "pack_30",
+    credits: 30,
     pricing: {
       IN: { amount: 199, currency: "INR" },
       US: { amount: 5, currency: "USD" },
     },
   },
   {
-    id: "pack_500",
-    credits: 500,
+    id: "pack_150",
+    credits: 150,
     pricing: {
       IN: { amount: 699, currency: "INR" },
-      US: { amount: 15, currency: "USD" },
+      US: { amount: 20, currency: "USD" },
     },
     highlight: "Best Value",
   },
   {
-    id: "pack_2000",
-    credits: 2000,
+    id: "pack_350",
+    credits: 350,
     pricing: {
       IN: { amount: 1999, currency: "INR" },
-      US: { amount: 39, currency: "USD" },
+      US: { amount: 50, currency: "USD" },
     },
   },
 ]

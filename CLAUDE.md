@@ -13,7 +13,7 @@ Next.js 16 marketing + auth frontend for AutoVision Pro. Handles the public site
 | Styling | Tailwind CSS 4 |
 | Auth | NextAuth v5 (beta) |
 | Database | MongoDB Atlas via native driver |
-| Payments (India) | Razorpay |
+| Payments (India) | Razorpay + PayU (user's choice) |
 | Payments (international) | Paddle Billing v2 |
 | AI | Anthropic Claude claude-sonnet-4-6 (Vision + text) |
 | Background removal | remove.bg API |
@@ -109,6 +109,11 @@ ADMIN_EMAILS=
 # Razorpay (India)
 RAZORPAY_KEY_ID=
 RAZORPAY_KEY_SECRET=
+
+# PayU (India — second gateway, user can choose between Razorpay and PayU)
+PAYU_MERCHANT_KEY=           # from PayU dashboard → My Account → Merchant Key
+PAYU_MERCHANT_SALT=          # from PayU dashboard → My Account → Salt
+PAYU_MODE=test               # "test" or "live"
 
 # Paddle Billing v2 (international)
 NEXT_PUBLIC_PADDLE_CLIENT_TOKEN=   # from Paddle dashboard → Developer → Authentication

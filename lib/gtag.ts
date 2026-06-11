@@ -12,6 +12,7 @@ declare global {
 }
 
 function isReady(): boolean {
+  if (process.env.NODE_ENV !== 'production') return false
   return !!(GA_MEASUREMENT_ID && typeof window !== 'undefined' && typeof window.gtag === 'function')
 }
 

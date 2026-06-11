@@ -1,5 +1,5 @@
 /** Free tier trial length from account start (or downgrade date). */
-export const FREE_PLAN_VALIDITY_DAYS = 7
+export const FREE_PLAN_VALIDITY_DAYS = 10
 
 export function computeFreePlanExpiresAt(from: Date = new Date()): Date {
   const d = new Date(from)

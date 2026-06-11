@@ -128,7 +128,7 @@ export default async function CheckoutPage({
               <h2 className="text-lg font-semibold">Payment Details</h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 {country === "IN"
-                  ? "Pay securely with Razorpay (UPI, cards, netbanking)"
+                  ? "Choose your preferred payment gateway below."
                   : "Pay securely with PayPal (cards, PayPal balance)"}
               </p>
 

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { DashboardTabs } from "@/components/dashboard/dashboard-tabs"
+import { DashboardTabsWithCountryToggle } from "@/components/dev/country-toggle"
 import {
   Plus,
   Folder,
@@ -20,6 +21,7 @@ import {
   isSubscriptionAccessExpired,
 } from "@/lib/subscription-access"
 import { getCarProjectsByEmail } from "@/lib/db"
+import { CancelSubscription } from "@/components/dashboard/cancel-subscription"
 
 export const metadata: Metadata = {
   title: "Dashboard - AutoVision Pro",
@@ -177,8 +179,34 @@ export default async function DashboardPage() {
           </div>
         </div>
 
+        {/* Billing management — only for active paid subscribers */}
+        {planType !== "free" && !isExpired && (
+          <div className="mt-6">
+            <CancelSubscription
+              planName={plan?.name ?? planType}
+              subscriptionExpiry={subscriptionExpiry}
+            />
+          </div>
+        )}
+
         {/* Tabs */}
-        <DashboardTabs isAtLimit={isAtLimit} isExpired={isExpired} userEmail={session.user.email} userName={session.user.name || 'User'} country={session.user.country === 'US' ? 'US' : 'IN'} />
+        {process.env.NODE_ENV === "development" ? (
+          <DashboardTabsWithCountryToggle
+            isAtLimit={isAtLimit}
+            isExpired={isExpired}
+            userEmail={session.user.email}
+            userName={session.user.name || "User"}
+            defaultCountry={session.user.country === "US" ? "US" : "IN"}
+          />
+        ) : (
+          <DashboardTabs
+            isAtLimit={isAtLimit}
+            isExpired={isExpired}
+            userEmail={session.user.email}
+            userName={session.user.name || "User"}
+            country={session.user.country === "US" ? "US" : "IN"}
+          />
+        )}
       </div>
     </div>
   )

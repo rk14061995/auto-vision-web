@@ -15,17 +15,22 @@ import { AdPayment } from "./ad-payment"
 interface CreateAdFormProps {
   userEmail: string
   userName: string
+  country?: "IN" | "US"
+  initialAdType?: string
   onAdCreated: () => void
 }
 
-export function CreateAdForm({ userEmail, userName, onAdCreated }: CreateAdFormProps) {
+export function CreateAdForm({ userEmail, userName, country = "IN", initialAdType, onAdCreated }: CreateAdFormProps) {
   const [shopName, setShopName] = useState('')
   const [shopDescription, setShopDescription] = useState('')
   const [contactInfo, setContactInfo] = useState('')
-  const [adType, setAdType] = useState('')
+  const [adType, setAdType] = useState(initialAdType ?? '')
   const [images, setImages] = useState<File[]>([])
+  const [video, setVideo] = useState<File | null>(null)
   const [step, setStep] = useState<'form' | 'payment'>('form')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [pendingAdId, setPendingAdId] = useState<string | null>(null)
+  const [savingAd, setSavingAd] = useState(false)
 
   const selectedAdType = getAdTypeById(adType)
 
@@ -45,10 +50,35 @@ export function CreateAdForm({ userEmail, userName, onAdCreated }: CreateAdFormP
     setImages(prev => prev.filter((_, i) => i !== index))
   }
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedAdType || images.length === 0) return
-    setStep('payment')
+
+    if (country === "US") {
+      // For PayPal: upload images + save pending ad before redirecting
+      setSavingAd(true)
+      try {
+        const formData = new FormData()
+        formData.append("shopName", shopName)
+        formData.append("shopDescription", shopDescription)
+        formData.append("contactInfo", contactInfo)
+        formData.append("adType", adType)
+        images.forEach((img) => formData.append("images", img))
+        if (video) formData.append("video", video)
+
+        const res = await fetch("/api/ads/pending", { method: "POST", body: formData })
+        const json = await res.json()
+        if (!res.ok) throw new Error(json.error || "Failed to save ad")
+        setPendingAdId(json.pendingAdId)
+      } catch (err) {
+        alert((err as Error).message)
+        setSavingAd(false)
+        return
+      }
+      setSavingAd(false)
+    }
+
+    setStep("payment")
   }
 
   const handlePaymentSuccess = async (paymentId: string) => {
@@ -62,10 +92,8 @@ export function CreateAdForm({ userEmail, userName, onAdCreated }: CreateAdFormP
       formData.append('adType', adType)
       formData.append('paymentId', paymentId || '')
       
-      // Add all image files
-      images.forEach((image) => {
-        formData.append('images', image)
-      })
+      images.forEach((image) => formData.append("images", image))
+      if (video) formData.append("video", video)
 
       const response = await fetch('/api/ads', {
         method: 'POST',
@@ -79,6 +107,7 @@ export function CreateAdForm({ userEmail, userName, onAdCreated }: CreateAdFormP
         setContactInfo('')
         setAdType('')
         setImages([])
+        setVideo(null)
         setStep('form')
 
         // Notify parent component
@@ -123,6 +152,8 @@ export function CreateAdForm({ userEmail, userName, onAdCreated }: CreateAdFormP
             adType={selectedAdType}
             userEmail={userEmail}
             userName={userName}
+            country={country}
+            pendingAdId={pendingAdId}
             onPaymentSuccess={handlePaymentSuccess}
             onPaymentCancel={handlePaymentCancel}
           />
@@ -187,7 +218,9 @@ export function CreateAdForm({ userEmail, userName, onAdCreated }: CreateAdFormP
                         <div className="text-sm text-muted-foreground">{type.description}</div>
                       </div>
                       <Badge variant="secondary" className="ml-2">
-                        {formatPrice(type.pricing.IN.amount, "INR")}
+                        {country === "US"
+                          ? formatPrice(type.pricing.US.amount, "USD")
+                          : formatPrice(type.pricing.IN.amount, "INR")}
                       </Badge>
                     </div>
                   </SelectItem>
@@ -211,7 +244,9 @@ export function CreateAdForm({ userEmail, userName, onAdCreated }: CreateAdFormP
                 <div>
                   <span className="text-muted-foreground">Price:</span>
                   <span className="ml-2 font-medium">
-                    {formatPrice(selectedAdType.pricing.IN.amount, "INR")} ({formatPrice(selectedAdType.pricing.US.amount, "USD")})
+                    {country === "US"
+                      ? formatPrice(selectedAdType.pricing.US.amount, "USD")
+                      : formatPrice(selectedAdType.pricing.IN.amount, "INR")}
                   </span>
                 </div>
                 <div>
@@ -222,35 +257,29 @@ export function CreateAdForm({ userEmail, userName, onAdCreated }: CreateAdFormP
             </div>
           )}
 
+          {/* Image upload */}
           <div className="space-y-2">
-            <Label htmlFor="images">Ad Images ({images.length}/{selectedAdType?.maxImages || 1})</Label>
-            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6">
-              <div className="text-center">
-                <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <div className="space-y-2">
-                  <Label htmlFor="image-upload" className="cursor-pointer">
-                    <span className="text-sm font-medium text-primary hover:underline">
-                      Click to upload images
-                    </span>
-                    <Input
-                      id="image-upload"
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                      disabled={!selectedAdType || images.length >= (selectedAdType?.maxImages || 1)}
-                    />
-                  </Label>
-                  <p className="text-xs text-muted-foreground">
-                    PNG, JPG, GIF up to 10MB each
-                  </p>
-                </div>
-              </div>
+            <Label>Images ({images.length}/{selectedAdType?.maxImages || 1})</Label>
+            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
+              <Upload className="mx-auto h-10 w-10 text-muted-foreground mb-3" />
+              <Label htmlFor="image-upload" className="cursor-pointer">
+                <span className="text-sm font-medium text-primary hover:underline">
+                  Click to upload images
+                </span>
+                <Input
+                  id="image-upload"
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  disabled={!selectedAdType || images.length >= (selectedAdType?.maxImages || 1)}
+                />
+              </Label>
+              <p className="mt-1 text-xs text-muted-foreground">PNG, JPG up to 10MB each</p>
             </div>
-
             {images.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+              <div className="grid grid-cols-3 gap-3 mt-2">
                 {images.map((image, index) => (
                   <div key={index} className="relative group">
                     <img
@@ -273,13 +302,74 @@ export function CreateAdForm({ userEmail, userName, onAdCreated }: CreateAdFormP
             )}
           </div>
 
+          {/* Video upload — vertical ads only */}
+          {selectedAdType?.supportsVideo && (
+            <div className="space-y-2">
+              <Label>Video {video ? "(1/1)" : "(optional)"}</Label>
+              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
+                <Upload className="mx-auto h-10 w-10 text-muted-foreground mb-3" />
+                {video ? (
+                  <div className="flex items-center justify-center gap-3">
+                    <span className="text-sm text-muted-foreground truncate max-w-[200px]">{video.name}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 text-destructive"
+                      onClick={() => setVideo(null)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <Label htmlFor="video-upload" className="cursor-pointer">
+                      <span className="text-sm font-medium text-primary hover:underline">
+                        Click to upload video
+                      </span>
+                      <Input
+                        id="video-upload"
+                        type="file"
+                        accept="video/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (!file) return
+                          if (file.size > 10 * 1024 * 1024) {
+                            alert("Video must be under 10MB")
+                            e.target.value = ""
+                            return
+                          }
+                          const url = URL.createObjectURL(file)
+                          const vid = document.createElement("video")
+                          vid.preload = "metadata"
+                          vid.onloadedmetadata = () => {
+                            URL.revokeObjectURL(url)
+                            if (vid.duration > 30) {
+                              alert("Video must be 30 seconds or less")
+                              e.target.value = ""
+                              return
+                            }
+                            setVideo(file)
+                          }
+                          vid.src = url
+                        }}
+                        className="hidden"
+                      />
+                    </Label>
+                    <p className="mt-1 text-xs text-muted-foreground">MP4, MOV up to 10MB, max 30 seconds</p>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
           <Button
             type="submit"
             className="w-full gap-2"
-            disabled={isSubmitting || !selectedAdType || images.length === 0}
+            disabled={isSubmitting || savingAd || !selectedAdType || images.length === 0 || (selectedAdType?.supportsVideo === false && images.length === 0)}
           >
             <CreditCard className="h-4 w-4" />
-            Continue to Payment
+            {savingAd ? "Uploading images..." : "Continue to Payment"}
           </Button>
         </form>
       </CardContent>

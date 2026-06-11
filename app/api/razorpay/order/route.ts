@@ -2,12 +2,12 @@ import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { createRazorpayOrder } from "@/lib/razorpay"
 import { createPurchaseOrder } from "@/lib/db"
-import { getPlanById, getAdTypeById } from "@/lib/products"
+import { getPlanById, getAdTypeById, getDesignServicePrice } from "@/lib/products"
 import { getCreditPackById, getCreditPackPrice } from "@/lib/credit-packs"
 import { getPlanByTier, getPlanPrice } from "@/lib/plans"
 import { writeUsageEvent } from "@/lib/usage"
 
-type OrderKind = "subscription" | "credit_pack" | "ad"
+type OrderKind = "subscription" | "credit_pack" | "ad" | "ad_free" | "design_request"
 
 export async function POST(request: Request) {
   const session = await auth()
@@ -28,6 +28,7 @@ export async function POST(request: Request) {
       cycle = "monthly",
       kind: kindRaw,
       creditPackId,
+      requestId,
     } = body as {
       planId?: string
       isAdPayment?: boolean
@@ -38,9 +39,45 @@ export async function POST(request: Request) {
       cycle?: "monthly" | "annual"
       kind?: OrderKind
       creditPackId?: string
+      requestId?: string
     }
 
     const kind: OrderKind = kindRaw ?? (isAdPayment ? "ad" : creditPackId ? "credit_pack" : "subscription")
+
+    if (kind === "ad_free") {
+      const order = await createRazorpayOrder(99, "ad_free", {
+        customerName: session.user.name || undefined,
+        customerEmail: session.user.email,
+        notes: { paymentType: "ad_free" },
+      })
+
+      await createPurchaseOrder({
+        orderId: order.id,
+        email: session.user.email,
+        planId: "ad_free",
+        kind: "ad_free",
+        provider: "razorpay",
+        amount: 99,
+        currency: order.currency,
+        status: "created",
+        paymentId: null,
+        couponCode: null,
+        couponDiscount: 0,
+        referralDiscount: 0,
+        creditDiscount: 0,
+        finalAmount: 99,
+        appliedReferralCode: null,
+        referrerEmail: null,
+      })
+
+      return NextResponse.json({
+        orderId: order.id,
+        amount: order.amount,
+        currency: order.currency,
+        keyId: process.env.RAZORPAY_KEY_ID,
+        kind: "ad_free",
+      })
+    }
 
     if (kind === "ad") {
       if (!adType) {
@@ -149,6 +186,48 @@ export async function POST(request: Request) {
         kind: "credit_pack",
         creditPackId,
         credits: pack.credits,
+      })
+    }
+
+    if (kind === "design_request") {
+      if (!adType || !requestId) {
+        return NextResponse.json({ error: "adType and requestId required" }, { status: 400 })
+      }
+      const pricing = getDesignServicePrice(adType, "IN")
+      if (!pricing) return NextResponse.json({ error: "Invalid ad type" }, { status: 400 })
+
+      const order = await createRazorpayOrder(pricing.amount, `design_${adType}`, {
+        customerName: session.user.name || undefined,
+        customerEmail: session.user.email,
+        notes: { paymentType: "design_request", adType, requestId },
+      })
+
+      await createPurchaseOrder({
+        orderId: order.id,
+        email: session.user.email,
+        planId: `design_${adType}`,
+        kind: "design_request" as "ad",  // reuse "ad" bucket in DB schema
+        provider: "razorpay",
+        amount: pricing.amount,
+        currency: order.currency,
+        status: "created",
+        paymentId: null,
+        couponCode: null,
+        couponDiscount: 0,
+        referralDiscount: 0,
+        creditDiscount: 0,
+        finalAmount: pricing.amount,
+        appliedReferralCode: null,
+        referrerEmail: null,
+      })
+
+      return NextResponse.json({
+        orderId: order.id,
+        amount: order.amount,
+        currency: order.currency,
+        keyId: process.env.RAZORPAY_KEY_ID,
+        kind: "design_request",
+        requestId,
       })
     }
 

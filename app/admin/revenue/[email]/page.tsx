@@ -13,6 +13,7 @@ const KIND_LABEL: Record<PurchaseOrderKind, string> = {
   subscription: "Subscription",
   credit_pack: "Credit pack",
   ad: "Advertisement",
+  ad_free: "Ad-Free",
   marketplace: "Marketplace",
 }
 

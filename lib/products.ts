@@ -96,58 +96,80 @@ export interface AdType {
   }
   dimensions: string
   maxImages: number
+  supportsVideo: boolean
 }
 
 export const AD_TYPES: AdType[] = [
   {
     id: "banner",
     name: "Banner Ad",
-    description: "Horizontal banner displayed at the top of pages",
+    description: "Image-only banner shown across the platform",
     duration: 30,
     pricing: {
-      IN: { amount: 50, currency: "INR" },
-      US: { amount: 1, currency: "USD" },
+      IN: { amount: 1999, currency: "INR" },
+      US: { amount: 40, currency: "USD" },
     },
-    dimensions: "728x90px",
+    dimensions: "1200x300px",
     maxImages: 1,
+    supportsVideo: false,
   },
   {
-    id: "horizontal",
-    name: "Horizontal Ad",
-    description: "Wide horizontal advertisement for better visibility",
-    duration: 30,
+    id: "vertical_basic",
+    name: "Vertical Ad — Basic",
+    description: "Image + video vertical ad, 7-day placement",
+    duration: 7,
     pricing: {
-      IN: { amount: 70, currency: "INR" },
-      US: { amount: 1.5, currency: "USD" },
+      IN: { amount: 899, currency: "INR" },
+      US: { amount: 35, currency: "USD" },
     },
-    dimensions: "970x250px",
-    maxImages: 1,
+    dimensions: "400x700px",
+    maxImages: 3,
+    supportsVideo: true,
   },
   {
-    id: "square",
-    name: "Square Ad",
-    description: "Square advertisement for sidebar placement",
+    id: "vertical_premium",
+    name: "Vertical Ad — Premium",
+    description: "Image + video vertical ad, 30-day placement",
     duration: 30,
     pricing: {
-      IN: { amount: 60, currency: "INR" },
-      US: { amount: 1.2, currency: "USD" },
+      IN: { amount: 2499, currency: "INR" },
+      US: { amount: 99, currency: "USD" },
     },
-    dimensions: "300x300px",
-    maxImages: 1,
+    dimensions: "400x700px",
+    maxImages: 3,
+    supportsVideo: true,
   },
   {
-    id: "video",
-    name: "Video Ad",
-    description: "Short video advertisement with auto-play",
+    id: "landing_hero",
+    name: "Landing Page Hero Ad",
+    description: "Premium banner featured on the public landing page — maximum visibility, 30-day placement",
     duration: 30,
     pricing: {
-      IN: { amount: 100, currency: "INR" },
-      US: { amount: 2, currency: "USD" },
+      IN: { amount: 14999, currency: "INR" },
+      US: { amount: 250, currency: "USD" },
     },
-    dimensions: "16:9 aspect ratio",
+    dimensions: "1200x400px",
     maxImages: 1,
+    supportsVideo: false,
   },
 ]
+
+export type DesignAdType = "banner" | "vertical_basic" | "vertical_premium" | "landing_hero"
+
+export const DESIGN_SERVICE_PRICES: Record<
+  DesignAdType,
+  { IN: { amount: number; currency: "INR" }; US: { amount: number; currency: "USD" } }
+> = {
+  banner:           { IN: { amount: 999,  currency: "INR" }, US: { amount: 20, currency: "USD" } },
+  vertical_basic:   { IN: { amount: 1499, currency: "INR" }, US: { amount: 30, currency: "USD" } },
+  vertical_premium: { IN: { amount: 2499, currency: "INR" }, US: { amount: 45, currency: "USD" } },
+  landing_hero:     { IN: { amount: 4999, currency: "INR" }, US: { amount: 75, currency: "USD" } },
+}
+
+export function getDesignServicePrice(adType: string, country: "IN" | "US") {
+  const prices = DESIGN_SERVICE_PRICES[adType as DesignAdType]
+  return prices ? prices[country] : null
+}
 
 export function getAdTypeById(id: string): AdType | undefined {
   return AD_TYPES.find((ad) => ad.id === id)

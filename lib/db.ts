@@ -202,11 +202,12 @@ export interface User {
   legacyGrandfathered?: boolean
   legacyMigratedAt?: Date | null
   usageMetrics?: UserUsageMetrics
+  adFree?: boolean
   createdAt: Date
   updatedAt: Date
 }
 
-export type PurchaseOrderKind = "subscription" | "credit_pack" | "ad" | "marketplace"
+export type PurchaseOrderKind = "subscription" | "credit_pack" | "ad" | "ad_free" | "marketplace"
 
 export interface PurchaseOrder {
   _id?: ObjectId
@@ -221,7 +222,7 @@ export interface PurchaseOrder {
   creditAmount?: number
   // For subscription purchases: monthly vs annual.
   billingCycle?: BillingCycle
-  provider: "razorpay" | "paypal" | "paddle" | "lemonsqueezy"
+  provider: "razorpay" | "payu" | "paypal" | "paddle" | "lemonsqueezy"
   amount: number
   currency: "INR" | "USD"
   status: "created" | "paid" | "failed"
@@ -319,7 +320,7 @@ export interface Advertisement {
   shopDescription: string
   contactInfo: string
   images: string[] // URLs of uploaded images
-  adType: "banner" | "horizontal" | "square" | "video"
+  adType: "banner" | "horizontal" | "square" | "video" | "vertical_basic" | "vertical_premium" | "landing_hero"
   status: "active" | "expired" | "pending"
   views: number
   clicks: number
@@ -328,6 +329,26 @@ export interface Advertisement {
   paymentAmount: number
   paymentCurrency: "INR" | "USD"
   paymentId: string | null
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface DesignRequest {
+  _id?: ObjectId
+  email: string
+  adType: "banner" | "vertical_basic" | "vertical_premium" | "landing_hero"
+  shopName: string
+  tagline: string
+  shopDescription: string
+  brandColors: string[]
+  logoUrl?: string
+  referenceNotes?: string
+  selectedCopy?: { headline: string; subtext: string; cta: string }
+  paymentAmount: number
+  paymentCurrency: "INR" | "USD"
+  paymentId: string | null
+  status: "pending_payment" | "paid" | "in_progress" | "completed"
+  resultImageUrl?: string
   createdAt: Date
   updatedAt: Date
 }
@@ -426,7 +447,7 @@ export interface UsageEvent {
 
 export interface WebhookEvent {
   _id?: ObjectId
-  provider: "razorpay" | "paypal" | "paddle" | "lemonsqueezy"
+  provider: "razorpay" | "payu" | "paypal" | "paddle" | "lemonsqueezy"
   eventId: string
   eventName?: string
   processedAt: Date
@@ -617,7 +638,7 @@ export async function applyPlanPurchase(
   email: string,
   planId: string,
   providerPaymentId: string,
-  options?: { provider?: "razorpay" | "paypal" | "paddle" | "lemonsqueezy"; cycle?: BillingCycle }
+  options?: { provider?: "razorpay" | "payu" | "paypal" | "paddle" | "lemonsqueezy"; cycle?: BillingCycle }
 ): Promise<User | null> {
   const user = await getUserByEmail(email)
   if (!user) return null
@@ -663,7 +684,9 @@ export async function applyPlanPurchase(
     commercialLicense: tierPlan.features.commercialLicense,
   }
 
-  if (options?.provider === "paddle" || options?.provider === "lemonsqueezy") {
+  if (options?.provider === "paypal") {
+    update.paypalSubscriptionId = providerPaymentId
+  } else if (options?.provider === "paddle" || options?.provider === "lemonsqueezy") {
     // paddleCustomerId/SubscriptionId and lemonSqueezyCustomerId/SubscriptionId
     // are set by their respective webhook handlers.
   } else {
@@ -672,7 +695,39 @@ export async function applyPlanPurchase(
     update.razorpayCustomerId = providerPaymentId
   }
 
-  return updateUser(email, update)
+  await updateUser(email, update)
+
+  // Record in purchase_orders for transaction history
+  const db = await getDb()
+  await db.collection<PurchaseOrder>("purchase_orders").updateOne(
+    { orderId: providerPaymentId },
+    {
+      $setOnInsert: {
+        orderId: providerPaymentId,
+        email,
+        planId,
+        kind: "subscription" as PurchaseOrderKind,
+        billingCycle: cycle,
+        provider: options?.provider ?? "razorpay",
+        amount: (options?.provider === "razorpay" || options?.provider === "payu") ? (tierPlan.pricing.IN?.amount ?? 0) : (tierPlan.pricing.US?.amount ?? 0),
+        currency: (options?.provider === "razorpay" || options?.provider === "payu") ? "INR" : "USD",
+        status: "paid" as const,
+        paymentId: providerPaymentId,
+        couponCode: null,
+        couponDiscount: 0,
+        referralDiscount: 0,
+        creditDiscount: 0,
+        finalAmount: options?.provider === "razorpay" ? (tierPlan.pricing.IN?.amount ?? 0) : (tierPlan.pricing.US?.amount ?? 0),
+        appliedReferralCode: null,
+        referrerEmail: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    },
+    { upsert: true },
+  )
+
+  return getUserByEmail(email)
 }
 
 export async function getUserByReferralCode(referralCode: string): Promise<User | null> {
@@ -1238,3 +1293,36 @@ export async function syncProjectsUsedFromCount(email: string): Promise<number> 
 }
 
 export { getClientPromise as clientPromise }
+
+// DesignRequest functions
+export async function createDesignRequest(
+  data: Omit<DesignRequest, "_id" | "createdAt" | "updatedAt">
+): Promise<DesignRequest> {
+  const db = await getDb()
+  const now = new Date()
+  const doc: DesignRequest = { ...data, createdAt: now, updatedAt: now }
+  const result = await db.collection<DesignRequest>("design_requests").insertOne(doc)
+  return { ...doc, _id: result.insertedId }
+}
+
+export async function getDesignRequestsByEmail(email: string): Promise<DesignRequest[]> {
+  const db = await getDb()
+  return db.collection<DesignRequest>("design_requests").find({ email }).sort({ createdAt: -1 }).toArray()
+}
+
+export async function getAllDesignRequests(): Promise<DesignRequest[]> {
+  const db = await getDb()
+  return db.collection<DesignRequest>("design_requests").find({}).sort({ createdAt: -1 }).toArray()
+}
+
+export async function updateDesignRequest(
+  id: string,
+  update: Partial<DesignRequest>
+): Promise<DesignRequest | null> {
+  const db = await getDb()
+  return db.collection<DesignRequest>("design_requests").findOneAndUpdate(
+    { _id: new ObjectId(id) },
+    { $set: { ...update, updatedAt: new Date() } },
+    { returnDocument: "after" }
+  )
+}

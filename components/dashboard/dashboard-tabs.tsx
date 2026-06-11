@@ -8,6 +8,8 @@ import { CreateCarProjectForm } from "./create-car-form"
 import { AdList } from "./ad-list"
 import { ReferEarn } from "./refer-earn"
 import { CreditsTab } from "./credits-tab"
+import { CreativeBriefWizard } from "./creative-brief-wizard"
+import { DesignRequestList } from "./design-request-list"
 import { UpgradeModal } from "@/components/billing/upgrade-modal"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ExternalLink } from "lucide-react"
@@ -45,6 +47,7 @@ export function DashboardTabs({ isAtLimit, isExpired, userEmail, userName, count
   const [carProjects, setCarProjects] = useState<CarProject[]>([])
   const [loading, setLoading] = useState(true)
   const [projectsLoading, setProjectsLoading] = useState(true)
+  const [renewAdType, setRenewAdType] = useState<string | undefined>(undefined)
 
   useEffect(() => {
     if (tabParam === 'create-ad') {
@@ -102,7 +105,14 @@ export function DashboardTabs({ isAtLimit, isExpired, userEmail, userName, count
   }
 
   const handleAdCreated = () => {
+    setRenewAdType(undefined)
     fetchAdvertisements()
+  }
+
+  const handleRenew = (adType: string) => {
+    setRenewAdType(adType)
+    setActiveTab("create-ad")
+    window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
   const handleProjectCreated = (projectId: string) => {
@@ -121,6 +131,7 @@ export function DashboardTabs({ isAtLimit, isExpired, userEmail, userName, count
         <TabsTrigger value="create-project">New Project</TabsTrigger>
         <TabsTrigger value="credits">AI Credits</TabsTrigger>
         <TabsTrigger value="create-ad">Create Ad</TabsTrigger>
+        <TabsTrigger value="design-service">Design Service</TabsTrigger>
         <TabsTrigger value="refer">Refer & Earn</TabsTrigger>
       </TabsList>
 
@@ -227,6 +238,8 @@ export function DashboardTabs({ isAtLimit, isExpired, userEmail, userName, count
           <CreateAdForm
             userEmail={userEmail}
             userName={userName}
+            country={country}
+            initialAdType={renewAdType}
             onAdCreated={handleAdCreated}
           />
 
@@ -237,8 +250,28 @@ export function DashboardTabs({ isAtLimit, isExpired, userEmail, userName, count
                 <p className="text-muted-foreground">Loading advertisements...</p>
               </div>
             ) : (
-              <AdList advertisements={advertisements} />
+              <AdList advertisements={advertisements} onRenew={handleRenew} />
             )}
+          </div>
+        </div>
+      </TabsContent>
+
+      <TabsContent value="design-service" className="mt-6">
+        <div className="space-y-10">
+          <div>
+            <h3 className="text-xl font-bold">Ad Creative Design Service</h3>
+            <p className="text-muted-foreground mt-1">
+              Let our team design a professional banner or vertical ad for your business. Fill in your brand brief, get AI copy suggestions, and we'll deliver a high-res creative in 2–3 business days.
+            </p>
+          </div>
+          <CreativeBriefWizard
+            userEmail={userEmail}
+            userName={userName}
+            country={country}
+          />
+          <div className="border-t border-border/50 pt-8">
+            <h4 className="font-semibold mb-4">Your design requests</h4>
+            <DesignRequestList />
           </div>
         </div>
       </TabsContent>

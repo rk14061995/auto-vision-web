@@ -10,6 +10,8 @@ import {
   markWebhookProcessed,
   redeemCoupon,
   updateAdvertisement,
+  updateDesignRequest,
+  updateUser,
   getAdvertisementsByEmail,
 } from "@/lib/db"
 import { verifyRazorpaySignature } from "@/lib/razorpay"
@@ -29,6 +31,7 @@ export async function POST(request: Request) {
       razorpay_order_id,
       razorpay_payment_id,
       razorpay_signature,
+      requestId,
     } = await request.json()
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
@@ -66,6 +69,27 @@ export async function POST(request: Request) {
 
     const kind = order.kind ?? "subscription"
     const orderCurrency = order.currency
+
+    if (kind === "ad_free") {
+      await updateUser(session.user.email, { adFree: true })
+      await markPurchaseOrderPaid(razorpay_order_id, razorpay_payment_id)
+      await markWebhookProcessed("razorpay", razorpay_payment_id, "ad_free_paid")
+      await writeUsageEvent(session.user.email, "checkout_completed", {
+        kind: "ad_free",
+        orderId: razorpay_order_id,
+      })
+      return NextResponse.json({ success: true, kind: "ad_free" })
+    }
+
+    if (kind === ("design_request" as string)) {
+      const rid = requestId ?? order.planId?.replace("design_", "")
+      if (rid) {
+        await updateDesignRequest(rid, { status: "paid", paymentId: razorpay_payment_id })
+      }
+      await markPurchaseOrderPaid(razorpay_order_id, razorpay_payment_id)
+      await markWebhookProcessed("razorpay", razorpay_payment_id, "design_request_paid")
+      return NextResponse.json({ success: true, kind: "design_request" })
+    }
 
     if (kind === "ad") {
       const ads = await getAdvertisementsByEmail(session.user.email)

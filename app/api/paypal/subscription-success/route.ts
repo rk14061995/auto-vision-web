@@ -31,12 +31,12 @@ export async function GET(request: Request) {
 
   const userEmail = session.user.email
 
-  try {
-    // Idempotency — skip if already processed (e.g. webhook fired first)
-    if (await isWebhookProcessed("paypal", subscriptionId)) {
-      redirect("/dashboard?payment=success")
-    }
+  // Idempotency — skip if already processed (e.g. webhook fired first)
+  if (await isWebhookProcessed("paypal", subscriptionId)) {
+    redirect("/dashboard?payment=success")
+  }
 
+  try {
     // Fetch subscription details from PayPal
     const accessToken = await getPayPalAccessToken()
     const res = await fetch(
@@ -72,14 +72,11 @@ export async function GET(request: Request) {
       cycle: "monthly",
     })
 
-    await updateUser(userEmail, {
-      paypalSubscriptionId: subscriptionId,
-      planTier: planType,
-      planType,
-      projectLimit,
-      subscriptionExpiry: nextBilling,
-      dunning: false,
-    })
+    // Prefer PayPal's actual next-billing date over the locally computed estimate,
+    // but only when it's present — a null would clear the expiry and lock the user out.
+    if (nextBilling) {
+      await updateUser(userEmail, { subscriptionExpiry: nextBilling })
+    }
 
     const userRecord = await getUserByEmail(userEmail)
     await applyReferralRewards({
@@ -100,6 +97,8 @@ export async function GET(request: Request) {
 
     await markWebhookProcessed("paypal", subscriptionId, "BILLING.SUBSCRIPTION.ACTIVATED")
   } catch (err) {
+    // Re-throw Next.js redirect/notFound — they are control flow, not errors
+    if (err instanceof Error && (err as { digest?: string }).digest?.startsWith("NEXT_REDIRECT")) throw err
     console.error("PayPal subscription-success error:", err)
     redirect("/dashboard?payment=failed")
   }
