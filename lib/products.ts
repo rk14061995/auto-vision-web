@@ -106,7 +106,7 @@ export const AD_TYPES: AdType[] = [
     description: "Image-only banner shown across the platform",
     duration: 30,
     pricing: {
-      IN: { amount: 1999, currency: "INR" },
+      IN: { amount: 99, currency: "INR" },
       US: { amount: 40, currency: "USD" },
     },
     dimensions: "1200x300px",
@@ -119,7 +119,7 @@ export const AD_TYPES: AdType[] = [
     description: "Image + video vertical ad, 7-day placement",
     duration: 7,
     pricing: {
-      IN: { amount: 899, currency: "INR" },
+      IN: { amount: 100, currency: "INR" },
       US: { amount: 35, currency: "USD" },
     },
     dimensions: "400x700px",
@@ -132,7 +132,7 @@ export const AD_TYPES: AdType[] = [
     description: "Image + video vertical ad, 30-day placement",
     duration: 30,
     pricing: {
-      IN: { amount: 2499, currency: "INR" },
+      IN: { amount: 499, currency: "INR" },
       US: { amount: 99, currency: "USD" },
     },
     dimensions: "400x700px",
@@ -145,7 +145,7 @@ export const AD_TYPES: AdType[] = [
     description: "Premium banner featured on the public landing page — maximum visibility, 30-day placement",
     duration: 30,
     pricing: {
-      IN: { amount: 14999, currency: "INR" },
+      IN: { amount: 9999, currency: "INR" },
       US: { amount: 250, currency: "USD" },
     },
     dimensions: "1200x400px",
@@ -160,10 +160,10 @@ export const DESIGN_SERVICE_PRICES: Record<
   DesignAdType,
   { IN: { amount: number; currency: "INR" }; US: { amount: number; currency: "USD" } }
 > = {
-  banner:           { IN: { amount: 999,  currency: "INR" }, US: { amount: 20, currency: "USD" } },
-  vertical_basic:   { IN: { amount: 1499, currency: "INR" }, US: { amount: 30, currency: "USD" } },
-  vertical_premium: { IN: { amount: 2499, currency: "INR" }, US: { amount: 45, currency: "USD" } },
-  landing_hero:     { IN: { amount: 4999, currency: "INR" }, US: { amount: 75, currency: "USD" } },
+  banner:           { IN: { amount: 199,  currency: "INR" }, US: { amount: 20, currency: "USD" } },
+  vertical_basic:   { IN: { amount: 499,  currency: "INR" }, US: { amount: 30, currency: "USD" } },
+  vertical_premium: { IN: { amount: 1499, currency: "INR" }, US: { amount: 45, currency: "USD" } },
+  landing_hero:     { IN: { amount: 1999, currency: "INR" }, US: { amount: 75, currency: "USD" } },
 }
 
 export function getDesignServicePrice(adType: string, country: "IN" | "US") {

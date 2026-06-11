@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
@@ -83,6 +83,11 @@ const BUSINESS_TYPES = [
   "Other",
 ]
 
+const PRICING = {
+  IN: { standard: "₹2,999/mo", premium: "₹4,499/mo", hero: "₹2,999", sub: "Standard" },
+  US: { standard: "$99/mo",    premium: "$149/mo",    hero: "$99",     sub: "Standard" },
+}
+
 export default function WebsiteServicePage() {
   const [form, setForm] = useState({
     name: "", email: "", businessName: "", businessType: BUSINESS_TYPES[0],
@@ -91,6 +96,15 @@ export default function WebsiteServicePage() {
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
   const [error, setError] = useState("")
+  const [country, setCountry] = useState<"IN" | "US">("IN")
+
+  useEffect(() => {
+    fetch("/api/geo").then(r => r.json()).then(d => {
+      if (d.country === "US") setCountry("US")
+    }).catch(() => {})
+  }, [])
+
+  const p = PRICING[country]
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -129,19 +143,19 @@ export default function WebsiteServicePage() {
               <span className="text-primary">Auto Business</span>
             </h1>
             <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto text-pretty">
-              We design, build, and maintain a custom website for your wrap shop, detailing studio, or dealership — starting at $99/month. No agency fees, no tech headaches.
+              We design, build, and maintain a custom website for your wrap shop, detailing studio, or dealership — starting at {p.standard}. No agency fees, no tech headaches.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
               <a href="#inquire">
                 <Button size="lg" className="gap-2">
-                  Get started — $99/month <ArrowRight className="h-4 w-4" />
+                  Get started — {p.standard} <ArrowRight className="h-4 w-4" />
                 </Button>
               </a>
               <Link href="/faq#website">
                 <Button size="lg" variant="outline">Read the FAQ</Button>
               </Link>
             </div>
-            <p className="mt-4 text-xs text-muted-foreground">India pricing: ₹2,999/month · Cancel anytime</p>
+            <p className="mt-4 text-xs text-muted-foreground">Cancel anytime · No setup fee</p>
           </div>
         </section>
 
@@ -188,10 +202,9 @@ export default function WebsiteServicePage() {
                 <div className="text-center">
                   <p className="text-sm text-muted-foreground">Starting from</p>
                   <div className="mt-2">
-                    <span className="text-5xl font-bold">$99</span>
+                    <span className="text-5xl font-bold">{p.hero}</span>
                     <span className="text-muted-foreground">/month</span>
                   </div>
-                  <p className="mt-1 text-xs text-muted-foreground">India: ₹2,999/month</p>
                   <div className="mt-6 space-y-2 text-left text-sm">
                     <div className="flex items-center gap-2">
                       <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
@@ -319,8 +332,8 @@ export default function WebsiteServicePage() {
                   <Label>Budget preference</Label>
                   <div className="flex gap-3">
                     {[
-                      { value: "standard", label: "$99/mo", sub: "Standard" },
-                      { value: "premium", label: "$149/mo", sub: "Premium (more pages + priority)" },
+                      { value: "standard", label: p.standard, sub: "Standard" },
+                      { value: "premium", label: p.premium, sub: "Premium (more pages + priority)" },
                     ].map((opt) => (
                       <label
                         key={opt.value}

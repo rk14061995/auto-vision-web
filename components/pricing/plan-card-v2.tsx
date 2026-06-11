@@ -48,10 +48,10 @@ export function PlanCardV2({ plan, country, cycle, highlighted }: PlanCardV2Prop
 
   return (
     <div
-      className={`relative flex flex-col rounded-2xl border p-6 transition-shadow ${
+      className={`relative flex flex-col rounded-2xl border p-6 transition-all ${
         highlighted
-          ? "border-primary bg-card shadow-lg shadow-primary/15"
-          : "border-border/50 bg-card/50 hover:border-border"
+          ? "border-primary bg-white shadow-xl shadow-primary/15"
+          : "border-gray-200 bg-white shadow-sm hover:shadow-md hover:border-gray-300"
       }`}
     >
       {plan.badge && (
@@ -96,7 +96,7 @@ export function PlanCardV2({ plan, country, cycle, highlighted }: PlanCardV2Prop
         )}
       </div>
 
-      <div className="mt-5 inline-flex items-center gap-2 rounded-lg bg-secondary/50 px-3 py-2 text-sm">
+      <div className="mt-5 inline-flex items-center gap-2 rounded-lg bg-gray-100 px-3 py-2 text-sm text-gray-700">
         <Zap className="h-4 w-4 text-primary" />
         <span>
           <span className="font-medium">{plan.monthlyAiCredits}</span> AI credits / month
@@ -118,10 +118,10 @@ export function PlanCardV2({ plan, country, cycle, highlighted }: PlanCardV2Prop
           trackSelectItem(ga4Item)
           if (!isFree && !isContact) trackBeginCheckout(ga4Item)
         }}
-        className={`mt-6 inline-flex h-10 w-full items-center justify-center rounded-md text-sm font-medium transition-colors ${
+        className={`mt-6 inline-flex h-10 w-full items-center justify-center rounded-md text-sm font-semibold transition-colors ${
           highlighted
-            ? "bg-primary text-primary-foreground hover:bg-primary/90"
-            : "border border-border/60 bg-secondary text-foreground hover:bg-secondary/80"
+            ? "bg-primary text-white hover:bg-primary/90 shadow-sm"
+            : "border border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100"
         }`}
       >
         {ctaLabel}

@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 const benefits = [
   "Design your dream car virtually",
-  "Access to basic customization tools",
+  "AI-powered wrap and colour tools",
   "Save and share your designs",
   "No credit card required",
 ]
@@ -18,49 +18,62 @@ const benefits = [
 export default function SignupPage() {
   return (
     <div className="flex min-h-screen">
-      {/* Left Panel - Benefits */}
-      <div className="hidden flex-1 flex-col justify-center bg-card/50 px-12 lg:flex">
-        <div className="max-w-md">
-          <h2 className="text-3xl font-bold">
+
+      {/* Left — brand panel */}
+      <div className="hidden w-[45%] flex-col justify-between bg-primary px-12 py-10 lg:flex">
+        <Link href="/" className="flex items-center gap-2">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/20">
+            <Car className="h-5 w-5 text-white" />
+          </div>
+          <span className="text-lg font-bold text-white">AutoVision Pro</span>
+        </Link>
+
+        <div className="max-w-sm">
+          <h2 className="text-3xl font-extrabold leading-tight text-white">
             Start designing your dream car today
           </h2>
-          <p className="mt-4 text-muted-foreground">
-            Join thousands of car enthusiasts who use AutoVision Pro to visualize
-            their perfect vehicle.
+          <p className="mt-4 text-base text-white/75">
+            Join thousands of car enthusiasts who use AutoVision Pro to visualize their perfect vehicle.
           </p>
-          <ul className="mt-8 space-y-4">
-            {benefits.map((benefit) => (
-              <li key={benefit} className="flex items-center gap-3">
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
-                  <Check className="h-4 w-4 text-primary" />
+          <ul className="mt-8 space-y-3">
+            {benefits.map((b) => (
+              <li key={b} className="flex items-center gap-3 text-sm text-white/85">
+                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/20">
+                  <Check className="h-3 w-3 text-white" />
                 </div>
-                <span className="text-muted-foreground">{benefit}</span>
+                {b}
               </li>
             ))}
           </ul>
         </div>
+
+        <p className="text-xs text-white/50">&copy; {new Date().getFullYear()} AutoVision Pro</p>
       </div>
 
-      {/* Right Panel - Form */}
-      <div className="flex flex-1 flex-col items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md space-y-8">
-          {/* Logo */}
-          <div className="flex flex-col items-center">
+      {/* Right — form */}
+      <div className="flex flex-1 flex-col items-center justify-center bg-gray-50 px-4 py-12">
+        <div className="w-full max-w-md">
+          {/* Mobile logo */}
+          <div className="mb-8 flex flex-col items-center lg:hidden">
             <Link href="/" className="flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-                <Car className="h-6 w-6 text-primary-foreground" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+                <Car className="h-5 w-5 text-white" />
               </div>
-              <span className="text-xl font-semibold">AutoVision Pro</span>
+              <span className="text-lg font-bold text-gray-900">AutoVision Pro</span>
             </Link>
-            <h1 className="mt-6 text-2xl font-bold">Create your account</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Get started with your free account
-            </p>
           </div>
 
-          {/* Form */}
-          <div className="rounded-xl border border-border/50 bg-card p-6 shadow-lg">
-            <SignupForm />
+          <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
+            <h1 className="text-2xl font-bold text-gray-900">Create your account</h1>
+            <p className="mt-1 text-sm text-gray-500">
+              Already have an account?{" "}
+              <Link href="/login" className="font-semibold text-primary hover:underline">
+                Sign in
+              </Link>
+            </p>
+            <div className="mt-6">
+              <SignupForm />
+            </div>
           </div>
         </div>
       </div>

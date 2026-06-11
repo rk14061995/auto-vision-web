@@ -18,15 +18,14 @@ export async function generateMetadata({
   if (!isValidRegion(region)) return {}
 
   const r = region as Region
-  const currency = REGION_CURRENCY[r]
   const title =
     r === "us"
-      ? `Pricing in USD — AutoVision Pro`
-      : `INR Pricing — AutoVision Pro`
+      ? "Pricing in USD — AutoVision Pro"
+      : "INR Pricing — AutoVision Pro"
   const description =
     r === "us"
-      ? `AutoVision Pro plans priced in USD. From free to enterprise — built for US wrap shops, dealerships, and automotive brands.`
-      : `AutoVision Pro ke plans INR mein. Free se enterprise tak — Indian wrap shops, garages aur dealerships ke liye.`
+      ? "AutoVision Pro plans in USD. From free to enterprise — built for US wrap shops, dealerships, and automotive brands."
+      : "AutoVision Pro ke plans INR mein. Free se enterprise tak — Indian wrap shops, garages aur dealerships ke liye."
 
   return {
     title,
@@ -48,6 +47,21 @@ export async function generateMetadata({
   }
 }
 
+const CONTENT = {
+  in: {
+    badge:       "India · INR pricing",
+    ctaStart:    "Free mein Shuru Karein",
+    ctaContact:  "Talk to Sales",
+    industryDesc: "Indian wrap shops, dealerships, garages aur OEM teams AutoVision Pro use karte hain to pitch designs, clients win karein, aur competition se aage rehein.",
+  },
+  us: {
+    badge:       "United States · USD pricing",
+    ctaStart:    "Start Free",
+    ctaContact:  "Talk to Sales",
+    industryDesc: "Wrap shops, dealerships, garages, and OEM teams use AutoVision Pro to pitch designs, win clients, and stay ahead of the competition.",
+  },
+}
+
 export default async function RegionalPricingPage({
   params,
 }: {
@@ -59,87 +73,58 @@ export default async function RegionalPricingPage({
   const r = region as Region
   const content = REGION_CONTENT[r]
   const initialCountry = REGION_TO_COUNTRY[r]
-
-  if (r != "us") {
-    return (
-      <div className="flex min-h-screen flex-col">
-        <Header />
-        <main className="flex-1 flex items-center justify-center py-20">
-          <div className="mx-auto max-w-2xl px-4 text-center">
-            <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
-              US market • USD pricing
-            </span>
-            <h1 className="mt-6 text-balance text-4xl font-bold tracking-tight sm:text-5xl">
-              Coming Soon
-            </h1>
-            <p className="mt-4 text-pretty text-lg text-muted-foreground">
-              We&apos;re setting up USD payments for the US market. Drop your email and we&apos;ll notify you the moment it goes live.
-            </p>
-            <div className="mt-8 flex flex-wrap justify-center gap-4">
-              <a
-                href="mailto:autovisionpro07@gmail.com"
-                className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-              >
-                Get Notified
-              </a>
-              <a
-                href="/in/pricing"
-                className="inline-flex h-11 items-center justify-center rounded-md border border-border bg-secondary px-6 text-sm font-medium text-foreground hover:bg-secondary/80"
-              >
-                View INR Pricing
-              </a>
-            </div>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    )
-  }
+  const copy = CONTENT[r]
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-gray-50">
       <Header />
       <main className="flex-1 py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+
+          {/* Header */}
           <div className="mx-auto max-w-3xl text-center">
-            <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
-              Indian market • {REGION_CURRENCY[r]} pricing
+            <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/8 px-4 py-1.5 text-sm font-semibold text-primary">
+              {copy.badge}
             </span>
-            <h1 className="mt-5 text-balance text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
+            <h1 className="mt-5 text-balance text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">
               {content.pricingTitle}
             </h1>
-            <p className="mt-4 text-pretty text-lg text-muted-foreground">
+            <p className="mt-4 text-pretty text-lg text-gray-500">
               {content.pricingDescription}
             </p>
           </div>
 
+          {/* Pricing table — country locked to region, no switcher */}
           <div className="mt-14">
             <PricingTable initialCountry={initialCountry} />
           </div>
 
+          {/* FAQ */}
           <div className="mt-24">
             <PricingFAQ />
           </div>
 
-          <div className="mt-20 rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 via-background to-background p-10 text-center">
-            <h2 className="text-2xl font-semibold sm:text-3xl">
+          {/* Industry CTA */}
+          <div className="mt-20 overflow-hidden rounded-3xl bg-primary px-10 py-14 text-center">
+            <div className="pointer-events-none absolute inset-0 opacity-10" />
+            <h2 className="text-2xl font-extrabold text-white sm:text-3xl">
               Built for the automotive industry
             </h2>
-            <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">
-              Indian wrap shops, dealerships, garages aur OEM teams AutoVision Pro use karte hain to pitch designs, clients win karein, aur competition se aage rehein.
+            <p className="mx-auto mt-3 max-w-2xl text-white/75">
+              {copy.industryDesc}
             </p>
-            <div className="mt-6 flex flex-wrap justify-center gap-4">
+            <div className="mt-8 flex flex-wrap justify-center gap-4">
               <a
                 href="/signup"
-                className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                className="inline-flex h-11 items-center justify-center rounded-md bg-white px-6 text-sm font-semibold text-primary shadow hover:bg-gray-50"
               >
-                Free mein Shuru Karein
+                {copy.ctaStart}
               </a>
               <a
                 href="mailto:autovisionpro07@gmail.com"
-                className="inline-flex h-11 items-center justify-center rounded-md border border-border bg-secondary px-6 text-sm font-medium text-foreground hover:bg-secondary/80"
+                className="inline-flex h-11 items-center justify-center rounded-md border border-white/30 px-6 text-sm font-medium text-white hover:bg-white/10"
               >
-                Talk to Sales
+                {copy.ctaContact}
               </a>
             </div>
           </div>

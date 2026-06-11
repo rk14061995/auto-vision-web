@@ -31,7 +31,7 @@ interface LeaderEntry {
   referredCount: number
 }
 
-export function ReferEarn() {
+export function ReferEarn({ country = "IN" }: { country?: "IN" | "US" }) {
   const [data, setData] = useState<ReferralData | null>(null)
   const [leaders, setLeaders] = useState<LeaderEntry[]>([])
   const [loading, setLoading] = useState(true)
@@ -91,8 +91,8 @@ export function ReferEarn() {
       <div className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-card to-card p-6">
         <h2 className="text-lg font-semibold">Refer & Earn</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Share your link. When your friend makes their first paid purchase, you both get
-          ₹{REFERRAL_REWARD_INR}/${REFERRAL_REWARD_USD} in credits PLUS{' '}
+          Share your link. When your friend makes their first paid purchase, you both get{' '}
+          {country === "US" ? `$${REFERRAL_REWARD_USD}` : `₹${REFERRAL_REWARD_INR}`} in credits PLUS{' '}
           {REFERRAL_AI_CREDIT_BONUS} bonus AI credits each.
         </p>
         <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto]">
@@ -113,8 +113,9 @@ export function ReferEarn() {
         <div className="rounded-xl border border-border/50 bg-card p-6">
           <p className="text-sm text-muted-foreground">Credit balance</p>
           <p className="mt-2 text-xl font-semibold">
-            ₹{data.creditBalanceINR}
-            <span className="ml-3 text-base text-muted-foreground">${data.creditBalanceUSD}</span>
+            {country === "US"
+              ? `$${data.creditBalanceUSD}`
+              : `₹${data.creditBalanceINR}`}
           </p>
         </div>
       </div>

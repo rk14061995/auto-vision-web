@@ -11,14 +11,9 @@ import { CreditsTab } from "./credits-tab"
 import { CreativeBriefWizard } from "./creative-brief-wizard"
 import { DesignRequestList } from "./design-request-list"
 import { UpgradeModal } from "@/components/billing/upgrade-modal"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ExternalLink } from "lucide-react"
-import {
-  Plus,
-  Folder,
-  Clock,
-} from "lucide-react"
+import { ExternalLink, Plus, FolderOpen, Zap, Megaphone, Palette, Gift, Clock, Car } from "lucide-react"
 import type { CarProject } from '@/lib/db'
+import { cn } from '@/lib/utils'
 
 interface DashboardTabsProps {
   isAtLimit: boolean
@@ -28,20 +23,21 @@ interface DashboardTabsProps {
   country?: "IN" | "US"
 }
 
+const TABS = [
+  { id: "projects",       label: "Projects",       icon: FolderOpen },
+  { id: "create-project", label: "New Project",     icon: Plus },
+  { id: "credits",        label: "AI Credits",      icon: Zap },
+  { id: "create-ad",      label: "Advertise",       icon: Megaphone },
+  { id: "design-service", label: "Design Service",  icon: Palette },
+  { id: "refer",          label: "Refer & Earn",    icon: Gift },
+] as const
+
+type TabId = typeof TABS[number]["id"]
+
 export function DashboardTabs({ isAtLimit, isExpired, userEmail, userName, country = "IN" }: DashboardTabsProps) {
   const searchParams = useSearchParams()
-  const tabParam = searchParams.get('tab')
-  const [activeTab, setActiveTab] = useState(
-    tabParam === 'refer'
-      ? 'refer'
-      : tabParam === 'credits'
-        ? 'credits'
-        : tabParam === 'create-ad'
-          ? 'create-ad'
-          : tabParam === 'create-project'
-            ? 'create-project'
-            : 'projects'
-  )
+
+  const [activeTab, setActiveTab] = useState<TabId>('projects')
   const [upgradeOpen, setUpgradeOpen] = useState(false)
   const [advertisements, setAdvertisements] = useState<any[]>([])
   const [carProjects, setCarProjects] = useState<CarProject[]>([])
@@ -50,90 +46,63 @@ export function DashboardTabs({ isAtLimit, isExpired, userEmail, userName, count
   const [renewAdType, setRenewAdType] = useState<string | undefined>(undefined)
 
   useEffect(() => {
-    if (tabParam === 'create-ad') {
-      setActiveTab('create-ad')
-    } else if (tabParam === 'create-project') {
-      setActiveTab('create-project')
-    } else if (tabParam === 'refer') {
-      setActiveTab('refer')
-    } else if (tabParam === 'credits') {
-      setActiveTab('credits')
-    }
-  }, [tabParam])
+    const p = searchParams.get('tab') as TabId | null
+    const valid = TABS.map(t => t.id) as TabId[]
+    setActiveTab(valid.includes(p as TabId) ? (p as TabId) : 'projects')
+  }, [searchParams])
 
   useEffect(() => {
-    if (isAtLimit && activeTab === 'create-project') {
-      setUpgradeOpen(true)
-    }
+    if (isAtLimit && activeTab === 'create-project') setUpgradeOpen(true)
   }, [isAtLimit, activeTab])
 
   useEffect(() => {
-    if (activeTab === 'create-ad') {
-      fetchAdvertisements()
-    } else if (activeTab === 'projects') {
-      fetchCarProjects()
-    }
-  }, [activeTab, userEmail])
+    if (activeTab === 'create-ad') fetchAdvertisements()
+    else if (activeTab === 'projects') fetchCarProjects()
+  }, [activeTab])
 
-  const fetchAdvertisements = async () => {
+  async function fetchAdvertisements() {
     try {
-      const response = await fetch('/api/ads')
-      if (response.ok) {
-        const data = await response.json()
-        setAdvertisements(data)
-      }
-    } catch (error) {
-      console.error('Error fetching advertisements:', error)
-    } finally {
-      setLoading(false)
-    }
+      const r = await fetch('/api/ads')
+      if (r.ok) setAdvertisements(await r.json())
+    } catch { /* silent */ } finally { setLoading(false) }
   }
 
-  const fetchCarProjects = async () => {
+  async function fetchCarProjects() {
+    setProjectsLoading(true)
     try {
-      setProjectsLoading(true)
-      const response = await fetch('/api/projects')
-      if (response.ok) {
-        const data = await response.json()
-        setCarProjects(data.projects || [])
-      }
-    } catch (error) {
-      console.error('Error fetching projects:', error)
-    } finally {
-      setProjectsLoading(false)
-    }
+      const r = await fetch('/api/projects')
+      if (r.ok) { const d = await r.json(); setCarProjects(d.projects || []) }
+    } catch { /* silent */ } finally { setProjectsLoading(false) }
   }
 
-  const handleAdCreated = () => {
-    setRenewAdType(undefined)
-    fetchAdvertisements()
-  }
-
-  const handleRenew = (adType: string) => {
-    setRenewAdType(adType)
-    setActiveTab("create-ad")
-    window.scrollTo({ top: 0, behavior: "smooth" })
-  }
-
-  const handleProjectCreated = (projectId: string) => {
-    // This will redirect to dashboard app, so we don't need to refresh here
-  }
-
-  const handleOpenProject = (projectId: string) => {
-    const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'http://localhost:3000'
-    window.location.href = `${dashboardUrl}?projectId=${projectId}&email=${userEmail}`
+  const handleAdCreated = () => { setRenewAdType(undefined); fetchAdvertisements() }
+  const handleRenew = (adType: string) => { setRenewAdType(adType); setActiveTab('create-ad'); window.scrollTo({ top: 0, behavior: 'smooth' }) }
+  const handleOpenProject = (id: string) => {
+    const url = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'http://localhost:3000'
+    window.location.href = `${url}?projectId=${id}&email=${userEmail}`
   }
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-8">
-      <TabsList>
-        <TabsTrigger value="projects">Car Projects</TabsTrigger>
-        <TabsTrigger value="create-project">New Project</TabsTrigger>
-        <TabsTrigger value="credits">AI Credits</TabsTrigger>
-        <TabsTrigger value="create-ad">Create Ad</TabsTrigger>
-        <TabsTrigger value="design-service">Design Service</TabsTrigger>
-        <TabsTrigger value="refer">Refer & Earn</TabsTrigger>
-      </TabsList>
+    <div className="space-y-6">
+
+      {/* ── Tab Navigation ─────────────────────────────────────────────── */}
+      <div className="flex overflow-x-auto scrollbar-hide gap-1 rounded-2xl border border-gray-200 bg-white p-1.5 shadow-sm">
+        {TABS.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            onClick={() => setActiveTab(id)}
+            className={cn(
+              "flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all",
+              activeTab === id
+                ? "bg-primary text-primary-foreground shadow-sm shadow-primary/30"
+                : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+            )}
+          >
+            <Icon className="h-4 w-4" />
+            <span className="hidden sm:inline">{label}</span>
+          </button>
+        ))}
+      </div>
 
       <UpgradeModal
         open={upgradeOpen}
@@ -143,75 +112,78 @@ export function DashboardTabs({ isAtLimit, isExpired, userEmail, userName, count
         country={country}
       />
 
-      <TabsContent value="projects" className="mt-6">
-        {/* Car Projects List */}
+      {/* ── Projects ───────────────────────────────────────────────────── */}
+      {activeTab === 'projects' && (
         <div>
-          <h2 className="text-lg font-semibold">Your Car Projects</h2>
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h2 className="text-lg font-semibold">Your Car Projects</h2>
+              <p className="text-sm text-muted-foreground">Click any project to open the editor</p>
+            </div>
+            <Button size="sm" className="gap-2" onClick={() => setActiveTab('create-project')} disabled={isAtLimit || !!isExpired}>
+              <Plus className="h-3.5 w-3.5" /> New
+            </Button>
+          </div>
+
           {projectsLoading ? (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">Loading projects...</p>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="rounded-2xl border border-border/50 bg-card animate-pulse">
+                  <div className="aspect-video bg-secondary/60 rounded-t-2xl" />
+                  <div className="p-4 space-y-2">
+                    <div className="h-4 bg-secondary/60 rounded w-3/4" />
+                    <div className="h-3 bg-secondary/40 rounded w-1/2" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : carProjects.length === 0 ? (
-            <div className="mt-6 rounded-xl border border-dashed border-border p-12 text-center">
-              <Folder className="mx-auto h-12 w-12 text-muted-foreground" />
-              <h3 className="mt-4 font-medium">No projects yet</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Create your first project to start customizing cars
+            <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-white py-20 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-4">
+                <Car className="h-8 w-8" />
+              </div>
+              <h3 className="text-base font-semibold">No projects yet</h3>
+              <p className="mt-1 text-sm text-muted-foreground max-w-xs">
+                Create your first project and start visualising car wraps, colours, and accessories.
               </p>
-              <Button 
-                onClick={() => setActiveTab('create-project')}
-                className="mt-4 gap-2" 
-                disabled={isAtLimit || !!isExpired}
-              >
-                <Plus className="h-4 w-4" />
-                Create Project
+              <Button onClick={() => setActiveTab('create-project')} className="mt-5 gap-2" disabled={isAtLimit || !!isExpired}>
+                <Plus className="h-4 w-4" /> Create First Project
               </Button>
             </div>
           ) : (
-            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {carProjects.map((project) => {
-                const projectId = project._id?.toString() || ''
-                const imageSrc =
-                  project.baseImage &&
-                  (project.baseImage.startsWith('data:') ||
-                    project.baseImage.startsWith('http://') ||
-                    project.baseImage.startsWith('https://'))
-                    ? project.baseImage
-                    : ''
+                const id = project._id?.toString() || ''
+                const img = project.baseImage && (project.baseImage.startsWith('data:') || project.baseImage.startsWith('http')) ? project.baseImage : ''
                 return (
                   <div
-                    key={projectId}
-                    className="group rounded-xl border border-border/50 bg-card p-4 transition-all hover:border-border hover:shadow-lg"
+                    key={id}
+                    className="group rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm transition-all hover:border-primary/40 hover:shadow-lg cursor-pointer"
+                    onClick={() => handleOpenProject(id)}
                   >
-                    {project.baseImage && (
-                      <div className="aspect-video rounded-lg bg-secondary overflow-hidden">
-                        <img 
-                          src={imageSrc} 
-                          alt={project.projectName}
-                          className="w-full h-full object-cover"
-                        />
+                    <div className="aspect-video bg-secondary/40 overflow-hidden relative">
+                      {img ? (
+                        <img src={img} alt={project.projectName} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-muted-foreground/30">
+                          <Car className="h-12 w-12" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+                        <span className="flex items-center gap-1.5 text-xs font-medium text-white">
+                          <ExternalLink className="h-3 w-3" /> Open in Editor
+                        </span>
                       </div>
-                    )}
-                    <div className="mt-4">
-                      <h3 className="font-medium group-hover:text-primary">
-                        {project.projectName}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-semibold truncate group-hover:text-primary transition-colors">{project.projectName}</h3>
+                      <p className="text-sm text-muted-foreground mt-0.5">
                         {project.carDetails.year} {project.carDetails.make} {project.carDetails.model}
                       </p>
-                      <p className="mt-1 flex items-center text-sm text-muted-foreground">
-                        <Clock className="mr-1 h-3 w-3" />
-                        {new Date(project.lastAccessedAt).toLocaleDateString()}
+                      <p className="mt-2 flex items-center gap-1 text-xs text-muted-foreground/70">
+                        <Clock className="h-3 w-3" />
+                        {new Date(project.lastAccessedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                       </p>
-                      <Button 
-                        onClick={() => handleOpenProject(projectId)}
-                        size="sm" 
-                        className="mt-4 w-full gap-1"
-                        variant="outline"
-                      >
-                        <ExternalLink className="h-3 w-3" />
-                        Open & Edit
-                      </Button>
                     </div>
                   </div>
                 )
@@ -219,22 +191,37 @@ export function DashboardTabs({ isAtLimit, isExpired, userEmail, userName, count
             </div>
           )}
         </div>
-      </TabsContent>
+      )}
 
-      <TabsContent value="create-project" className="mt-6">
-        <CreateCarProjectForm
-          userEmail={userEmail}
-          userName={userName}
-          onProjectCreated={handleProjectCreated}
-        />
-      </TabsContent>
+      {/* ── New Project ────────────────────────────────────────────────── */}
+      {activeTab === 'create-project' && (
+        <div>
+          <div className="mb-5">
+            <h2 className="text-lg font-semibold">Create New Project</h2>
+            <p className="text-sm text-muted-foreground">Start a new car customisation canvas</p>
+          </div>
+          <CreateCarProjectForm userEmail={userEmail} userName={userName} onProjectCreated={() => {}} />
+        </div>
+      )}
 
-      <TabsContent value="credits" className="mt-6">
-        <CreditsTab country={country} />
-      </TabsContent>
+      {/* ── AI Credits ─────────────────────────────────────────────────── */}
+      {activeTab === 'credits' && (
+        <div>
+          <div className="mb-5">
+            <h2 className="text-lg font-semibold">AI Credits</h2>
+            <p className="text-sm text-muted-foreground">Manage and top up your AI feature credits</p>
+          </div>
+          <CreditsTab country={country} />
+        </div>
+      )}
 
-      <TabsContent value="create-ad" className="mt-6">
-        <div className="space-y-6">
+      {/* ── Advertise ──────────────────────────────────────────────────── */}
+      {activeTab === 'create-ad' && (
+        <div className="space-y-8">
+          <div>
+            <h2 className="text-lg font-semibold">Advertising</h2>
+            <p className="text-sm text-muted-foreground">Create and manage your ad placements</p>
+          </div>
           <CreateAdForm
             userEmail={userEmail}
             userName={userName}
@@ -242,43 +229,56 @@ export function DashboardTabs({ isAtLimit, isExpired, userEmail, userName, count
             initialAdType={renewAdType}
             onAdCreated={handleAdCreated}
           />
-
           <div>
-            <h3 className="text-lg font-semibold mb-4">Your Advertisements</h3>
+            <h3 className="text-base font-semibold mb-4">Your Advertisements</h3>
             {loading ? (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">Loading advertisements...</p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {[...Array(2)].map((_, i) => (
+                  <div key={i} className="rounded-2xl border border-border/50 bg-card h-28 animate-pulse" />
+                ))}
               </div>
             ) : (
               <AdList advertisements={advertisements} onRenew={handleRenew} />
             )}
           </div>
         </div>
-      </TabsContent>
+      )}
 
-      <TabsContent value="design-service" className="mt-6">
-        <div className="space-y-10">
-          <div>
-            <h3 className="text-xl font-bold">Ad Creative Design Service</h3>
-            <p className="text-muted-foreground mt-1">
-              Let our team design a professional banner or vertical ad for your business. Fill in your brand brief, get AI copy suggestions, and we'll deliver a high-res creative in 2–3 business days.
-            </p>
+      {/* ── Design Service ─────────────────────────────────────────────── */}
+      {activeTab === 'design-service' && (
+        <div className="space-y-8">
+          <div className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 to-transparent p-6">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20 text-primary">
+                <Palette className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold">Ad Creative Design Service</h2>
+                <p className="text-sm text-muted-foreground">
+                  Professional banners designed by our team in 2–3 business days
+                </p>
+              </div>
+            </div>
           </div>
-          <CreativeBriefWizard
-            userEmail={userEmail}
-            userName={userName}
-            country={country}
-          />
-          <div className="border-t border-border/50 pt-8">
-            <h4 className="font-semibold mb-4">Your design requests</h4>
+          <CreativeBriefWizard userEmail={userEmail} userName={userName} country={country} />
+          <div className="border-t border-border/40 pt-8">
+            <h4 className="text-base font-semibold mb-4">Your Design Requests</h4>
             <DesignRequestList />
           </div>
         </div>
-      </TabsContent>
+      )}
 
-      <TabsContent value="refer" className="mt-6">
-        <ReferEarn />
-      </TabsContent>
-    </Tabs>
+      {/* ── Refer & Earn ───────────────────────────────────────────────── */}
+      {activeTab === 'refer' && (
+        <div>
+          <div className="mb-5">
+            <h2 className="text-lg font-semibold">Refer & Earn</h2>
+            <p className="text-sm text-muted-foreground">Share your link and earn credits for every signup</p>
+          </div>
+          <ReferEarn country={country} />
+        </div>
+      )}
+
+    </div>
   )
 }

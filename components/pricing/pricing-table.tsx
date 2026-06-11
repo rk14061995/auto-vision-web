@@ -60,10 +60,13 @@ export function PricingTable({ initialCountry }: PricingTableProps = {}) {
   return (
     <div className="space-y-12">
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center sm:gap-6">
-        {isLoading ? (
-          <div className="h-10 w-64 animate-pulse rounded-full bg-secondary" />
-        ) : (
-          <CountrySelector country={country} onChange={setCountry} />
+        {/* Country selector is hidden on regional pages — the URL already locks the country */}
+        {!initialCountry && (
+          isLoading ? (
+            <div className="h-10 w-64 animate-pulse rounded-full bg-secondary" />
+          ) : (
+            <CountrySelector country={country} onChange={setCountry} />
+          )
         )}
         <BillingCycleToggle cycle={cycle} onChange={setCycle} />
       </div>
@@ -82,7 +85,7 @@ export function PricingTable({ initialCountry }: PricingTableProps = {}) {
 
       <CreditPacksGrid country={country} />
 
-      <div className="mx-auto max-w-2xl rounded-2xl border border-border/50 bg-card/40 p-8">
+      <div className="mx-auto max-w-2xl rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
         <div className="flex flex-col items-center gap-6 sm:flex-row sm:justify-between">
           <div>
             <h3 className="text-xl font-semibold">{ENTERPRISE_PLAN.name}</h3>
