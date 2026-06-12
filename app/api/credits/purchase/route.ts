@@ -20,20 +20,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid credit pack" }, { status: 400 })
   }
 
-  // Delegate to the Razorpay order route to create the order and persist
-  // PurchaseOrder with kind=credit_pack. The verify route will grant credits
-  // when payment succeeds.
-  const orderRes = await fetch(
-    new URL("/api/razorpay/order", process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        cookie: request.headers.get("cookie") || "",
-      },
-      body: JSON.stringify({ kind: "credit_pack", creditPackId, currency }),
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+
+  // USD → PayPal one-time order; INR → Razorpay order
+  const apiPath = currency === "USD" ? "/api/paypal/create-order" : "/api/razorpay/order"
+
+  const orderRes = await fetch(new URL(apiPath, baseUrl), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      cookie: request.headers.get("cookie") || "",
     },
-  )
+    body: JSON.stringify({ kind: "credit_pack", creditPackId, currency }),
+  })
 
   const data = await orderRes.json()
   return NextResponse.json(data, { status: orderRes.status })
