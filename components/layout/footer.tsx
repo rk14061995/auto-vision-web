@@ -44,11 +44,11 @@ export function Footer() {
               AI-powered car customization for enthusiasts, wrap shops, and automotive businesses.
             </p>
             <a
-              href="mailto:support@auto-vision-pro.com"
+              href="mailto:autovisionpro07@gmail.com"
               className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary transition-colors"
             >
               <Mail className="h-3.5 w-3.5" />
-              support@auto-vision-pro.com
+              autovisionpro07@gmail.com
             </a>
           </div>
 

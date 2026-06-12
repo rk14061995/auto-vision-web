@@ -29,7 +29,7 @@ export default function TermsPage() {
 
       <h2>3. User Accounts</h2>
       <p>
-        You must provide accurate, current, and complete information when creating an account. You are responsible for maintaining the confidentiality of your login credentials and for all activity under your account. Notify us immediately at <a href="mailto:support@auto-vision-pro.com">support@auto-vision-pro.com</a> if you suspect unauthorised access.
+        You must provide accurate, current, and complete information when creating an account. You are responsible for maintaining the confidentiality of your login credentials and for all activity under your account. Notify us immediately at <a href="mailto:autovisionpro07@gmail.com">autovisionpro07@gmail.com</a> if you suspect unauthorised access.
       </p>
       <p>
         We reserve the right to suspend or terminate accounts that violate these terms, including accounts used for fraud, spam, or abuse of our AI credit system.
@@ -117,7 +117,7 @@ export default function TermsPage() {
 
       <h2>14. Contact</h2>
       <p>
-        Questions about these terms? Contact us at <a href="mailto:support@auto-vision-pro.com">support@auto-vision-pro.com</a> or via our <a href="/contact">Contact page</a>.
+        Questions about these terms? Contact us at <a href="mailto:autovisionpro07@gmail.com">autovisionpro07@gmail.com</a> or via our <a href="/contact">Contact page</a>.
       </p>
     </LegalPage>
   )

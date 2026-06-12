@@ -18,7 +18,7 @@ export default function RefundPage() {
         This policy applies to all purchases made on AutoVision Pro, including subscriptions, AI credit packs, advertising placements, creative design services, and website building services. Refund eligibility depends on the product type and the circumstances of the request.
       </p>
       <p>
-        To request a refund, email <a href="mailto:support@auto-vision-pro.com">support@auto-vision-pro.com</a> with your order details. We aim to respond within 2 business days.
+        To request a refund, email <a href="mailto:autovisionpro07@gmail.com">autovisionpro07@gmail.com</a> with your order details. We aim to respond within 2 business days.
       </p>
 
       <h2>2. Subscription Plans</h2>
@@ -82,7 +82,7 @@ export default function RefundPage() {
 
       <h2>7. How to Request a Refund</h2>
       <ol>
-        <li>Email <a href="mailto:support@auto-vision-pro.com">support@auto-vision-pro.com</a> with subject line &quot;Refund Request — [Order ID]&quot;.</li>
+        <li>Email <a href="mailto:autovisionpro07@gmail.com">autovisionpro07@gmail.com</a> with subject line &quot;Refund Request — [Order ID]&quot;.</li>
         <li>Include your registered email address, the product purchased, and the reason for your request.</li>
         <li>We will review and respond within 2 business days.</li>
         <li>Approved refunds are processed to the original payment method within 5–10 business days (Razorpay/PayPal processing times may vary).</li>
@@ -95,7 +95,7 @@ export default function RefundPage() {
 
       <h2>9. Contact</h2>
       <p>
-        For any refund questions, contact us at <a href="mailto:support@auto-vision-pro.com">support@auto-vision-pro.com</a> or use the <a href="/contact">Contact page</a>.
+        For any refund questions, contact us at <a href="mailto:autovisionpro07@gmail.com">autovisionpro07@gmail.com</a> or use the <a href="/contact">Contact page</a>.
       </p>
     </LegalPage>
   )

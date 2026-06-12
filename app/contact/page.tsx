@@ -72,8 +72,8 @@ export default function ContactPage() {
                   </div>
                   <span className="font-medium text-sm">Email</span>
                 </div>
-                <a href="mailto:support@auto-vision-pro.com" className="text-sm text-primary hover:underline break-all">
-                  support@auto-vision-pro.com
+                <a href="mailto:autovisionpro07@gmail.com" className="text-sm text-primary hover:underline break-all">
+                  autovisionpro07@gmail.com
                 </a>
               </div>
 

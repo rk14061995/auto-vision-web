@@ -61,7 +61,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "How do I get a refund?",
-    a: "Email support@auto-vision-pro.com with your order details. Refund eligibility depends on the product — see our full Refund Policy for details. We aim to respond within 2 business days.",
+    a: "Email autovisionpro07@gmail.com with your order details. Refund eligibility depends on the product — see our full Refund Policy for details. We aim to respond within 2 business days.",
   },
   {
     q: "Is AutoVision Pro available outside India and the US?",
