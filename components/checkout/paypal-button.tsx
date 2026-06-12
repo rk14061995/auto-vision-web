@@ -34,6 +34,7 @@ interface PayPalButtonsInstance {
 }
 
 interface PayPalButtonsConfig {
+  fundingSource?: string
   style?: {
     layout?: "vertical" | "horizontal"
     color?: "gold" | "blue" | "silver" | "white" | "black"
@@ -81,6 +82,7 @@ export function PayPalButton({
   const [loading, setLoading] = useState(true)
   const [renderError, setRenderError] = useState<string | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const cardContainerRef = useRef<HTMLDivElement>(null)
   const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ?? ""
 
   const ga4Item: GA4Item = {
@@ -95,56 +97,71 @@ export function PayPalButton({
   function handleSdkLoad() {
     if (!window.paypal || !containerRef.current) return
 
-    window.paypal
-      .Buttons({
-        style: {
-          shape: "pill",
-          color: "white",
-          layout: "vertical",
-          label: "subscribe",
-        },
-        onClick: (_data, actions) => {
-          if (!paypalPlanId) {
-            // Plan ID not yet configured in env — block checkout
-            setRenderError("Checkout is temporarily unavailable. Please try again later.")
-            actions.reject()
-            return
-          }
-          trackBeginCheckout(ga4Item)
-          trackPayPalButtonClicked({ planId, planName, priceUSD })
-        },
-        createSubscription: async (_data, actions) => {
-          trackPaymentInitiated(planId, priceUSD, "USD")
-          trackAddPaymentInfo(ga4Item, "paypal")
-          trackPayPalSubscriptionCreating({ planId, planName, paypalPlanId, priceUSD })
-          return actions.subscription.create({
-            plan_id: paypalPlanId,
-            custom_id: email ?? "",
-          })
-        },
-        onApprove: (data) => {
-          trackPayPalPaymentApproved({
-            planId,
-            planName,
-            subscriptionId: data.subscriptionID,
-            priceUSD,
-          })
-          onSuccess?.(data.subscriptionID)
-        },
-        onCancel: () => {
-          trackPaymentCancelled(planId, priceUSD, "USD")
-          trackPayPalPaymentCancelled({ planId, planName, paypalPlanId })
-          onCancel?.()
-        },
-        onError: (err) => {
-          const errMsg = err instanceof Error ? err.message : String(err)
-          trackPaymentFailed(planId, errMsg)
-          trackPayPalPaymentError({ planId, planName, errorMessage: errMsg })
-          setRenderError("Payment encountered an error. Please try again.")
-          onError?.(err)
-        },
-      })
-      .render(containerRef.current)
+    const sharedConfig: Omit<PayPalButtonsConfig, "style" | "fundingSource"> = {
+      onClick: (_data, actions) => {
+        if (!paypalPlanId) {
+          setRenderError("Checkout is temporarily unavailable. Please try again later.")
+          actions.reject()
+          return
+        }
+        trackBeginCheckout(ga4Item)
+        trackPayPalButtonClicked({ planId, planName, priceUSD })
+      },
+      createSubscription: async (_data, actions) => {
+        trackPaymentInitiated(planId, priceUSD, "USD")
+        trackAddPaymentInfo(ga4Item, "paypal")
+        trackPayPalSubscriptionCreating({ planId, planName, paypalPlanId, priceUSD })
+        return actions.subscription.create({
+          plan_id: paypalPlanId,
+          custom_id: email ?? "",
+        })
+      },
+      onApprove: (data) => {
+        trackPayPalPaymentApproved({
+          planId,
+          planName,
+          subscriptionId: data.subscriptionID,
+          priceUSD,
+        })
+        onSuccess?.(data.subscriptionID)
+      },
+      onCancel: () => {
+        trackPaymentCancelled(planId, priceUSD, "USD")
+        trackPayPalPaymentCancelled({ planId, planName, paypalPlanId })
+        onCancel?.()
+      },
+      onError: (err) => {
+        const errMsg = err instanceof Error ? err.message : String(err)
+        trackPaymentFailed(planId, errMsg)
+        trackPayPalPaymentError({ planId, planName, errorMessage: errMsg })
+        setRenderError("Payment encountered an error. Please try again.")
+        onError?.(err)
+      },
+    }
+
+    // PayPal button
+    const paypalBtn = window.paypal.Buttons({
+      ...sharedConfig,
+      style: { shape: "pill", color: "white", layout: "vertical", label: "subscribe" },
+    })
+
+    // Card button (debit / credit)
+    const cardBtn = window.paypal.Buttons({
+      ...sharedConfig,
+      fundingSource: window.paypal.FUNDING.CARD,
+      style: { shape: "pill", color: "black", layout: "vertical" },
+    })
+
+    const renders: Promise<void>[] = []
+
+    if (paypalBtn.isEligible() && containerRef.current) {
+      renders.push(paypalBtn.render(containerRef.current))
+    }
+    if (cardBtn.isEligible() && cardContainerRef.current) {
+      renders.push(cardBtn.render(cardContainerRef.current))
+    }
+
+    Promise.all(renders)
       .then(() => {
         setLoading(false)
         trackPayPalButtonRendered({ planId, planName, priceUSD })
@@ -160,7 +177,7 @@ export function PayPalButton({
   return (
     <>
       <Script
-        src={`https://www.paypal.com/sdk/js?client-id=${clientId}&vault=true&intent=subscription&currency=USD&components=buttons`}
+        src={`https://www.paypal.com/sdk/js?client-id=${clientId}&vault=true&intent=subscription&currency=USD&components=buttons&enable-funding=card`}
         strategy="lazyOnload"
         onLoad={handleSdkLoad}
         onError={() => {
@@ -183,8 +200,12 @@ export function PayPalButton({
         </p>
       )}
 
-      {/* PayPal renders its hosted button into this div */}
-      <div ref={containerRef} className={loading ? "hidden" : "block"} />
+      <div className={loading ? "hidden" : "flex flex-col gap-3"}>
+        {/* PayPal button */}
+        <div ref={containerRef} />
+        {/* Debit / Credit card button */}
+        <div ref={cardContainerRef} />
+      </div>
     </>
   )
 }
