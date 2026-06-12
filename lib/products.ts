@@ -107,7 +107,7 @@ export const AD_TYPES: AdType[] = [
     duration: 30,
     pricing: {
       IN: { amount: 99, currency: "INR" },
-      US: { amount: 40, currency: "USD" },
+      US: { amount: 49, currency: "USD" },
     },
     dimensions: "1200x300px",
     maxImages: 1,
@@ -120,7 +120,7 @@ export const AD_TYPES: AdType[] = [
     duration: 7,
     pricing: {
       IN: { amount: 100, currency: "INR" },
-      US: { amount: 35, currency: "USD" },
+      US: { amount: 39, currency: "USD" },
     },
     dimensions: "400x700px",
     maxImages: 3,
@@ -146,7 +146,7 @@ export const AD_TYPES: AdType[] = [
     duration: 30,
     pricing: {
       IN: { amount: 9999, currency: "INR" },
-      US: { amount: 250, currency: "USD" },
+      US: { amount: 299, currency: "USD" },
     },
     dimensions: "1200x400px",
     maxImages: 1,
@@ -160,10 +160,10 @@ export const DESIGN_SERVICE_PRICES: Record<
   DesignAdType,
   { IN: { amount: number; currency: "INR" }; US: { amount: number; currency: "USD" } }
 > = {
-  banner:           { IN: { amount: 199,  currency: "INR" }, US: { amount: 20, currency: "USD" } },
-  vertical_basic:   { IN: { amount: 499,  currency: "INR" }, US: { amount: 30, currency: "USD" } },
-  vertical_premium: { IN: { amount: 1499, currency: "INR" }, US: { amount: 45, currency: "USD" } },
-  landing_hero:     { IN: { amount: 1999, currency: "INR" }, US: { amount: 75, currency: "USD" } },
+  banner:           { IN: { amount: 199,  currency: "INR" }, US: { amount: 19, currency: "USD" } },
+  vertical_basic:   { IN: { amount: 499,  currency: "INR" }, US: { amount: 29, currency: "USD" } },
+  vertical_premium: { IN: { amount: 1499, currency: "INR" }, US: { amount: 49, currency: "USD" } },
+  landing_hero:     { IN: { amount: 1999, currency: "INR" }, US: { amount: 99, currency: "USD" } },
 }
 
 export function getDesignServicePrice(adType: string, country: "IN" | "US") {
