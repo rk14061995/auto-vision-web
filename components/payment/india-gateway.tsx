@@ -2,7 +2,8 @@
 
 import { cn } from "@/lib/utils"
 
-export type IndiaGateway = "razorpay" | "payu" | "cashfree"
+// "payu" removed from active gateways — account not yet activated
+export type IndiaGateway = "razorpay" | "cashfree" /* | "payu" */
 
 interface Props {
   selected: IndiaGateway
@@ -17,6 +18,7 @@ const GATEWAYS: { id: IndiaGateway; label: string; methods: string; color: strin
     color: "bg-[#072654]",
     textColor: "text-white",
   },
+  /* PayU disabled — account not activated
   {
     id: "payu",
     label: "PayU",
@@ -24,6 +26,7 @@ const GATEWAYS: { id: IndiaGateway; label: string; methods: string; color: strin
     color: "bg-[#4a90d9]",
     textColor: "text-white",
   },
+  */
   {
     id: "cashfree",
     label: "Cashfree",
@@ -69,7 +72,7 @@ export function IndiaGatewaySelector({ selected, onChange }: Props) {
   )
 }
 
-/** Dynamically submit a form to PayU from field data returned by /api/payu/create-order */
+/* PayU disabled — account not activated
 export function submitPayUForm(fields: Record<string, string>, formUrl: string) {
   const form = document.createElement("form")
   form.method = "POST"
@@ -84,3 +87,4 @@ export function submitPayUForm(fields: Record<string, string>, formUrl: string) 
   document.body.appendChild(form)
   form.submit()
 }
+*/

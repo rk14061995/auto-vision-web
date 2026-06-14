@@ -21,7 +21,7 @@ import {
 } from "@/lib/gtag"
 import {
   IndiaGatewaySelector,
-  submitPayUForm,
+  // submitPayUForm, // PayU disabled — account not activated
   type IndiaGateway,
 } from "@/components/payment/india-gateway"
 
@@ -112,6 +112,7 @@ export function RazorpayCheckout({
     trackBeginCheckout(ga4Item)
   })
 
+  /* PayU disabled — account not activated
   async function handlePayU() {
     setIsLoading(true)
     try {
@@ -128,6 +129,7 @@ export function RazorpayCheckout({
       setIsLoading(false)
     }
   }
+  */
 
   async function handleCashfree() {
     setIsLoading(true)
@@ -190,7 +192,7 @@ export function RazorpayCheckout({
   }
 
   async function handlePayment() {
-    if (gateway === "payu") return handlePayU()
+    // if (gateway === "payu") return handlePayU() // PayU disabled
     if (gateway === "cashfree") return handleCashfree()
     setIsLoading(true)
 
@@ -408,15 +410,13 @@ export function RazorpayCheckout({
         size="lg"
       >
         {isLoading
-          ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{gateway === "payu" ? "Redirecting to PayU…" : "Processing…"}</>
-          : <><CreditCard className="mr-2 h-4 w-4" />Pay {formatPrice((quote?.finalAmount ?? amount), "INR")} via {gateway === "payu" ? "PayU" : gateway === "cashfree" ? "Cashfree" : "Razorpay"}</>
+          ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{"Processing…"}</>
+          : <><CreditCard className="mr-2 h-4 w-4" />Pay {formatPrice((quote?.finalAmount ?? amount), "INR")} via {gateway === "cashfree" ? "Cashfree" : "Razorpay"}</>
         }
       </Button>
 
       <p className="text-center text-xs text-muted-foreground">
-        {gateway === "payu"
-          ? "You will be redirected to PayU's secure checkout."
-          : gateway === "cashfree"
+        {gateway === "cashfree"
           ? "A secure Cashfree payment popup will open."
           : "You will be redirected to Razorpay's secure checkout."}
       </p>

@@ -5,7 +5,7 @@ import Script from "next/script"
 import { Sparkles, Zap, RotateCcw, Plus, AlertTriangle, EyeOff, CheckCircle, Loader2 } from "lucide-react"
 import { CREDIT_PACKS } from "@/lib/credit-packs"
 import { formatPlanPrice } from "@/lib/plans"
-import { IndiaGatewaySelector, submitPayUForm, type IndiaGateway } from "@/components/payment/india-gateway"
+import { IndiaGatewaySelector, /* submitPayUForm, */ type IndiaGateway } from "@/components/payment/india-gateway"
 
 declare global {
   interface Window {
@@ -124,6 +124,7 @@ export function CreditsTab({ country }: { country: "IN" | "US" }) {
     await load()
   }
 
+  /* PayU disabled — account not activated
   async function launchPayU(packId: string) {
     const res = await fetch("/api/payu/create-order", {
       method: "POST",
@@ -134,6 +135,7 @@ export function CreditsTab({ country }: { country: "IN" | "US" }) {
     if (!res.ok || !json.fields) throw new Error(json.error || "Could not start PayU checkout")
     submitPayUForm(json.fields, json.formUrl)
   }
+  */
 
   async function buy(packId: string) {
     setPurchasing(packId)
@@ -147,8 +149,8 @@ export function CreditsTab({ country }: { country: "IN" | "US" }) {
         const json = await res.json()
         if (!res.ok || !json.approveUrl) throw new Error(json.error || "Could not start checkout")
         window.location.href = json.approveUrl
-      } else if (gateway === "payu") {
-        await launchPayU(packId)
+      // } else if (gateway === "payu") { // PayU disabled
+      //   await launchPayU(packId)
       } else if (gateway === "cashfree") {
         await launchCashfree("credit_pack", packId)
       } else {

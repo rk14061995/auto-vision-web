@@ -8,7 +8,7 @@ import { Loader2, CreditCard } from "lucide-react"
 import { type AdType, formatPrice } from "@/lib/products"
 import {
   IndiaGatewaySelector,
-  submitPayUForm,
+  // submitPayUForm, // PayU disabled — account not activated
   type IndiaGateway,
 } from "@/components/payment/india-gateway"
 
@@ -162,6 +162,7 @@ export function AdPayment({
     }
   }
 
+  /* PayU disabled — account not activated
   async function handlePayU() {
     setIsLoading(true)
     try {
@@ -178,10 +179,11 @@ export function AdPayment({
       setIsLoading(false)
     }
   }
+  */
 
   async function handlePay() {
     if (isUS) return handlePayPal()
-    if (gateway === "payu") return handlePayU()
+    // if (gateway === "payu") return handlePayU() // PayU disabled
     if (gateway === "cashfree") return handleCashfree()
     return handleRazorpay()
   }
@@ -224,7 +226,7 @@ export function AdPayment({
       <Button onClick={handlePay} disabled={isLoading} className="w-full" size="lg">
         {isLoading ? (
           <><Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            {isUS ? "Redirecting to PayPal…" : gateway === "payu" ? "Redirecting to PayU…" : gateway === "cashfree" ? "Opening Cashfree…" : "Processing…"}
+            {isUS ? "Redirecting to PayPal…" : gateway === "cashfree" ? "Opening Cashfree…" : "Processing…"}
           </>
         ) : (
           <><CreditCard className="mr-2 h-4 w-4" />Pay {formatPrice(amount, currency)}</>

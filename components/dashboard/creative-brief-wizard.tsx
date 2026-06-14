@@ -17,7 +17,7 @@ import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import {
   IndiaGatewaySelector,
-  submitPayUForm,
+  // submitPayUForm, // PayU disabled — account not activated
   type IndiaGateway,
 } from "@/components/payment/india-gateway"
 
@@ -155,6 +155,7 @@ export function CreativeBriefWizard({ userEmail, userName, country = "IN" }: Pro
     }
   }
 
+  /* PayU disabled — account not activated
   async function handlePayU() {
     setPaying(true)
     try {
@@ -175,6 +176,7 @@ export function CreativeBriefWizard({ userEmail, userName, country = "IN" }: Pro
       setPaying(false)
     }
   }
+  */
 
   async function handleCashfree() {
     setPaying(true)
@@ -571,14 +573,14 @@ export function CreativeBriefWizard({ userEmail, userName, country = "IN" }: Pro
           )}
 
           <Button
-            onClick={isUS ? handlePayPal : gateway === "payu" ? handlePayU : gateway === "cashfree" ? handleCashfree : handleRazorpay}
+            onClick={isUS ? handlePayPal : /* gateway === "payu" ? handlePayU : */ gateway === "cashfree" ? handleCashfree : handleRazorpay}
             disabled={paying || submitting}
             className={cn("w-full", isUS && "bg-[#0070ba] hover:bg-[#003087] text-white")}
             size="lg"
           >
             {paying || submitting
               ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {isUS ? "Redirecting to PayPal…" : gateway === "payu" ? "Redirecting to PayU…" : gateway === "cashfree" ? "Opening Cashfree…" : "Processing…"}
+                  {isUS ? "Redirecting to PayPal…" : gateway === "cashfree" ? "Opening Cashfree…" : "Processing…"}
                 </>
               : <><CreditCard className="mr-2 h-4 w-4" />Pay {formatPrice(pricing.amount, pricing.currency)}</>
             }
