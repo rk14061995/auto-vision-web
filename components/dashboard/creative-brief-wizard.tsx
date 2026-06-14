@@ -35,6 +35,12 @@ interface Props {
 declare global {
   interface Window {
     Razorpay: new (opts: Record<string, unknown>) => { open(): void }
+    Cashfree: (config: { mode: "sandbox" | "production" }) => {
+      checkout: (opts: { paymentSessionId: string; redirectTarget: "_modal" | "_self" }) => Promise<{
+        error?: { message: string; code: string }
+        paymentDetails?: { paymentMessage: string }
+      }>
+    }
   }
 }
 
@@ -170,6 +176,41 @@ export function CreativeBriefWizard({ userEmail, userName, country = "IN" }: Pro
     }
   }
 
+  async function handleCashfree() {
+    setPaying(true)
+    try {
+      const rid = requestId ?? (await saveRequestAndGetId())
+      if (!rid) { setPaying(false); return }
+      setRequestId(rid)
+
+      const orderRes = await fetch("/api/cashfree/order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind: "design_request", adType, requestId: rid }),
+      })
+      const orderData = await orderRes.json()
+      if (!orderRes.ok || !orderData.paymentSessionId) throw new Error(orderData.error ?? "Failed to create order")
+      if (!window.Cashfree) throw new Error("Cashfree SDK not loaded")
+
+      const cfMode = (process.env.NEXT_PUBLIC_CASHFREE_MODE ?? "sandbox") as "sandbox" | "production"
+      const cashfree = window.Cashfree({ mode: cfMode })
+      const result = await cashfree.checkout({ paymentSessionId: orderData.paymentSessionId, redirectTarget: "_modal" })
+      if (result.error) throw new Error(result.error.message ?? "Payment failed")
+
+      const vRes = await fetch("/api/cashfree/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: orderData.orderId, requestId: rid }),
+      })
+      if (!vRes.ok) throw new Error("Payment verification failed")
+      toast.success("Payment successful!")
+      setStep("done")
+    } catch (err) {
+      toast.error((err as Error).message)
+      setPaying(false)
+    }
+  }
+
   async function handleRazorpay() {
     setPaying(true)
     try {
@@ -246,7 +287,12 @@ export function CreativeBriefWizard({ userEmail, userName, country = "IN" }: Pro
 
   return (
     <>
-      {!isUS && <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />}
+      {!isUS && (
+        <>
+          <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+          <Script src="https://sdk.cashfree.com/js/v3/cashfree.js" strategy="lazyOnload" />
+        </>
+      )}
 
       {/* Step indicator */}
       <div className="flex items-center gap-2 mb-8 text-sm">
@@ -525,14 +571,14 @@ export function CreativeBriefWizard({ userEmail, userName, country = "IN" }: Pro
           )}
 
           <Button
-            onClick={isUS ? handlePayPal : gateway === "payu" ? handlePayU : handleRazorpay}
+            onClick={isUS ? handlePayPal : gateway === "payu" ? handlePayU : gateway === "cashfree" ? handleCashfree : handleRazorpay}
             disabled={paying || submitting}
             className={cn("w-full", isUS && "bg-[#0070ba] hover:bg-[#003087] text-white")}
             size="lg"
           >
             {paying || submitting
               ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {isUS ? "Redirecting to PayPal…" : gateway === "payu" ? "Redirecting to PayU…" : "Processing…"}
+                  {isUS ? "Redirecting to PayPal…" : gateway === "payu" ? "Redirecting to PayU…" : gateway === "cashfree" ? "Opening Cashfree…" : "Processing…"}
                 </>
               : <><CreditCard className="mr-2 h-4 w-4" />Pay {formatPrice(pricing.amount, pricing.currency)}</>
             }

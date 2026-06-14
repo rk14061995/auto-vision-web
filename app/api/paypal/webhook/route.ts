@@ -19,6 +19,12 @@ import {
 import { computeFreePlanExpiresAt } from "@/lib/subscription-access"
 import { applyReferralRewards } from "@/lib/referrals"
 import { writeUsageEvent } from "@/lib/usage"
+import {
+  sendPaymentSuccessEmail,
+  sendPaymentFailedEmail,
+  sendSubscriptionCancelledEmail,
+  sendSubscriptionPausedEmail,
+} from "@/lib/email"
 
 export async function POST(request: Request) {
   const webhookId = process.env.PAYPAL_WEBHOOK_ID
@@ -109,6 +115,18 @@ export async function POST(request: Request) {
           subscriptionId,
           paypalPlanId,
         })
+        const { planType: pt, projectLimit: pl } = mapPayPalPlanIdToTier(paypalPlanId)
+        sendPaymentSuccessEmail({
+          name: userBefore?.name || userEmail,
+          email: userEmail,
+          planOrItem: pt,
+          amount: "—",
+          currency: "USD",
+          orderId: subscriptionId ?? eventId,
+          provider: "PayPal",
+          kind: "subscription",
+        }).catch(console.error)
+        void pl
         break
       }
 
@@ -139,6 +157,8 @@ export async function POST(request: Request) {
           provider: "paypal",
           subscriptionId: getPayPalSubscriptionId(payload),
         })
+        const suspUser = await getUserByEmail(userEmail)
+        sendSubscriptionPausedEmail(suspUser?.name || userEmail, userEmail).catch(console.error)
         break
       }
 
@@ -157,11 +177,12 @@ export async function POST(request: Request) {
           provider: "paypal",
           eventType,
         })
+        const cancelUser = await getUserByEmail(userEmail)
+        sendSubscriptionCancelledEmail(cancelUser?.name || userEmail, userEmail).catch(console.error)
         break
       }
 
       case "PAYMENT.SALE.COMPLETED": {
-        // Renewal payment — extend subscription expiry, clear dunning flag
         const subscriptionId = getPayPalSubscriptionId(payload)
         await updateUser(userEmail, { dunning: false })
         await writeUsageEvent(userEmail, "payment_received", {
@@ -170,6 +191,17 @@ export async function POST(request: Request) {
           amount: payload.resource.amount?.total,
           currency: payload.resource.amount?.currency_code,
         })
+        const saleUser = await getUserByEmail(userEmail)
+        sendPaymentSuccessEmail({
+          name: saleUser?.name || userEmail,
+          email: userEmail,
+          planOrItem: "Subscription renewal",
+          amount: String(payload.resource.amount?.total ?? "—"),
+          currency: payload.resource.amount?.currency_code ?? "USD",
+          orderId: subscriptionId ?? eventId,
+          provider: "PayPal",
+          kind: "subscription",
+        }).catch(console.error)
         break
       }
 
@@ -181,6 +213,8 @@ export async function POST(request: Request) {
           reason: eventType.toLowerCase(),
           subscriptionId: getPayPalSubscriptionId(payload),
         })
+        const deniedUser = await getUserByEmail(userEmail)
+        sendPaymentFailedEmail(deniedUser?.name || userEmail, userEmail, "PayPal", eventType).catch(console.error)
         break
       }
 

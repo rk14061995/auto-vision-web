@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils"
 
-export type IndiaGateway = "razorpay" | "payu"
+export type IndiaGateway = "razorpay" | "payu" | "cashfree"
 
 interface Props {
   selected: IndiaGateway
@@ -24,13 +24,20 @@ const GATEWAYS: { id: IndiaGateway; label: string; methods: string; color: strin
     color: "bg-[#4a90d9]",
     textColor: "text-white",
   },
+  {
+    id: "cashfree",
+    label: "Cashfree",
+    methods: "Cards · UPI · Net Banking · EMI",
+    color: "bg-[#2cba6e]",
+    textColor: "text-white",
+  },
 ]
 
 export function IndiaGatewaySelector({ selected, onChange }: Props) {
   return (
     <div className="space-y-2">
       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Payment gateway</p>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         {GATEWAYS.map((g) => (
           <button
             key={g.id}

@@ -37,6 +37,12 @@ declare global {
     Razorpay: new (options: Record<string, unknown>) => {
       open: () => void
     }
+    Cashfree: (config: { mode: "sandbox" | "production" }) => {
+      checkout: (options: { paymentSessionId: string; redirectTarget: "_modal" | "_self" }) => Promise<{
+        error?: { message: string; code: string }
+        paymentDetails?: { paymentMessage: string }
+      }>
+    }
   }
 }
 
@@ -112,10 +118,7 @@ export function RazorpayCheckout({
       const res = await fetch("/api/payu/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          kind: "subscription",
-          planId: plan.id,
-        }),
+        body: JSON.stringify({ kind: "subscription", planId: plan.id }),
       })
       const json = await res.json()
       if (!res.ok || !json.fields) throw new Error(json.error || "Could not start PayU checkout")
@@ -126,8 +129,69 @@ export function RazorpayCheckout({
     }
   }
 
+  async function handleCashfree() {
+    setIsLoading(true)
+    try {
+      const orderRes = await fetch("/api/cashfree/order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planId: plan.id,
+          couponCode: quote?.couponCode || undefined,
+          useCredits,
+          currency,
+        }),
+      })
+      const orderData = await orderRes.json()
+      if (!orderRes.ok || !orderData.paymentSessionId) {
+        throw new Error(orderData.error || "Failed to create Cashfree order")
+      }
+
+      if (!window.Cashfree) throw new Error("Cashfree SDK not loaded")
+
+      const cfMode = (process.env.NEXT_PUBLIC_CASHFREE_MODE ?? "sandbox") as "sandbox" | "production"
+      const cashfree = window.Cashfree({ mode: cfMode })
+
+      trackPaymentInitiated(plan.id, amount, "INR")
+      setIsProcessing(true)
+
+      const result = await cashfree.checkout({
+        paymentSessionId: orderData.paymentSessionId,
+        redirectTarget: "_modal",
+      })
+
+      if (result.error) {
+        throw new Error(result.error.message || "Payment failed")
+      }
+
+      // Verify with server
+      const verifyRes = await fetch("/api/cashfree/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: orderData.orderId }),
+      })
+
+      if (!verifyRes.ok) {
+        throw new Error("Payment verification failed")
+      }
+
+      trackPurchase({ transaction_id: orderData.orderId, value: amount, currency: "INR", item: ga4Item })
+      await updateSession()
+      toast.success("Payment successful!")
+      router.push("/dashboard")
+      router.refresh()
+    } catch (error) {
+      console.error("Cashfree error:", error)
+      trackPaymentFailed(plan.id, error instanceof Error ? error.message : "cashfree_error")
+      toast.error((error as Error).message || "Payment failed. Please try again.")
+      setIsProcessing(false)
+      setIsLoading(false)
+    }
+  }
+
   async function handlePayment() {
     if (gateway === "payu") return handlePayU()
+    if (gateway === "cashfree") return handleCashfree()
     setIsLoading(true)
 
     try {
@@ -237,6 +301,7 @@ export function RazorpayCheckout({
   return (
     <div className="space-y-6">
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+      <Script src="https://sdk.cashfree.com/js/v3/cashfree.js" strategy="lazyOnload" />
       {/* Order Summary */}
       <div className="rounded-lg border border-border/50 bg-secondary/30 p-4">
         <div className="flex items-center justify-between">
@@ -344,13 +409,15 @@ export function RazorpayCheckout({
       >
         {isLoading
           ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{gateway === "payu" ? "Redirecting to PayU…" : "Processing…"}</>
-          : <><CreditCard className="mr-2 h-4 w-4" />Pay {formatPrice((quote?.finalAmount ?? amount), "INR")}</>
+          : <><CreditCard className="mr-2 h-4 w-4" />Pay {formatPrice((quote?.finalAmount ?? amount), "INR")} via {gateway === "payu" ? "PayU" : gateway === "cashfree" ? "Cashfree" : "Razorpay"}</>
         }
       </Button>
 
       <p className="text-center text-xs text-muted-foreground">
         {gateway === "payu"
           ? "You will be redirected to PayU's secure checkout."
+          : gateway === "cashfree"
+          ? "A secure Cashfree payment popup will open."
           : "You will be redirected to Razorpay's secure checkout."}
       </p>
     </div>

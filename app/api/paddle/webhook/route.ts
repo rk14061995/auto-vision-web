@@ -21,6 +21,13 @@ import { grant as grantAiCredits } from "@/lib/credits"
 import { getCreditPackById } from "@/lib/credit-packs"
 import { applyReferralRewards } from "@/lib/referrals"
 import { writeUsageEvent } from "@/lib/usage"
+import {
+  sendPaymentSuccessEmail,
+  sendCreditPackEmail,
+  sendPaymentFailedEmail,
+  sendSubscriptionCancelledEmail,
+  sendSubscriptionPausedEmail,
+} from "@/lib/email"
 
 export async function POST(request: Request) {
   const secret = process.env.PADDLE_WEBHOOK_SECRET
@@ -65,6 +72,7 @@ export async function POST(request: Request) {
       case "transaction.completed": {
         const priceId = getPaddlePriceId(payload)
 
+        const txUser = await getUserByEmail(userEmail)
         if (customData?.kind === "credit_pack" && customData.creditPackId) {
           const pack = getCreditPackById(customData.creditPackId)
           if (pack) {
@@ -82,6 +90,15 @@ export async function POST(request: Request) {
               packId: pack.id,
               credits: pack.credits,
             })
+            sendCreditPackEmail({
+              name: txUser?.name || userEmail,
+              email: userEmail,
+              credits: pack.credits,
+              packName: pack.id,
+              orderId: payload.data.id,
+              amount: "—",
+              currency: "USD",
+            }).catch(console.error)
           }
         } else if (priceId) {
           const { planType } = mapPriceToPlan(priceId)
@@ -110,6 +127,16 @@ export async function POST(request: Request) {
               provider: "paddle",
               orderId: payload.data.id,
             })
+            sendPaymentSuccessEmail({
+              name: txUser?.name || userEmail,
+              email: userEmail,
+              planOrItem: planType,
+              amount: "—",
+              currency: "USD",
+              orderId: payload.data.id,
+              provider: "Paddle",
+              kind: "subscription",
+            }).catch(console.error)
           }
         }
         break
@@ -142,6 +169,16 @@ export async function POST(request: Request) {
           currency: "USD",
           paidCountBefore,
         })
+        sendPaymentSuccessEmail({
+          name: userBefore?.name || userEmail,
+          email: userEmail,
+          planOrItem: planType,
+          amount: "—",
+          currency: "USD",
+          orderId: payload.data.id,
+          provider: "Paddle",
+          kind: "subscription",
+        }).catch(console.error)
         break
       }
 
@@ -167,16 +204,22 @@ export async function POST(request: Request) {
           reason: "payment_failed",
           transactionId: payload.data.id,
         })
+        const failUser = await getUserByEmail(userEmail)
+        sendPaymentFailedEmail(failUser?.name || userEmail, userEmail, "Paddle").catch(console.error)
         break
       }
 
       case "subscription.past_due": {
         await updateUser(userEmail, { dunning: true })
+        const pastDueUser = await getUserByEmail(userEmail)
+        sendPaymentFailedEmail(pastDueUser?.name || userEmail, userEmail, "Paddle", "Subscription is past due").catch(console.error)
         break
       }
 
       case "subscription.paused": {
         await updateUser(userEmail, { dunning: true })
+        const pausedUser = await getUserByEmail(userEmail)
+        sendSubscriptionPausedEmail(pausedUser?.name || userEmail, userEmail).catch(console.error)
         break
       }
 
@@ -193,6 +236,8 @@ export async function POST(request: Request) {
           pendingDowngradeTo: "free",
           pendingDowngradeAt: endsAt ? new Date(endsAt) : null,
         })
+        const cancelledUser = await getUserByEmail(userEmail)
+        sendSubscriptionCancelledEmail(cancelledUser?.name || userEmail, userEmail, endsAt ?? undefined).catch(console.error)
         break
       }
 
