@@ -23,26 +23,27 @@ export async function generateMetadata({
   const r = region as Region
   const content = REGION_CONTENT[r]
   const currency = REGION_CURRENCY[r]
-  const title =
+  const pageTitle =
     r === "us"
-      ? "AutoVision Pro — Virtual Car Customization for US Businesses"
-      : "AutoVision Pro — India's Virtual Car Customization Platform"
+      ? "Virtual Car Customization for US Businesses"
+      : "India's Virtual Car Customization Platform"
+  const socialTitle = `AutoVision Pro — ${pageTitle}`
   const description =
     r === "us"
       ? `The leading virtual car customization platform for American automotive businesses. Pitch wraps, color swaps, and mods in ${currency} — before any work begins.`
       : `India ka #1 virtual car customization platform. AI-powered wrap designs aur colour variants — ₹0 se shuru karein.`
 
   return {
-    title,
+    title: pageTitle,
     description,
     openGraph: {
-      title,
+      title: socialTitle,
       description,
       url: `${APP_URL}/${r}/`,
       images: [{ url: "/og-image.png", width: 1200, height: 630 }],
     },
     twitter: {
-      title,
+      title: socialTitle,
       description,
       images: ["/og-image.png"],
     },

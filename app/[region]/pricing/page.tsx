@@ -18,20 +18,21 @@ export async function generateMetadata({
   if (!isValidRegion(region)) return {}
 
   const r = region as Region
-  const title =
+  const pageTitle =
     r === "us"
-      ? "Pricing in USD — AutoVision Pro"
-      : "INR Pricing — AutoVision Pro"
+      ? "USD Pricing for Wrap Shops & Dealerships"
+      : "INR Pricing for Car Wrap Shops & Garages"
+  const socialTitle = `AutoVision Pro — ${pageTitle}`
   const description =
     r === "us"
       ? "AutoVision Pro plans in USD. From free to enterprise — built for US wrap shops, dealerships, and automotive brands."
       : "AutoVision Pro ke plans INR mein. Free se enterprise tak — Indian wrap shops, garages aur dealerships ke liye."
 
   return {
-    title,
+    title: pageTitle,
     description,
     openGraph: {
-      title,
+      title: socialTitle,
       description,
       url: `${APP_URL}/${r}/pricing`,
       images: [{ url: "/og-image.png", width: 1200, height: 630 }],
