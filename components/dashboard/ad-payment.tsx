@@ -8,7 +8,7 @@ import { Loader2, CreditCard } from "lucide-react"
 import { type AdType, formatPrice } from "@/lib/products"
 import {
   IndiaGatewaySelector,
-  submitPayUForm,
+  // submitPayUForm, // PayU disabled — account not activated
   type IndiaGateway,
 } from "@/components/payment/india-gateway"
 
@@ -25,6 +25,12 @@ interface AdPaymentProps {
 declare global {
   interface Window {
     Razorpay: new (options: Record<string, unknown>) => { open: () => void }
+    Cashfree: (config: { mode: "sandbox" | "production" }) => {
+      checkout: (opts: { paymentSessionId: string; redirectTarget: "_modal" | "_self" }) => Promise<{
+        error?: { message: string; code: string }
+        paymentDetails?: { paymentMessage: string }
+      }>
+    }
   }
 }
 
@@ -121,6 +127,42 @@ export function AdPayment({
     }
   }
 
+  async function handleCashfree() {
+    setIsLoading(true)
+    try {
+      const orderRes = await fetch("/api/cashfree/order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind: "ad", adType: adType.id }),
+      })
+      const orderData = await orderRes.json()
+      if (!orderRes.ok || !orderData.paymentSessionId) throw new Error(orderData.error || "Failed to create order")
+      if (!window.Cashfree) throw new Error("Cashfree SDK not loaded")
+
+      const cfMode = (process.env.NEXT_PUBLIC_CASHFREE_MODE ?? "sandbox") as "sandbox" | "production"
+      const cashfree = window.Cashfree({ mode: cfMode })
+      setIsProcessing(true)
+
+      const result = await cashfree.checkout({ paymentSessionId: orderData.paymentSessionId, redirectTarget: "_modal" })
+      if (result.error) throw new Error(result.error.message || "Payment failed")
+
+      const verifyRes = await fetch("/api/cashfree/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: orderData.orderId }),
+      })
+      if (!verifyRes.ok) throw new Error("Payment verification failed")
+
+      toast.success("Payment successful!")
+      onPaymentSuccess(orderData.orderId)
+    } catch (error) {
+      toast.error((error as Error).message || "Payment failed. Please try again.")
+      setIsProcessing(false)
+      setIsLoading(false)
+    }
+  }
+
+  /* PayU disabled — account not activated
   async function handlePayU() {
     setIsLoading(true)
     try {
@@ -137,10 +179,12 @@ export function AdPayment({
       setIsLoading(false)
     }
   }
+  */
 
   async function handlePay() {
     if (isUS) return handlePayPal()
-    if (gateway === "payu") return handlePayU()
+    // if (gateway === "payu") return handlePayU() // PayU disabled
+    if (gateway === "cashfree") return handleCashfree()
     return handleRazorpay()
   }
 
@@ -156,7 +200,12 @@ export function AdPayment({
 
   return (
     <div className="space-y-6">
-      {!isUS && <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />}
+      {!isUS && (
+        <>
+          <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+          <Script src="https://sdk.cashfree.com/js/v3/cashfree.js" strategy="lazyOnload" />
+        </>
+      )}
 
       {/* Order summary */}
       <div className="rounded-lg border border-border/50 bg-secondary/30 p-4">
@@ -177,7 +226,7 @@ export function AdPayment({
       <Button onClick={handlePay} disabled={isLoading} className="w-full" size="lg">
         {isLoading ? (
           <><Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            {isUS ? "Redirecting to PayPal…" : gateway === "payu" ? "Redirecting to PayU…" : "Processing…"}
+            {isUS ? "Redirecting to PayPal…" : gateway === "cashfree" ? "Opening Cashfree…" : "Processing…"}
           </>
         ) : (
           <><CreditCard className="mr-2 h-4 w-4" />Pay {formatPrice(amount, currency)}</>

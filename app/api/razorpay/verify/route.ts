@@ -18,6 +18,7 @@ import { verifyRazorpaySignature } from "@/lib/razorpay"
 import { grant as grantAiCredits } from "@/lib/credits"
 import { applyReferralRewards } from "@/lib/referrals"
 import { writeUsageEvent } from "@/lib/usage"
+import { sendPaymentSuccessEmail, sendCreditPackEmail } from "@/lib/email"
 
 export async function POST(request: Request) {
   const session = await auth()
@@ -78,6 +79,16 @@ export async function POST(request: Request) {
         kind: "ad_free",
         orderId: razorpay_order_id,
       })
+      sendPaymentSuccessEmail({
+        name: session.user.name || session.user.email,
+        email: session.user.email,
+        planOrItem: "Ad-Free Upgrade",
+        amount: (order.finalAmount / 100).toFixed(2),
+        currency: order.currency || "INR",
+        orderId: razorpay_order_id,
+        provider: "Razorpay",
+        kind: "ad_free",
+      }).catch(console.error)
       return NextResponse.json({ success: true, kind: "ad_free" })
     }
 
@@ -104,6 +115,16 @@ export async function POST(request: Request) {
       }
       await markPurchaseOrderPaid(razorpay_order_id, razorpay_payment_id)
       await markWebhookProcessed("razorpay", razorpay_payment_id, "ad_paid")
+      sendPaymentSuccessEmail({
+        name: session.user.name || session.user.email,
+        email: session.user.email,
+        planOrItem: order.planId || "Advertisement",
+        amount: (order.finalAmount / 100).toFixed(2),
+        currency: order.currency || "INR",
+        orderId: razorpay_order_id,
+        provider: "Razorpay",
+        kind: "ad",
+      }).catch(console.error)
       return NextResponse.json({ success: true, kind: "ad" })
     }
 
@@ -127,6 +148,15 @@ export async function POST(request: Request) {
         kind: "credit_pack",
         orderId: razorpay_order_id,
       })
+      sendCreditPackEmail({
+        name: session.user.name || session.user.email,
+        email: session.user.email,
+        credits,
+        packName: order.planId || `${credits}-credit pack`,
+        orderId: razorpay_order_id,
+        amount: (order.finalAmount / 100).toFixed(2),
+        currency: order.currency || "INR",
+      }).catch(console.error)
       return NextResponse.json({ success: true, kind: "credit_pack", credits })
     }
 
@@ -182,6 +212,16 @@ export async function POST(request: Request) {
       planId: order.planId,
       orderId: razorpay_order_id,
     })
+    sendPaymentSuccessEmail({
+      name: session.user.name || session.user.email,
+      email: session.user.email,
+      planOrItem: order.planId,
+      amount: (order.finalAmount / 100).toFixed(2),
+      currency: order.currency || "INR",
+      orderId: razorpay_order_id,
+      provider: "Razorpay",
+      kind: "subscription",
+    }).catch(console.error)
 
     return NextResponse.json({ success: true, kind: "subscription" })
   } catch (error) {

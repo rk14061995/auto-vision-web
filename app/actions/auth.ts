@@ -6,6 +6,7 @@ import { cookies } from "next/headers"
 import { createUser, getUserByEmail } from "@/lib/db"
 import { signIn } from "@/lib/auth"
 import { computeFreePlanExpiresAt } from "@/lib/subscription-access"
+import { sendWelcomeEmail } from "@/lib/email"
 
 export async function signup(formData: FormData) {
   const email = formData.get("email") as string
@@ -87,6 +88,11 @@ export async function signup(formData: FormData) {
       createdAt: new Date(),
       updatedAt: new Date(),
     })
+
+    // Fire-and-forget — don't block signup on email delivery
+    sendWelcomeEmail(name, email).catch((err) =>
+      console.error("Welcome email failed:", err),
+    )
 
     return { success: true }
   } catch (error) {

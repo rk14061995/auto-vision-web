@@ -1,6 +1,8 @@
 import Script from 'next/script'
 import { GA_MEASUREMENT_ID } from '@/lib/gtag'
 
+const GOOGLE_ADS_ID = 'AW-16472038937'
+
 export function GoogleAnalytics() {
   if (!GA_MEASUREMENT_ID) return null
 
@@ -21,6 +23,7 @@ export function GoogleAnalytics() {
             anonymize_ip: true,
             cookie_flags: 'SameSite=None;Secure'
           });
+          gtag('config', '${GOOGLE_ADS_ID}');
         `}
       </Script>
     </>

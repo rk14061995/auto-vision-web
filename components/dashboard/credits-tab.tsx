@@ -5,11 +5,17 @@ import Script from "next/script"
 import { Sparkles, Zap, RotateCcw, Plus, AlertTriangle, EyeOff, CheckCircle, Loader2 } from "lucide-react"
 import { CREDIT_PACKS } from "@/lib/credit-packs"
 import { formatPlanPrice } from "@/lib/plans"
-import { IndiaGatewaySelector, submitPayUForm, type IndiaGateway } from "@/components/payment/india-gateway"
+import { IndiaGatewaySelector, /* submitPayUForm, */ type IndiaGateway } from "@/components/payment/india-gateway"
 
 declare global {
   interface Window {
     Razorpay: new (opts: Record<string, unknown>) => { open(): void }
+    Cashfree: (config: { mode: "sandbox" | "production" }) => {
+      checkout: (opts: { paymentSessionId: string; redirectTarget: "_modal" | "_self" }) => Promise<{
+        error?: { message: string; code: string }
+        paymentDetails?: { paymentMessage: string }
+      }>
+    }
   }
 }
 
@@ -94,6 +100,31 @@ export function CreditsTab({ country }: { country: "IN" | "US" }) {
     })
   }
 
+  async function launchCashfree(kind: "credit_pack" | "ad_free", packId?: string) {
+    const orderRes = await fetch("/api/cashfree/order", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(kind === "credit_pack" ? { kind, creditPackId: packId } : { kind }),
+    })
+    const orderData = await orderRes.json()
+    if (!orderRes.ok || !orderData.paymentSessionId) throw new Error(orderData.error || "Failed to create order")
+    if (!window.Cashfree) throw new Error("Cashfree SDK not loaded")
+
+    const cfMode = (process.env.NEXT_PUBLIC_CASHFREE_MODE ?? "sandbox") as "sandbox" | "production"
+    const cashfree = window.Cashfree({ mode: cfMode })
+    const result = await cashfree.checkout({ paymentSessionId: orderData.paymentSessionId, redirectTarget: "_modal" })
+    if (result.error) throw new Error(result.error.message || "Payment failed")
+
+    const verifyRes = await fetch("/api/cashfree/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderId: orderData.orderId }),
+    })
+    if (!verifyRes.ok) throw new Error("Payment verification failed")
+    await load()
+  }
+
+  /* PayU disabled — account not activated
   async function launchPayU(packId: string) {
     const res = await fetch("/api/payu/create-order", {
       method: "POST",
@@ -104,6 +135,7 @@ export function CreditsTab({ country }: { country: "IN" | "US" }) {
     if (!res.ok || !json.fields) throw new Error(json.error || "Could not start PayU checkout")
     submitPayUForm(json.fields, json.formUrl)
   }
+  */
 
   async function buy(packId: string) {
     setPurchasing(packId)
@@ -117,8 +149,10 @@ export function CreditsTab({ country }: { country: "IN" | "US" }) {
         const json = await res.json()
         if (!res.ok || !json.approveUrl) throw new Error(json.error || "Could not start checkout")
         window.location.href = json.approveUrl
-      } else if (gateway === "payu") {
-        await launchPayU(packId)
+      // } else if (gateway === "payu") { // PayU disabled
+      //   await launchPayU(packId)
+      } else if (gateway === "cashfree") {
+        await launchCashfree("credit_pack", packId)
       } else {
         await launchRazorpay(packId)
       }
@@ -141,32 +175,10 @@ export function CreditsTab({ country }: { country: "IN" | "US" }) {
         const json = await res.json()
         if (!res.ok || !json.approveUrl) throw new Error(json.error || "Could not start checkout")
         window.location.href = json.approveUrl
-      } else if (gateway === "payu") {
-        // ad_free is a fixed ₹99 item — map to ad kind with a sentinel
-        const res = await fetch("/api/razorpay/order", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ kind: "ad_free", currency: "INR" }),
-        })
-        const orderData = await res.json()
-        if (!res.ok) throw new Error(orderData.error || "Failed to create order")
-        if (!window.Razorpay) throw new Error("Razorpay SDK not loaded")
-        const rzp = new window.Razorpay({
-          key: orderData.keyId, amount: orderData.amount, currency: orderData.currency,
-          name: "AutoVision Pro", description: "Go Ad-Free (one-time)", order_id: orderData.orderId,
-          theme: { color: "#0f172a" },
-          handler: async (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => {
-            await fetch("/api/razorpay/verify", {
-              method: "POST", headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ ...response, kind: "ad_free" }),
-            })
-            await load()
-          },
-          modal: { ondismiss: () => setPurchasing(null) },
-        })
-        rzp.open()
-        return
+      } else if (gateway === "cashfree") {
+        await launchCashfree("ad_free")
       } else {
+        // razorpay or payu — both use Razorpay order for ad_free (PayU doesn't support one-time easily)
         const res = await fetch("/api/razorpay/order", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -212,7 +224,12 @@ export function CreditsTab({ country }: { country: "IN" | "US" }) {
 
   return (
     <div className="space-y-8">
-      {country === "IN" && <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />}
+      {country === "IN" && (
+        <>
+          <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+          <Script src="https://sdk.cashfree.com/js/v3/cashfree.js" strategy="lazyOnload" />
+        </>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border border-primary/40 bg-primary/5 p-5">
