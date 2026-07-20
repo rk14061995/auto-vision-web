@@ -12,7 +12,7 @@ import './globals.css'
 const geist = Geist({ subsets: ["latin"] });
 const geistMono = Geist_Mono({ subsets: ["latin"] });
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://autovisionpro.com'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://autovision-pro.com'
 
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),

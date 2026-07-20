@@ -7,7 +7,7 @@ import { PricingTable } from "@/components/pricing/pricing-table"
 import { PricingFAQ } from "@/components/pricing/pricing-faq"
 import { PricingTracker } from "@/components/pricing/pricing-tracker"
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://auto-vision-pro.com"
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://autovision-pro.com"
 
 export async function generateMetadata({
   params,

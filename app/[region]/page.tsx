@@ -10,7 +10,7 @@ import { RegionalCTA } from "@/components/landing/regional-cta"
 import { LandingAdsSection } from "@/components/landing/landing-ads"
 import { AdvertiseSection } from "@/components/landing/advertise-section"
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://auto-vision-pro.com"
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://autovision-pro.com"
 
 export async function generateMetadata({
   params,

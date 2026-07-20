@@ -7,7 +7,7 @@ interface Props {
   params: Promise<{ region: string }>
 }
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://auto-vision-pro.com"
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://autovision-pro.com"
 
 export async function generateMetadata({ params }: { params: Promise<{ region: string }> }): Promise<Metadata> {
   const { region } = await params

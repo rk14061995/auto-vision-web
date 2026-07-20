@@ -3,7 +3,7 @@ import nodemailer from "nodemailer"
 
 const ADMIN_EMAIL = "autovisionpro07@gmail.com"
 const APP_NAME = "AutoVision Pro"
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://auto-vision-pro.com"
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://autovision-pro.com"
 
 function createTransporter() {
   const host = process.env.SMTP_HOST
