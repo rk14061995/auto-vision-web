@@ -9,8 +9,8 @@ import { WebVitals } from '@/components/analytics/WebVitals'
 import { Suspense } from 'react'
 import './globals.css'
 
-const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
+const geist = Geist({ subsets: ["latin"] });
+const geistMono = Geist_Mono({ subsets: ["latin"] });
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://autovisionpro.com'
 
@@ -74,14 +74,39 @@ export const viewport: Viewport = {
   initialScale: 1,
 }
 
+const organizationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'AutoVision Pro',
+  url: APP_URL,
+  logo: `${APP_URL}/icon.svg`,
+  description: 'AI-powered virtual car customization platform for wrap shops, dealerships, and automotive brands.',
+  email: 'autovisionpro07@gmail.com',
+}
+
+const websiteJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'AutoVision Pro',
+  url: APP_URL,
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${geist.className} ${geistMono.className}`}>
       <body className="font-sans antialiased min-h-screen">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
         <GoogleAnalytics />
         <WebVitals />
         {/* RouteChangeTracker needs Suspense because it reads useSearchParams */}

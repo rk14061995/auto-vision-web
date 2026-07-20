@@ -24,6 +24,7 @@ async function sendEmail(options: {
   to: string | string[]
   subject: string
   html: string
+  text: string
 }) {
   const transporter = createTransporter()
   if (!transporter) {
@@ -35,7 +36,7 @@ async function sendEmail(options: {
   const recipients = Array.isArray(options.to) ? options.to.join(", ") : options.to
 
   try {
-    await transporter.sendMail({ from, to: recipients, subject: options.subject, html: options.html })
+    await transporter.sendMail({ from, to: recipients, subject: options.subject, html: options.html, text: options.text })
   } catch (err) {
     console.error("[email] Failed to send:", options.subject, err)
   }
@@ -93,6 +94,12 @@ function layout(title: string, body: string) {
 </html>`
 }
 
+// ─── Plain-text footer ───────────────────────────────────────────────────────
+
+function textFooter() {
+  return `\n—\n${APP_NAME} · ${APP_URL}\nYou're receiving this because of activity on your account.`
+}
+
 // ─── Templates ───────────────────────────────────────────────────────────────
 
 function welcomeTemplate(name: string, email: string) {
@@ -113,6 +120,34 @@ function welcomeTemplate(name: string, email: string) {
   `)
 }
 
+function welcomeText(name: string, email: string) {
+  return `Welcome aboard, ${name}!
+
+Your account has been created successfully. You're on the Free plan with 5 AI credits to get started.
+
+Email: ${email}
+Plan: Free
+AI Credits: 5
+Projects: Up to 3
+
+Head to your dashboard to start designing stunning car wraps with AI:
+${APP_URL}/dashboard
+
+Need help? Reply to this email or visit our support page.
+${textFooter()}`
+}
+
+function welcomeAdminText(name: string, email: string) {
+  return `New User Registration
+
+A new user just signed up on ${APP_NAME}.
+
+Name: ${name}
+Email: ${email}
+Time: ${new Date().toUTCString()}
+${textFooter()}`
+}
+
 function welcomeAdminTemplate(name: string, email: string) {
   return layout("New User Registered", `
     <h2>New User Registration</h2>
@@ -125,6 +160,39 @@ function welcomeAdminTemplate(name: string, email: string) {
       </table>
     </div>
   `)
+}
+
+function paymentSuccessText(opts: {
+  name: string
+  email: string
+  planOrItem: string
+  amount: string
+  currency: string
+  orderId: string
+  provider: string
+  kind: "subscription" | "credit_pack" | "ad" | "ad_free" | "design_request"
+}) {
+  const kindLabel: Record<string, string> = {
+    subscription: "Subscription",
+    credit_pack: "AI Credit Pack",
+    ad: "Advertisement",
+    ad_free: "Ad-Free Upgrade",
+    design_request: "Design Request",
+  }
+  return `Payment Confirmed
+
+Hi ${opts.name}, your payment was processed successfully.
+
+Type: ${kindLabel[opts.kind] ?? opts.kind}
+Item: ${opts.planOrItem}
+Amount: ${opts.currency} ${opts.amount}
+Order ID: ${opts.orderId}
+Provider: ${opts.provider}
+Date: ${new Date().toUTCString()}
+
+Your access has been activated. Visit your dashboard to start using ${APP_NAME}:
+${APP_URL}/dashboard
+${textFooter()}`
 }
 
 function paymentSuccessTemplate(opts: {
@@ -162,6 +230,29 @@ function paymentSuccessTemplate(opts: {
   `)
 }
 
+function paymentSuccessAdminText(opts: {
+  name: string
+  email: string
+  planOrItem: string
+  amount: string
+  currency: string
+  orderId: string
+  provider: string
+  kind: string
+}) {
+  return `New Payment Received
+
+Customer: ${opts.name}
+Email: ${opts.email}
+Type: ${opts.kind}
+Item: ${opts.planOrItem}
+Amount: ${opts.currency} ${opts.amount}
+Order ID: ${opts.orderId}
+Provider: ${opts.provider}
+Time: ${new Date().toUTCString()}
+${textFooter()}`
+}
+
 function paymentSuccessAdminTemplate(opts: {
   name: string
   email: string
@@ -189,6 +280,16 @@ function paymentSuccessAdminTemplate(opts: {
   `)
 }
 
+function paymentFailedText(name: string, provider: string, reason?: string) {
+  return `Payment Failed
+
+Hi ${name}, we were unable to process your payment via ${provider}.
+${reason ? `\n${reason}\n` : ""}
+Please update your payment method and try again, or contact support if the issue persists:
+${APP_URL}/dashboard/billing
+${textFooter()}`
+}
+
 function paymentFailedTemplate(name: string, provider: string, reason?: string) {
   return layout("Payment Failed", `
     <h2>Payment Failed <span class="badge badge-red">Failed</span></h2>
@@ -197,6 +298,17 @@ function paymentFailedTemplate(name: string, provider: string, reason?: string) 
     <p>Please update your payment method and try again, or contact support if the issue persists.</p>
     <a href="${APP_URL}/dashboard/billing" class="btn">Update Payment →</a>
   `)
+}
+
+function subscriptionCancelledText(name: string, endsAt?: string) {
+  return `Subscription Cancelled
+
+Hi ${name}, your ${APP_NAME} subscription has been cancelled.
+${endsAt ? `\nAccess until: ${new Date(endsAt).toDateString()}\n` : ""}
+You'll continue to have access until your billing period ends. After that, you'll be moved to the Free plan.
+
+Re-subscribe: ${APP_URL}/pricing
+${textFooter()}`
 }
 
 function subscriptionCancelledTemplate(name: string, endsAt?: string) {
@@ -209,6 +321,16 @@ function subscriptionCancelledTemplate(name: string, endsAt?: string) {
   `)
 }
 
+function subscriptionPausedText(name: string) {
+  return `Subscription Paused
+
+Hi ${name}, your subscription has been paused due to a billing issue.
+
+Please update your payment method to restore full access:
+${APP_URL}/dashboard/billing
+${textFooter()}`
+}
+
 function subscriptionPausedTemplate(name: string) {
   return layout("Subscription Paused", `
     <h2>Subscription Paused <span class="badge badge-orange">Paused</span></h2>
@@ -216,6 +338,20 @@ function subscriptionPausedTemplate(name: string) {
     <p>Please update your payment method to restore full access.</p>
     <a href="${APP_URL}/dashboard/billing" class="btn">Fix Billing →</a>
   `)
+}
+
+function creditPackGrantedText(name: string, credits: number, packName: string, orderId: string) {
+  return `AI Credits Added
+
+Hi ${name}, your credit pack purchase was successful!
+
+Pack: ${packName}
+Credits Added: +${credits} credits
+Order ID: ${orderId}
+
+Your credits are available immediately in your dashboard:
+${APP_URL}/dashboard
+${textFooter()}`
 }
 
 function creditPackGrantedTemplate(name: string, credits: number, packName: string, orderId: string) {
@@ -238,8 +374,8 @@ function creditPackGrantedTemplate(name: string, credits: number, packName: stri
 
 export async function sendWelcomeEmail(name: string, email: string) {
   await Promise.all([
-    sendEmail({ to: email, subject: `Welcome to ${APP_NAME}! 🎉`, html: welcomeTemplate(name, email) }),
-    sendEmail({ to: ADMIN_EMAIL, subject: `New signup: ${name} (${email})`, html: welcomeAdminTemplate(name, email) }),
+    sendEmail({ to: email, subject: `Welcome to ${APP_NAME}! 🎉`, html: welcomeTemplate(name, email), text: welcomeText(name, email) }),
+    sendEmail({ to: ADMIN_EMAIL, subject: `New signup: ${name} (${email})`, html: welcomeAdminTemplate(name, email), text: welcomeAdminText(name, email) }),
   ])
 }
 
@@ -258,11 +394,13 @@ export async function sendPaymentSuccessEmail(opts: {
       to: opts.email,
       subject: `Payment confirmed — ${opts.planOrItem}`,
       html: paymentSuccessTemplate(opts),
+      text: paymentSuccessText(opts),
     }),
     sendEmail({
       to: ADMIN_EMAIL,
       subject: `💰 New payment: ${opts.currency} ${opts.amount} from ${opts.email}`,
       html: paymentSuccessAdminTemplate(opts),
+      text: paymentSuccessAdminText(opts),
     }),
   ])
 }
@@ -281,11 +419,22 @@ export async function sendCreditPackEmail(opts: {
       to: opts.email,
       subject: `${opts.credits} AI Credits added to your account`,
       html: creditPackGrantedTemplate(opts.name, opts.credits, opts.packName, opts.orderId),
+      text: creditPackGrantedText(opts.name, opts.credits, opts.packName, opts.orderId),
     }),
     sendEmail({
       to: ADMIN_EMAIL,
       subject: `💰 Credit pack purchased: ${opts.credits} credits by ${opts.email}`,
       html: paymentSuccessAdminTemplate({
+        name: opts.name,
+        email: opts.email,
+        planOrItem: `${opts.credits}-credit pack`,
+        amount: opts.amount,
+        currency: opts.currency,
+        orderId: opts.orderId,
+        provider: "razorpay",
+        kind: "credit_pack",
+      }),
+      text: paymentSuccessAdminText({
         name: opts.name,
         email: opts.email,
         planOrItem: `${opts.credits}-credit pack`,
@@ -305,11 +454,13 @@ export async function sendPaymentFailedEmail(name: string, email: string, provid
       to: email,
       subject: "Payment failed — action required",
       html: paymentFailedTemplate(name, provider, reason),
+      text: paymentFailedText(name, provider, reason),
     }),
     sendEmail({
       to: ADMIN_EMAIL,
       subject: `⚠️ Payment failed: ${email} via ${provider}`,
       html: paymentFailedTemplate(name, provider, reason),
+      text: paymentFailedText(name, provider, reason),
     }),
   ])
 }
@@ -319,6 +470,7 @@ export async function sendSubscriptionCancelledEmail(name: string, email: string
     to: email,
     subject: `Your ${APP_NAME} subscription has been cancelled`,
     html: subscriptionCancelledTemplate(name, endsAt),
+    text: subscriptionCancelledText(name, endsAt),
   })
 }
 
@@ -327,5 +479,6 @@ export async function sendSubscriptionPausedEmail(name: string, email: string) {
     to: email,
     subject: `Action required — ${APP_NAME} subscription paused`,
     html: subscriptionPausedTemplate(name),
+    text: subscriptionPausedText(name),
   })
 }

@@ -67,9 +67,30 @@ export default async function RegionalHomePage({
 
   const r = region as Region
   const content = REGION_CONTENT[r]
+  const currency = REGION_CURRENCY[r]
+
+  const softwareAppJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'AutoVision Pro',
+    applicationCategory: 'DesignApplication',
+    operatingSystem: 'Web',
+    description: content.subheadline,
+    url: `${APP_URL}/${r}/`,
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: currency,
+      description: 'Free plan with 5 AI credits and up to 3 projects',
+    },
+  }
 
   return (
     <div className="flex min-h-screen flex-col">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareAppJsonLd) }}
+      />
       <Header />
       <main className="flex-1">
         <RegionalHero region={r} content={content} />
