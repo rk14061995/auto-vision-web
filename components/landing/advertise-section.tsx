@@ -136,7 +136,7 @@ export function AdvertiseSection({ region }: Props) {
                       </li>
                     ))}
                   </ul>
-                  <Link href="/signup?next=/dashboard%3Ftab%3Dcreate-ad" className="mt-7 block">
+                  <Link href="/signup?next=/dashboard%3Ftab%3Dcreate-ad" title={`Sign up to book ${ad.name}`} className="mt-7 block">
                     <Button
                       className={`w-full gap-2 ${isHighlighted ? "bg-white text-primary hover:bg-gray-50" : ""}`}
                       variant={isHighlighted ? "outline" : "default"}
@@ -160,12 +160,12 @@ export function AdvertiseSection({ region }: Props) {
               Upload your banner, choose a placement, and go live today. No design skills needed.
             </p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <Link href="/dashboard?tab=create-ad">
+              <Link href="/dashboard?tab=create-ad" title={copy.ctaLabel}>
                 <Button className="gap-2 w-full sm:w-auto shadow-sm">
                   {copy.ctaLabel} <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
-              <Link href="/signup?next=/dashboard%3Ftab%3Dcreate-ad">
+              <Link href="/signup?next=/dashboard%3Ftab%3Dcreate-ad" title="Sign up free to advertise on AutoVision Pro">
                 <Button variant="outline" className="w-full sm:w-auto border-gray-300 text-gray-700 hover:bg-white">Sign up free</Button>
               </Link>
             </div>
@@ -178,12 +178,12 @@ export function AdvertiseSection({ region }: Props) {
               Our team creates a professional ad creative for you — {copy.currency === "USD" ? "from $20" : "from ₹199"}. Submit your brief and get your creative in 2–3 business days.
             </p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <Link href="/dashboard?tab=design-service">
+              <Link href="/dashboard?tab=design-service" title="Get a professional ad banner designed">
                 <Button variant="outline" className="gap-2 w-full sm:w-auto border-gray-300 text-gray-700 hover:bg-white">
                   Get banner designed <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
-              <Link href="/signup?next=/dashboard%3Ftab%3Ddesign-service">
+              <Link href="/signup?next=/dashboard%3Ftab%3Ddesign-service" title="Sign up to get your ad banner designed">
                 <Button variant="ghost" className="w-full sm:w-auto text-gray-500 hover:text-gray-700">New here? Sign up</Button>
               </Link>
             </div>

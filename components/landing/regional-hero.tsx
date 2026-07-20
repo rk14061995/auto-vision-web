@@ -54,6 +54,7 @@ export function RegionalHero({ region, content }: Props) {
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link
               href="/signup"
+              title={content.primaryCta}
               onClick={() => trackCTAClick(content.primaryCta, "hero")}
             >
               <Button size="lg" className="gap-2">
@@ -63,6 +64,7 @@ export function RegionalHero({ region, content }: Props) {
             </Link>
             <Link
               href={content.secondaryCtaHref}
+              title={content.secondaryCta}
               onClick={() => trackCTAClick(content.secondaryCta, "hero")}
             >
               <Button size="lg" variant="outline">

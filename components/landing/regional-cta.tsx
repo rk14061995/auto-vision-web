@@ -39,6 +39,7 @@ export function RegionalCTA({ region, content }: Props) {
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link
                 href="/signup"
+                title={content.primaryCta}
                 onClick={() => trackCTAClick("Get Started Free", "cta_section")}
               >
                 <Button size="lg" className="gap-2">
@@ -48,6 +49,7 @@ export function RegionalCTA({ region, content }: Props) {
               </Link>
               <Link
                 href={content.secondaryCtaHref}
+                title={cta.compareCta}
                 onClick={() => trackCTAClick(cta.compareCta, "cta_section")}
               >
                 <Button size="lg" variant="outline">

@@ -15,10 +15,10 @@ import { Car, User, LogOut, LayoutDashboard, Menu, X } from "lucide-react"
 import { CreditsBadge } from "@/components/layout/credits-badge"
 
 const NAV_LINKS = [
-  { label: "Features",     href: "/#features" },
-  { label: "Pricing",      href: "/pricing" },
-  { label: "Testimonials", href: "/#testimonials" },
-  { label: "Advertise",    href: "/#advertise" },
+  { label: "Features",     href: "/#features",     title: "Explore AutoVision Pro's car customization features" },
+  { label: "Pricing",      href: "/pricing",        title: "View AutoVision Pro pricing plans" },
+  { label: "Testimonials", href: "/#testimonials",  title: "Read AutoVision Pro customer testimonials" },
+  { label: "Advertise",    href: "/#advertise",     title: "Advertise your shop or dealership on AutoVision Pro" },
 ]
 
 export function Header() {
@@ -30,7 +30,7 @@ export function Header() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
 
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5">
+        <Link href="/" title="AutoVision Pro home" className="flex items-center gap-2.5">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
             <Car className="h-5 w-5 text-white" />
           </div>
@@ -43,6 +43,7 @@ export function Header() {
             <Link
               key={l.href}
               href={l.href}
+              title={l.title}
               className="rounded-md px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
             >
               {l.label}
@@ -66,12 +67,12 @@ export function Header() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem asChild>
-                    <Link href="/dashboard" className="flex items-center gap-2">
+                    <Link href="/dashboard" title="Go to your dashboard" className="flex items-center gap-2">
                       <LayoutDashboard className="h-4 w-4" /> Dashboard
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/profile" className="flex items-center gap-2">
+                    <Link href="/profile" title="View your profile" className="flex items-center gap-2">
                       <User className="h-4 w-4" /> Profile
                     </Link>
                   </DropdownMenuItem>
@@ -87,10 +88,10 @@ export function Header() {
             </>
           ) : (
             <>
-              <Link href="/login" className="hidden sm:block">
+              <Link href="/login" title="Sign in to AutoVision Pro" className="hidden sm:block">
                 <Button variant="ghost" size="sm" className="text-gray-700">Sign In</Button>
               </Link>
-              <Link href="/signup">
+              <Link href="/signup" title="Create a free AutoVision Pro account">
                 <Button size="sm" className="shadow-sm">Get Started</Button>
               </Link>
             </>
@@ -115,6 +116,7 @@ export function Header() {
               <Link
                 key={l.href}
                 href={l.href}
+                title={l.title}
                 onClick={() => setOpen(false)}
                 className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
               >
@@ -122,7 +124,7 @@ export function Header() {
               </Link>
             ))}
             {!session?.user && (
-              <Link href="/login" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
+              <Link href="/login" title="Sign in to AutoVision Pro" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
                 Sign In
               </Link>
             )}

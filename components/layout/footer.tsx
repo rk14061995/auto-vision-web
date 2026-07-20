@@ -3,26 +3,26 @@ import { Car, Mail } from "lucide-react"
 
 const footerLinks = {
   product: [
-    { name: "Features",        href: "/#features" },
-    { name: "Pricing",         href: "/pricing" },
-    { name: "Dashboard",       href: "/dashboard" },
-    { name: "Advertise",       href: "/#advertise" },
+    { name: "Features",        href: "/#features",  title: "Explore AutoVision Pro's car customization features" },
+    { name: "Pricing",         href: "/pricing",     title: "View AutoVision Pro pricing plans" },
+    { name: "Dashboard",       href: "/dashboard",   title: "Go to your AutoVision Pro dashboard" },
+    { name: "Advertise",       href: "/#advertise",  title: "Advertise your shop or dealership on AutoVision Pro" },
   ],
   services: [
-    { name: "Ad Creative Design",    href: "/dashboard?tab=design-service" },
-    { name: "Website Building",      href: "/services/website" },
-    { name: "Advertising Platform",  href: "/#advertise" },
+    { name: "Ad Creative Design",    href: "/dashboard?tab=design-service", title: "Get a professional ad creative designed" },
+    { name: "Website Building",      href: "/services/website",             title: "Website building services for automotive businesses" },
+    { name: "Advertising Platform",  href: "/#advertise",                   title: "Advertise your shop or dealership on AutoVision Pro" },
   ],
   company: [
-    { name: "About",   href: "/about" },
-    { name: "Contact", href: "/contact" },
-    { name: "FAQ",     href: "/faq" },
+    { name: "About",   href: "/about",   title: "About AutoVision Pro" },
+    { name: "Contact", href: "/contact", title: "Contact the AutoVision Pro team" },
+    { name: "FAQ",     href: "/faq",     title: "Frequently asked questions" },
   ],
   legal: [
-    { name: "Privacy Policy",    href: "/privacy" },
-    { name: "Terms & Conditions", href: "/terms" },
-    { name: "Refund Policy",     href: "/refund" },
-    { name: "Cookie Policy",     href: "/cookies" },
+    { name: "Privacy Policy",    href: "/privacy", title: "AutoVision Pro privacy policy" },
+    { name: "Terms & Conditions", href: "/terms",   title: "AutoVision Pro terms and conditions" },
+    { name: "Refund Policy",     href: "/refund",   title: "AutoVision Pro refund policy" },
+    { name: "Cookie Policy",     href: "/cookies",  title: "AutoVision Pro cookie policy" },
   ],
 }
 
@@ -34,7 +34,7 @@ export function Footer() {
 
           {/* Brand */}
           <div className="space-y-4 md:col-span-1">
-            <Link href="/" className="flex items-center gap-2">
+            <Link href="/" title="AutoVision Pro home" className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
                 <Car className="h-5 w-5 text-white" />
               </div>
@@ -45,6 +45,7 @@ export function Footer() {
             </p>
             <a
               href="mailto:autovisionpro07@gmail.com"
+              title="Email AutoVision Pro support"
               className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary transition-colors"
             >
               <Mail className="h-3.5 w-3.5" />
@@ -61,6 +62,7 @@ export function Footer() {
                   <li key={link.name}>
                     <Link
                       href={link.href}
+                      title={link.title}
                       className="text-sm text-gray-500 transition-colors hover:text-primary"
                     >
                       {link.name}
@@ -79,12 +81,12 @@ export function Footer() {
           </p>
           <div className="flex gap-5 text-xs text-gray-400">
             {[
-              { name: "Privacy",  href: "/privacy" },
-              { name: "Terms",    href: "/terms" },
-              { name: "Refunds",  href: "/refund" },
-              { name: "Cookies",  href: "/cookies" },
+              { name: "Privacy",  href: "/privacy", title: "AutoVision Pro privacy policy" },
+              { name: "Terms",    href: "/terms",    title: "AutoVision Pro terms and conditions" },
+              { name: "Refunds",  href: "/refund",   title: "AutoVision Pro refund policy" },
+              { name: "Cookies",  href: "/cookies",  title: "AutoVision Pro cookie policy" },
             ].map((l) => (
-              <Link key={l.href} href={l.href} className="hover:text-primary transition-colors">
+              <Link key={l.href} href={l.href} title={l.title} className="hover:text-primary transition-colors">
                 {l.name}
               </Link>
             ))}

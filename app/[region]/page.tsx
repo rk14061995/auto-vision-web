@@ -73,8 +73,8 @@ export default async function RegionalHomePage({
       <Header />
       <main className="flex-1">
         <RegionalHero region={r} content={content} />
-        <LandingAdsSection />
         <Features />
+        <LandingAdsSection />
         <Testimonials />
         <AdvertiseSection region={r} />
         <RegionalCTA region={r} content={content} />
