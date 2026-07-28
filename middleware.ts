@@ -19,13 +19,6 @@ function detectRegion(req: NextRequest): Region {
   return "us" // all other countries (US, UK, DE, AU, etc.) get USD pricing
 }
 
-// Regional paths that should be geo-locked (only /in/* and /us/* prefixes).
-function getRegionFromPath(pathname: string): Region | null {
-  if (pathname === "/in" || pathname.startsWith("/in/")) return "in"
-  if (pathname === "/us" || pathname.startsWith("/us/")) return "us"
-  return null
-}
-
 export default auth((req) => {
   const { pathname } = req.nextUrl
 
@@ -64,21 +57,6 @@ export default auth((req) => {
   if (pathname === "/pricing") {
     const region = getEffectiveRegion(req)
     return NextResponse.redirect(new URL(`/${region}/pricing`, req.url))
-  }
-
-  // ── Geo-lock regional pages ────────────────────────────────────────────────
-  // If a visitor lands on the wrong region's page, redirect them to their own.
-  // e.g. a US visitor on /in/pricing → /us/pricing
-  const pathRegion = getRegionFromPath(pathname)
-  if (pathRegion !== null) {
-    const visitorRegion = getEffectiveRegion(req)
-    if (pathRegion !== visitorRegion) {
-      const corrected = pathname.replace(
-        new RegExp(`^/${pathRegion}`),
-        `/${visitorRegion}`
-      )
-      return NextResponse.redirect(new URL(corrected, req.url))
-    }
   }
 
   // ── Referral cookie ────────────────────────────────────────────────────────
