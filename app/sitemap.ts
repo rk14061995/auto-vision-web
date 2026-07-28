@@ -7,13 +7,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     // ── Regional homepages ──────────────────────────────────────────────────
     {
-      url: `${baseUrl}/in/`,
+      url: `${baseUrl}/in`,
       lastModified: now,
       changeFrequency: 'weekly',
       priority: 1,
     },
     {
-      url: `${baseUrl}/us/`,
+      url: `${baseUrl}/us`,
       lastModified: now,
       changeFrequency: 'weekly',
       priority: 1,

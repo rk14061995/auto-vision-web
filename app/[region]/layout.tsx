@@ -15,11 +15,11 @@ export async function generateMetadata({ params }: { params: Promise<{ region: s
 
   return {
     alternates: {
-      canonical: `${APP_URL}/${region}/`,
+      canonical: `${APP_URL}/${region}`,
       languages: {
-        "en-US": `${APP_URL}/us/`,
-        "en-IN": `${APP_URL}/in/`,
-        "x-default": `${APP_URL}/in/`,
+        "en-US": `${APP_URL}/us`,
+        "en-IN": `${APP_URL}/in`,
+        "x-default": `${APP_URL}/in`,
       },
     },
     openGraph: {

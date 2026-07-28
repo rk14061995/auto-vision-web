@@ -39,7 +39,7 @@ export async function generateMetadata({
     openGraph: {
       title: socialTitle,
       description,
-      url: `${APP_URL}/${r}/`,
+      url: `${APP_URL}/${r}`,
       images: [{ url: "/og-image.png", width: 1200, height: 630 }],
     },
     twitter: {
@@ -48,11 +48,11 @@ export async function generateMetadata({
       images: ["/og-image.png"],
     },
     alternates: {
-      canonical: `${APP_URL}/${r}/`,
+      canonical: `${APP_URL}/${r}`,
       languages: {
-        "en-US": `${APP_URL}/us/`,
-        "en-IN": `${APP_URL}/in/`,
-        "x-default": `${APP_URL}/in/`,
+        "en-US": `${APP_URL}/us`,
+        "en-IN": `${APP_URL}/in`,
+        "x-default": `${APP_URL}/in`,
       },
     },
   }

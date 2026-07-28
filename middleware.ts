@@ -27,7 +27,7 @@ export default auth((req) => {
   const regionOverrideParam = req.nextUrl.searchParams.get("region")
   if (regionOverrideParam === "us" || regionOverrideParam === "in") {
     const res = NextResponse.redirect(
-      new URL(`/${regionOverrideParam}${pathname.startsWith("/us") || pathname.startsWith("/in") ? pathname.replace(/^\/(us|in)/, "") : pathname === "/" ? "/" : pathname}`, req.url)
+      new URL(`/${regionOverrideParam}${pathname.startsWith("/us") || pathname.startsWith("/in") ? pathname.replace(/^\/(us|in)/, "") : pathname === "/" ? "" : pathname}`, req.url)
     )
     res.cookies.set("region_override", regionOverrideParam, {
       path: "/",
@@ -50,7 +50,7 @@ export default auth((req) => {
   // ── Root → geo-redirect ────────────────────────────────────────────────────
   if (pathname === "/") {
     const region = getEffectiveRegion(req)
-    return NextResponse.redirect(new URL(`/${region}/`, req.url))
+    return NextResponse.redirect(new URL(`/${region}`, req.url))
   }
 
   // ── /pricing → geo-redirect ────────────────────────────────────────────────
