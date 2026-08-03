@@ -9,6 +9,7 @@ import { Testimonials } from "@/components/landing/testimonials"
 import { RegionalCTA } from "@/components/landing/regional-cta"
 import { LandingAdsSection } from "@/components/landing/landing-ads"
 import { AdvertiseSection } from "@/components/landing/advertise-section"
+import { RegionalDeepDive } from "@/components/landing/regional-deep-dive"
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://autovision-pro.com"
 
@@ -100,9 +101,10 @@ export default async function RegionalHomePage({
       <Header />
       <main className="flex-1">
         <RegionalHero region={r} content={content} />
-        <Features />
+        <Features region={r} />
         <LandingAdsSection />
-        <Testimonials />
+        <Testimonials region={r} />
+        <RegionalDeepDive region={r} />
         <AdvertiseSection region={r} />
         <RegionalCTA region={r} content={content} />
         <LandingAdsSection />
