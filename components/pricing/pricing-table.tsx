@@ -22,9 +22,12 @@ const GRID_PLANS = [FREE_PLAN, CREATOR_PLAN, PRO_PLAN, STUDIO_PLAN]
 interface PricingTableProps {
   // When provided (regional pages), skip geo-detection and use this country directly.
   initialCountry?: Country
+  // UK pages pass this to show GBP-converted prices while still checking out
+  // through the US/PayPal (USD) flow behind `initialCountry`.
+  displayCurrency?: "GBP"
 }
 
-export function PricingTable({ initialCountry }: PricingTableProps = {}) {
+export function PricingTable({ initialCountry, displayCurrency }: PricingTableProps = {}) {
   const [country, setCountry] = useState<Country>(initialCountry ?? "IN")
   const [cycle, setCycle] = useState<BillingCycle>("monthly")
   const [isLoading, setIsLoading] = useState(!initialCountry)
@@ -79,11 +82,18 @@ export function PricingTable({ initialCountry }: PricingTableProps = {}) {
             country={country}
             cycle={cycle}
             highlighted={plan.badge === "popular"}
+            displayCurrency={displayCurrency}
           />
         ))}
       </div>
 
-      <CreditPacksGrid country={country} />
+      <CreditPacksGrid country={country} displayCurrency={displayCurrency} />
+
+      {displayCurrency === "GBP" && (
+        <p className="text-center text-xs text-muted-foreground">
+          Prices shown in GBP for reference. Checkout is billed in USD via PayPal.
+        </p>
+      )}
 
       <div className="mx-auto max-w-2xl rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
         <div className="flex flex-col items-center gap-6 sm:flex-row sm:justify-between">

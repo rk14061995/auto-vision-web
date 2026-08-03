@@ -21,12 +21,16 @@ export async function generateMetadata({
   const pageTitle =
     r === "us"
       ? "USD Pricing for Wrap Shops & Dealerships"
-      : "INR Pricing for Car Wrap Shops & Garages"
+      : r === "uk"
+        ? "GBP Pricing for Wrap Shops & Dealerships"
+        : "INR Pricing for Car Wrap Shops & Garages"
   const socialTitle = `AutoVision Pro — ${pageTitle}`
   const description =
     r === "us"
       ? "AutoVision Pro plans in USD. From free to enterprise — built for US wrap shops, dealerships, and automotive brands."
-      : "AutoVision Pro ke plans INR mein. Free se enterprise tak — Indian wrap shops, garages aur dealerships ke liye."
+      : r === "uk"
+        ? "AutoVision Pro plans shown in GBP. From free to enterprise — built for UK wrap shops, dealerships, and automotive brands."
+        : "AutoVision Pro ke plans INR mein. Free se enterprise tak — Indian wrap shops, garages aur dealerships ke liye."
 
   return {
     title: pageTitle,
@@ -42,6 +46,7 @@ export async function generateMetadata({
       languages: {
         "en-US": `${APP_URL}/us/pricing`,
         "en-IN": `${APP_URL}/in/pricing`,
+        "en-GB": `${APP_URL}/uk/pricing`,
         "x-default": `${APP_URL}/in/pricing`,
       },
     },
@@ -60,6 +65,12 @@ const CONTENT = {
     ctaStart:    "Start Free",
     ctaContact:  "Talk to Sales",
     industryDesc: "Wrap shops, dealerships, garages, and OEM teams use AutoVision Pro to pitch designs, win clients, and stay ahead of the competition.",
+  },
+  uk: {
+    badge:       "United Kingdom · GBP pricing",
+    ctaStart:    "Start Free",
+    ctaContact:  "Talk to Sales",
+    industryDesc: "Wrap shops, dealerships, garages, and OEM teams across the UK use AutoVision Pro to pitch designs, win clients, and stay ahead of the competition.",
   },
 }
 
@@ -97,7 +108,10 @@ export default async function RegionalPricingPage({
 
           {/* Pricing table — country locked to region, no switcher */}
           <div className="mt-14">
-            <PricingTable initialCountry={initialCountry} />
+            <PricingTable
+              initialCountry={initialCountry}
+              displayCurrency={r === "uk" ? "GBP" : undefined}
+            />
           </div>
 
           {/* FAQ */}

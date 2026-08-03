@@ -375,9 +375,20 @@ export function billingCycleMonths(cycle: BillingCycle): number {
   return cycle === "annual" ? 12 : 1
 }
 
-export function formatPlanPrice(amount: number, currency: "INR" | "USD"): string {
+export function formatPlanPrice(amount: number, currency: "INR" | "USD" | "GBP"): string {
   if (amount < 0) return "Contact Sales"
-  if (amount === 0) return currency === "INR" ? "₹0" : "$0"
+  if (amount === 0) return currency === "INR" ? "₹0" : currency === "GBP" ? "£0" : "$0"
   if (currency === "INR") return `₹${amount.toLocaleString("en-IN")}`
+  if (currency === "GBP") return `£${amount.toLocaleString("en-GB")}`
   return `$${amount.toLocaleString("en-US")}`
+}
+
+// Fixed display-only conversion rate. UK checkout still runs through the
+// existing USD/PayPal flow (no GBP billing plan exists) — this only converts
+// USD amounts for on-page GBP display on the /uk pages.
+export const USD_TO_GBP_RATE = 0.79
+
+export function convertUsdToGbp(usdAmount: number): number {
+  if (usdAmount <= 0) return usdAmount
+  return Math.round(usdAmount * USD_TO_GBP_RATE)
 }

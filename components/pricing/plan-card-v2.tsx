@@ -4,6 +4,7 @@ import Link from "next/link"
 import { Check, Sparkles, Zap } from "lucide-react"
 import type { BillingCycle } from "@/lib/db"
 import {
+  convertUsdToGbp,
   formatPlanPrice,
   getAnnualAmount,
   type Plan,
@@ -19,15 +20,23 @@ interface PlanCardV2Props {
   country: "IN" | "US"
   cycle: BillingCycle
   highlighted?: boolean
+  // When set, prices render converted to this currency for display only.
+  // Checkout/billing still runs on `country`'s real currency (e.g. UK pages
+  // pass country="US" + displayCurrency="GBP" — billed in USD via PayPal).
+  displayCurrency?: "GBP"
 }
 
-export function PlanCardV2({ plan, country, cycle, highlighted }: PlanCardV2Props) {
+export function PlanCardV2({ plan, country, cycle, highlighted, displayCurrency }: PlanCardV2Props) {
   const monthlyAmount = plan.pricing[country].amount
   const isContact = monthlyAmount < 0
   const isFree = monthlyAmount === 0
   const annualAmount = getAnnualAmount(plan, country)
   const cycleAmount = cycle === "annual" ? annualAmount : monthlyAmount
   const currency = plan.pricing[country].currency
+
+  const showGbp = displayCurrency === "GBP" && !isContact && !isFree
+  const renderedAmount = showGbp ? convertUsdToGbp(cycleAmount) : cycleAmount
+  const renderedCurrency: "INR" | "USD" | "GBP" = showGbp ? "GBP" : currency
 
   const ga4Item: GA4Item = {
     item_id: plan.id,
@@ -42,7 +51,7 @@ export function PlanCardV2({ plan, country, cycle, highlighted }: PlanCardV2Prop
     ? "/contact?plan=enterprise"
     : isFree
       ? "/signup"
-      : `/checkout/${plan.id}?cycle=${cycle}`
+      : `/checkout/${plan.id}?cycle=${cycle}&country=${country}`
 
   const ctaLabel = isContact ? "Contact Sales" : isFree ? "Start Free" : `Get ${plan.name}`
 
@@ -80,7 +89,7 @@ export function PlanCardV2({ plan, country, cycle, highlighted }: PlanCardV2Prop
         ) : (
           <>
             <p className="text-3xl font-bold">
-              {formatPlanPrice(cycleAmount, currency)}
+              {formatPlanPrice(renderedAmount, renderedCurrency)}
               {!isFree && (
                 <span className="text-base font-normal text-muted-foreground">
                   {cycle === "annual" ? "/yr" : "/mo"}
@@ -89,7 +98,7 @@ export function PlanCardV2({ plan, country, cycle, highlighted }: PlanCardV2Prop
             </p>
             {!isFree && cycle === "annual" && (
               <p className="mt-1 text-xs text-muted-foreground">
-                = {formatPlanPrice(Math.round(cycleAmount / 12), currency)} / month
+                = {formatPlanPrice(Math.round(renderedAmount / 12), renderedCurrency)} / month
               </p>
             )}
           </>

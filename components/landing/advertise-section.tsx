@@ -4,7 +4,7 @@ import { ArrowRight, Target, Zap, BadgeCheck, BarChart3, Megaphone, Users, Clock
 import { Button } from "@/components/ui/button"
 import type { Region } from "@/lib/region"
 
-const COPY: Record<"us" | "in" | "default", {
+const COPY: Record<"us" | "in" | "uk" | "default", {
   badge: string
   headline: string
   headlineHighlight: string
@@ -27,6 +27,15 @@ const COPY: Record<"us" | "in" | "default", {
     sub: "Apne wrap shop, dealership, ya auto brand ko hajaaron active car enthusiasts ke saamne laayein — woh log jo already paisa kharch kar rahe hain. Simple setup, koi subscription nahi, aaj hi live jaayein.",
     ctaLabel: "Abhi Advertise Karein",
     currency: "INR",
+  },
+  uk: {
+    badge: "Advertise on AutoVision Pro",
+    headline: "Reach the UK's Most Engaged",
+    headlineHighlight: "Car Enthusiasts",
+    // The ad-booking system only has IN/US pricing — UK reuses USD amounts.
+    sub: "Put your wrap shop, dealership, or auto brand in front of thousands of active car-customisation enthusiasts across the UK — people already spending on their vehicles. Simple setup, no subscriptions, go live today.",
+    ctaLabel: "Start Advertising",
+    currency: "USD",
   },
   default: {
     badge: "Advertise on AutoVision Pro",

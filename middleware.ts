@@ -99,6 +99,7 @@ function isBot(req: NextRequest) {
 
 // Reads Vercel's edge geo header.
 // India → /in
+// UK → /uk
 // Everyone else → /us
 // No header (localhost) → /in
 function detectRegion(req: NextRequest): Region {
@@ -108,6 +109,7 @@ function detectRegion(req: NextRequest): Region {
     null
 
   if (country === "IN") return "in"
+  if (country === "GB") return "uk"
   if (country === null) return "in"
 
   return "us"
@@ -116,18 +118,19 @@ function detectRegion(req: NextRequest): Region {
 export default auth((req) => {
   const { pathname } = req.nextUrl
 
-  // ── Region override (?region=us / ?region=in) ─────────────────────────────
+  // ── Region override (?region=us / ?region=in / ?region=uk) ────────────────
   const regionOverrideParam = req.nextUrl.searchParams.get("region")
 
   if (
     regionOverrideParam === "us" ||
-    regionOverrideParam === "in"
+    regionOverrideParam === "in" ||
+    regionOverrideParam === "uk"
   ) {
     const res = NextResponse.redirect(
       new URL(
         `/${regionOverrideParam}${
-          pathname.startsWith("/us") || pathname.startsWith("/in")
-            ? pathname.replace(/^\/(us|in)/, "")
+          pathname.startsWith("/us") || pathname.startsWith("/in") || pathname.startsWith("/uk")
+            ? pathname.replace(/^\/(us|in|uk)/, "")
             : pathname === "/"
               ? ""
               : pathname
@@ -150,7 +153,7 @@ export default auth((req) => {
   const regionCookie = req.cookies.get("region_override")?.value
 
   const overriddenRegion: Region | null =
-    regionCookie === "us" || regionCookie === "in"
+    regionCookie === "us" || regionCookie === "in" || regionCookie === "uk"
       ? regionCookie
       : null
 

@@ -2,13 +2,15 @@
 
 import { Sparkles, Zap } from "lucide-react"
 import { CREDIT_PACKS } from "@/lib/credit-packs"
-import { formatPlanPrice } from "@/lib/plans"
+import { convertUsdToGbp, formatPlanPrice } from "@/lib/plans"
 
 interface CreditPacksGridProps {
   country: "IN" | "US"
+  // Display-only conversion — purchases still go through in the real `country` currency.
+  displayCurrency?: "GBP"
 }
 
-export function CreditPacksGrid({ country }: CreditPacksGridProps) {
+export function CreditPacksGrid({ country, displayCurrency }: CreditPacksGridProps) {
   return (
     <div className="rounded-3xl border border-border/40 bg-gradient-to-br from-primary/5 via-card/40 to-card p-6 sm:p-10">
       <div className="flex items-center gap-2 text-sm text-primary">
@@ -26,7 +28,10 @@ export function CreditPacksGrid({ country }: CreditPacksGridProps) {
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
         {CREDIT_PACKS.map((pack) => {
           const price = country === "IN" ? pack.pricing.IN : pack.pricing.US
-          const perCredit = price.amount / pack.credits
+          const showGbp = displayCurrency === "GBP" && country === "US"
+          const renderedAmount = showGbp ? convertUsdToGbp(price.amount) : price.amount
+          const renderedCurrency: "INR" | "USD" | "GBP" = showGbp ? "GBP" : price.currency
+          const perCredit = renderedAmount / pack.credits
           return (
             <div
               key={pack.id}
@@ -48,10 +53,10 @@ export function CreditPacksGrid({ country }: CreditPacksGridProps) {
               <p className="text-sm text-muted-foreground">credits</p>
 
               <p className="mt-4 text-2xl font-semibold">
-                {formatPlanPrice(price.amount, price.currency)}
+                {formatPlanPrice(renderedAmount, renderedCurrency)}
               </p>
               <p className="text-xs text-muted-foreground">
-                {price.currency === "INR" ? "₹" : "$"}
+                {renderedCurrency === "INR" ? "₹" : renderedCurrency === "GBP" ? "£" : "$"}
                 {perCredit.toFixed(2)} / credit
               </p>
 

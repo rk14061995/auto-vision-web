@@ -1,26 +1,32 @@
 import type { Country } from './geo'
 
-export type Region = 'us' | 'in'
+export type Region = 'us' | 'in' | 'uk'
 
-export const REGIONS: Region[] = ['us', 'in']
+export const REGIONS: Region[] = ['us', 'in', 'uk']
 
 export function isValidRegion(r: string): r is Region {
   return REGIONS.includes(r as Region)
 }
 
+// UK checkout still runs through the existing US/PayPal (USD) flow — there is
+// no GBP billing plan yet. GBP only appears as a display conversion on the
+// marketing/pricing pages (see lib/plans.ts → convertUsdToGbp).
 export const REGION_TO_COUNTRY: Record<Region, Country> = {
   us: 'US',
   in: 'IN',
+  uk: 'US',
 }
 
 export const REGION_CURRENCY: Record<Region, string> = {
   us: 'USD',
   in: 'INR',
+  uk: 'GBP',
 }
 
 export const REGION_LOCALE: Record<Region, string> = {
   us: 'en-US',
   in: 'en-IN',
+  uk: 'en-GB',
 }
 
 export interface RegionContent {
@@ -61,5 +67,18 @@ export const REGION_CONTENT: Record<Region, RegionContent> = {
     pricingTitle: 'INR mein simple pricing',
     pricingDescription:
       'Har budget ke liye plan — solo designer se lekar wrap studio tak. Rupees mein pay karein, kabhi bhi cancel karein.',
+  },
+  uk: {
+    badge: 'For UK wrap shops, dealerships & body shops',
+    headline: 'Design. Preview.',
+    headlineHighlight: 'Win Every UK Client.',
+    subheadline:
+      'The leading virtual car customisation platform for British automotive businesses. Pitch wraps, colour swaps, and modifications in photorealistic detail — before any work begins.',
+    primaryCta: 'Start Free Trial',
+    secondaryCta: 'View GBP Pricing',
+    secondaryCtaHref: '/uk/pricing',
+    pricingTitle: 'Simple pricing in GBP',
+    pricingDescription:
+      'Plans for every UK shop — from solo detailers to multi-bay wrap studios. Prices shown in pounds; checkout is billed in USD via PayPal.',
   },
 }

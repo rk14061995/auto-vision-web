@@ -18,6 +18,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly',
       priority: 1,
     },
+    {
+      url: `${baseUrl}/uk`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 1,
+    },
 
     // ── Regional pricing ────────────────────────────────────────────────────
     {
@@ -28,6 +34,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     {
       url: `${baseUrl}/us/pricing`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/uk/pricing`,
       lastModified: now,
       changeFrequency: 'monthly',
       priority: 0.9,

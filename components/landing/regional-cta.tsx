@@ -22,6 +22,11 @@ const CTA_BY_REGION: Record<Region, { headline: string; sub: string; compareCta:
     sub: "Free trial aaj hi shuru karein. Credit card ki zaroorat nahi. INR mein billing, kabhi bhi cancel karein.",
     compareCta: "INR Plans Compare Karein",
   },
+  uk: {
+    headline: "Ready to win more UK clients?",
+    sub: "Start your free trial today. No credit card required. GBP pricing, cancel any time.",
+    compareCta: "Compare GBP Plans",
+  },
 }
 
 export function RegionalCTA({ region, content }: Props) {

@@ -24,6 +24,12 @@ const STATS_BY_REGION: Record<Region, { value: string; label: string }[]> = {
     { value: "99.9%", label: "Uptime" },
     { value: "4.9/5", label: "User Rating" },
   ],
+  uk: [
+    { value: "50K+", label: "Active Users" },
+    { value: "1M+", label: "Cars Designed" },
+    { value: "99.9%", label: "Uptime" },
+    { value: "4.9/5", label: "User Rating" },
+  ],
 }
 
 export function RegionalHero({ region, content }: Props) {

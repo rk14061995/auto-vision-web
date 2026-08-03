@@ -26,12 +26,16 @@ export async function generateMetadata({
   const pageTitle =
     r === "us"
       ? "Virtual Car Customization for US Businesses"
-      : "India's Virtual Car Customization Platform"
+      : r === "uk"
+        ? "Virtual Car Customisation for UK Businesses"
+        : "India's Virtual Car Customization Platform"
   const socialTitle = `AutoVision Pro — ${pageTitle}`
   const description =
     r === "us"
       ? `The leading virtual car customization platform for American automotive businesses. Pitch wraps, color swaps, and mods in ${currency} — before any work begins.`
-      : `India ka #1 virtual car customization platform. AI-powered wrap designs aur colour variants — ₹0 se shuru karein.`
+      : r === "uk"
+        ? `The leading virtual car customisation platform for British automotive businesses. Pitch wraps, colour swaps, and modifications — before any work begins.`
+        : `India ka #1 virtual car customization platform. AI-powered wrap designs aur colour variants — ₹0 se shuru karein.`
 
   return {
     title: pageTitle,
@@ -52,6 +56,7 @@ export async function generateMetadata({
       languages: {
         "en-US": `${APP_URL}/us`,
         "en-IN": `${APP_URL}/in`,
+        "en-GB": `${APP_URL}/uk`,
         "x-default": `${APP_URL}/in`,
       },
     },
