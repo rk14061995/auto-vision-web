@@ -29,6 +29,10 @@ export function event(action: string, params?: Record<string, unknown>) {
   window.gtag('event', action, params)
 }
 
+function slugify(label: string): string {
+  return label.toLowerCase().trim().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')
+}
+
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
 export function trackLogin(method = 'email') {
@@ -45,6 +49,10 @@ export function trackSignUp(method = 'email') {
 
 export function trackSignUpError(errorMessage: string) {
   event('signup_error', { error_message: errorMessage })
+}
+
+export function trackSignupPageView() {
+  event('signup_page_viewed', {})
 }
 
 // ─── E-commerce (GA4 standard) ───────────────────────────────────────────────
@@ -149,7 +157,39 @@ export function trackCreateProject(params: {
 // ─── CTA / Marketing ─────────────────────────────────────────────────────────
 
 export function trackCTAClick(label: string, location: 'hero' | 'cta_section' | 'pricing' | 'header') {
-  event('cta_click', { button_label: label, cta_location: location })
+  event(`cta_${slugify(label)}_click`, { button_label: label, cta_location: location })
+}
+
+// ─── Header / Nav ─────────────────────────────────────────────────────────────
+
+export function trackSignInClick(location = 'header') {
+  event('sign_in_click', { location })
+}
+
+export function trackSignUpClick(location = 'header') {
+  event('signup_click', { location })
+}
+
+export function trackSignOutClick() {
+  event('sign_out_click', {})
+}
+
+export function trackNavLinkClick(label: string, location: 'header_nav' | 'header_nav_mobile') {
+  event(`nav_${slugify(label)}_click`, { label, location })
+}
+
+export function trackUserMenuClick(item: 'dashboard' | 'profile') {
+  event(`user_menu_${item}_click`, { item })
+}
+
+export function trackLogoClick(location: 'header' | 'footer') {
+  event('logo_click', { location })
+}
+
+// ─── Footer ────────────────────────────────────────────────────────────────────
+
+export function trackFooterLinkClick(section: string, label: string) {
+  event(`footer_${slugify(label)}_click`, { section, label })
 }
 
 export function trackPricingView(planCount?: number) {
@@ -283,7 +323,7 @@ export type WebVitalName = 'LCP' | 'CLS' | 'FCP' | 'TTFB' | 'INP'
 export type WebVitalRating = 'good' | 'needs-improvement' | 'poor'
 
 export function trackWebVital(name: WebVitalName, value: number, rating: WebVitalRating) {
-  event('web_vitals', {
+  event(`web_vitals_${name.toLowerCase()}`, {
     metric_name: name,
     metric_value: Math.round(name === 'CLS' ? value * 1000 : value),
     metric_rating: rating,

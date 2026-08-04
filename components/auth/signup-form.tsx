@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { signIn } from "next-auth/react"
@@ -11,12 +11,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
 import { signup } from "@/app/actions/auth"
-import { trackSignUp, trackSignUpError } from "@/lib/gtag"
+import { trackSignUp, trackSignUpError, trackSignupPageView } from "@/lib/gtag"
 
 export function SignupForm() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [country, setCountry] = useState<"IN" | "US" | "">()
+
+  useEffect(() => {
+    trackSignupPageView()
+  }, [])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
