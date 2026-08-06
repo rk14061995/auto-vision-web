@@ -5,7 +5,6 @@ import { Hero } from "@/components/landing/hero"
 import { Features } from "@/components/landing/features"
 import { Testimonials } from "@/components/landing/testimonials"
 import { CTA } from "@/components/landing/cta"
-import { ShopBannerStrip } from "@/components/landing/shop-banner-strip"
 import { AdvertiseSection } from "@/components/landing/advertise-section"
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://autovision-pro.com"
@@ -30,7 +29,6 @@ export default function HomePage() {
       <main className="flex-1">
         <Hero />
         <Features region="us" />
-        <ShopBannerStrip />
         <Testimonials region="us" />
         <AdvertiseSection />
         <CTA />
