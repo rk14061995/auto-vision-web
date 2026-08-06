@@ -1,10 +1,15 @@
+import { headers } from "next/headers"
 import { getActiveAdvertisements } from "@/lib/db"
+import { detectCity } from "@/lib/geo"
+import { selectAdsForCity } from "@/lib/ads"
 
 export async function LandingAdsSection() {
   let ads: Awaited<ReturnType<typeof getActiveAdvertisements>> = []
   try {
     const all = await getActiveAdvertisements()
-    ads = all.filter((a) => a.adType === "landing_hero")
+    const heroAds = all.filter((a) => a.adType === "landing_hero")
+    const city = detectCity(await headers())
+    ads = selectAdsForCity(heroAds, city)
   } catch {
     // Non-critical — ads failing should never break the page
     return null

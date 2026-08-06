@@ -8,6 +8,7 @@ import { Features } from "@/components/landing/features"
 import { Testimonials } from "@/components/landing/testimonials"
 import { RegionalCTA } from "@/components/landing/regional-cta"
 import { LandingAdsSection } from "@/components/landing/landing-ads"
+import { ShopBannerStrip } from "@/components/landing/shop-banner-strip"
 import { AdvertiseSection } from "@/components/landing/advertise-section"
 import { RegionalDeepDive } from "@/components/landing/regional-deep-dive"
 
@@ -102,6 +103,7 @@ export default async function RegionalHomePage({
       <main className="flex-1">
         <RegionalHero region={r} content={content} />
         <Features region={r} />
+        <ShopBannerStrip />
         <LandingAdsSection />
         <Testimonials region={r} />
         <RegionalDeepDive region={r} />

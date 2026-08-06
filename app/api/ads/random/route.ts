@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getActiveAdvertisements, getUserByEmail } from '@/lib/db';
+import { detectCity } from "@/lib/geo";
+import { rankAdsByLocation } from "@/lib/ads";
 
 // /api/ads/random - returns random active ads; empty when the caller is ad-free
 export async function GET(request: NextRequest) {
@@ -28,9 +30,13 @@ export async function GET(request: NextRequest) {
     if (allowedTypes) {
       allAds = allAds.filter((a) => allowedTypes.includes(a.adType))
     }
-    // Shuffle and pick up to 5 random ads
-    const shuffled = allAds.sort(() => 0.5 - Math.random());
-    const randomAds = shuffled.slice(0, 5);
+    // Rank by relevance to the visitor's city (?city=Pune, else geo-detected):
+    // exact city match, then nearby cities, then national, then everything
+    // else — so local shop ads reach nearby customers first. Randomized
+    // within each tier, so this already IS the shuffle — take the top 5.
+    const cityParam = request.nextUrl.searchParams.get("city")
+    const city = cityParam || detectCity(request.headers)
+    const randomAds = rankAdsByLocation(allAds, city).slice(0, 5);
     const res = NextResponse.json(randomAds);
     res.headers.set('Access-Control-Allow-Origin', request.headers.get('origin') || '*');
     res.headers.set('Access-Control-Allow-Methods', 'GET,OPTIONS');

@@ -331,6 +331,12 @@ export interface Advertisement {
   paymentId: string | null
   createdAt: Date
   updatedAt: Date
+  // Local-shop advertiser targeting (customization shops, mechanics, tyre/alignment shops, etc.)
+  city?: string // e.g. "Pune" — omitted/"All India" means untargeted/national placement
+  category?: "customization" | "mechanic" | "tyre" | "detailing" | "other"
+  source?: "self_serve" | "manual" // "manual" = onboarded directly by admin, payment collected offline
+  paymentMethod?: "razorpay" | "payu" | "cashfree" | "paypal" | "cash" | "upi" | "bank_transfer" | "other"
+  notes?: string // internal admin notes, e.g. sales contact details
 }
 
 export interface DesignRequest {
@@ -871,7 +877,8 @@ export async function recordReferralReward(params: {
 
 // Advertisement functions
 export async function createAdvertisement(
-  adData: Omit<Advertisement, "_id" | "createdAt" | "updatedAt" | "views" | "clicks" | "status">
+  adData: Omit<Advertisement, "_id" | "createdAt" | "updatedAt" | "views" | "clicks" | "status">,
+  initialStatus: Advertisement["status"] = "pending"
 ): Promise<Advertisement> {
   const db = await getDb()
   const now = new Date()
@@ -879,7 +886,7 @@ export async function createAdvertisement(
     ...adData,
     views: 0,
     clicks: 0,
-    status: "pending",
+    status: initialStatus,
     createdAt: now,
     updatedAt: now,
   }

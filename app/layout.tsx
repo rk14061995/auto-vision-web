@@ -99,15 +99,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geist.className} ${geistMono.className}`}>
-      <head>
+      <body className="font-sans antialiased min-h-screen">
         <Script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7690670457022729"
           crossOrigin="anonymous"
-          strategy="beforeInteractive"
+          strategy="afterInteractive"
         />
-      </head>
-      <body className="font-sans antialiased min-h-screen">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}

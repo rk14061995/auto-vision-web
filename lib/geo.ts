@@ -17,3 +17,18 @@ export function getCountryName(country: Country): string {
 export function getCurrencySymbol(country: Country): string {
   return country === "IN" ? "₹" : "$"
 }
+
+/**
+ * Best-effort visitor city from Vercel's geo header — used to prioritize
+ * city-targeted shop ads (e.g. a Pune tyre shop banner for Pune visitors).
+ * Returns null on localhost/dev or when the header is absent (never throws).
+ */
+export function detectCity(headers: Headers): string | null {
+  const raw = headers.get("x-vercel-ip-city")
+  if (!raw) return null
+  try {
+    return decodeURIComponent(raw)
+  } catch {
+    return raw
+  }
+}

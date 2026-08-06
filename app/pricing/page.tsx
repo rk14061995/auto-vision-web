@@ -5,10 +5,19 @@ import { PricingTable } from "@/components/pricing/pricing-table"
 import { PricingFAQ } from "@/components/pricing/pricing-faq"
 import { PricingTracker } from "@/components/pricing/pricing-tracker"
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://autovision-pro.com"
+
+// Same duplicate-content situation as the root "/" page (see app/page.tsx):
+// bots hitting this bare URL (middleware exempts them from the region
+// redirect) see the same table as /us/pricing, which already declares
+// itself canonical. Agree with that here instead of leaving it undeclared.
 export const metadata: Metadata = {
   title: "Pricing - AutoVision Pro",
   description:
     "Choose the perfect plan for your car customization needs. From free trials to enterprise solutions.",
+  alternates: {
+    canonical: `${APP_URL}/us/pricing`,
+  },
 }
 
 export default function PricingPage() {

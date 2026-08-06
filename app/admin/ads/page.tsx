@@ -1,5 +1,14 @@
+import Link from "next/link"
 import { getAllAdvertisements } from "@/lib/db"
 import AdActions from "./AdActions"
+
+const CATEGORY_LABEL: Record<string, string> = {
+  customization: "Customization",
+  mechanic: "Mechanic",
+  tyre: "Tyre & Alignment",
+  detailing: "Detailing",
+  other: "Other",
+}
 
 export default async function AdsPage() {
   const ads = await getAllAdvertisements()
@@ -26,8 +35,9 @@ export default async function AdsPage() {
       <div className="admin-page-header">
         <div>
           <h1 className="admin-page-title">Advertisements</h1>
-          <p className="admin-page-sub">Review and approve user-submitted ads</p>
+          <p className="admin-page-sub">Review self-serve submissions, or onboard local shops directly</p>
         </div>
+        <Link href="/admin/ads/new" className="admin-btn admin-btn-primary">+ Onboard a Shop</Link>
       </div>
 
       <div className="admin-stat-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)", marginBottom: 24 }}>
@@ -54,6 +64,7 @@ export default async function AdsPage() {
               <tr>
                 <th>Preview</th>
                 <th>Shop</th>
+                <th>Category / City</th>
                 <th>Type</th>
                 <th>Owner</th>
                 <th>Period</th>
@@ -75,6 +86,11 @@ export default async function AdsPage() {
                     <strong style={{ fontSize: 13 }}>{ad.shopName}</strong>
                     <span style={{ fontSize: 11, color: "#64748b", display: "block", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ad.shopDescription}</span>
                   </td>
+                  <td style={{ fontSize: 11 }}>
+                    {ad.category && <span className="admin-badge admin-badge-gray" style={{ display: "inline-block", marginBottom: 3 }}>{CATEGORY_LABEL[ad.category] || ad.category}</span>}
+                    <span style={{ display: "block", color: "#64748b" }}>{ad.city || "All India"}</span>
+                    {ad.source === "manual" && <span style={{ display: "block", color: "#94a3b8" }}>Manually onboarded</span>}
+                  </td>
                   <td><span className="admin-badge admin-badge-blue">{TYPE_LABEL[ad.adType] || ad.adType}</span></td>
                   <td style={{ fontSize: 12, color: "#64748b" }}>{ad.email}</td>
                   <td style={{ fontSize: 11, color: "#64748b" }}>
@@ -89,6 +105,7 @@ export default async function AdsPage() {
                     <strong style={{ color: "#059669" }}>
                       {ad.paymentCurrency === "USD" ? "$" : "₹"}{ad.paymentAmount}
                     </strong>
+                    {ad.paymentMethod && <span style={{ display: "block", color: "#94a3b8", fontSize: 10, textTransform: "capitalize" }}>{ad.paymentMethod.replace("_", " ")}</span>}
                   </td>
                   <td><span className={`admin-badge ${STATUS_BADGE[ad.status] || "admin-badge-gray"}`}>{ad.status}</span></td>
                   <td><AdActions id={String(ad._id)} status={ad.status} /></td>
