@@ -11,7 +11,7 @@ export default function TermsPage() {
     <LegalPage
       title="Terms and Conditions"
       subtitle="Please read these terms carefully before using AutoVision Pro."
-      lastUpdated="June 11, 2026"
+      lastUpdated="August 3, 2026"
     >
       <h2>1. Acceptance of Terms</h2>
       <p>
@@ -105,17 +105,35 @@ export default function TermsPage() {
         You may cancel your subscription at any time via the dashboard. We may terminate or suspend your access immediately for breach of these terms. Upon termination, your right to use the Platform ceases; data may be retained as described in the Privacy Policy.
       </p>
 
-      <h2>12. Governing Law</h2>
+      <h2>12. Regional Consumer Rights</h2>
+      <p>Nothing in these Terms is intended to override statutory consumer protections that apply to you based on your location.</p>
+
+      <h3>12.1 United Kingdom / EEA</h3>
       <p>
-        These terms are governed by the laws of India. Any disputes shall be subject to the exclusive jurisdiction of the courts of Hyderabad, Telangana, India.
+        If you are a consumer in the UK or EEA, the Consumer Contracts Regulations 2013 (or the equivalent law in your country) may give you a 14-day right to cancel a digital service contract without giving a reason. Because AI credits, creative design work, and website building services are digital content or services that begin as soon as you use them, <strong>this cancellation right ends once you start using AI credits, once design work begins, or once your website building subscription begins</strong> — by doing so, you expressly agree that performance has started and that you lose this right. This does not affect your rights under our <a href="/refund">Refund Policy</a>.
       </p>
 
-      <h2>13. Changes to Terms</h2>
+      <h3>12.2 United States</h3>
+      <p>
+        Some US states require clear disclosure of automatically renewing subscriptions and an easy way to cancel. All paid subscriptions on AutoVision Pro renew automatically at the end of each billing cycle unless cancelled in advance from your dashboard, where cancellation takes effect immediately for future renewals.
+      </p>
+
+      <h3>12.3 India</h3>
+      <p>
+        If you are located in India, nothing in these Terms limits your rights under the Consumer Protection Act, 2019 or the Consumer Protection (E-Commerce) Rules, 2020, including your right to raise a grievance with our team at <a href="mailto:autovisionpro07@gmail.com">autovisionpro07@gmail.com</a>.
+      </p>
+
+      <h2>13. Governing Law</h2>
+      <p>
+        These terms are governed by the laws of India. Any disputes shall be subject to the exclusive jurisdiction of the courts of Hyderabad, Telangana, India. Section 12 above describes additional statutory consumer rights that apply based on your location and are not overridden by this governing law clause.
+      </p>
+
+      <h2>14. Changes to Terms</h2>
       <p>
         We may update these terms from time to time. Material changes will be communicated by email or an in-app notice at least 14 days before taking effect. Continued use after changes constitutes acceptance.
       </p>
 
-      <h2>14. Contact</h2>
+      <h2>15. Contact</h2>
       <p>
         Questions about these terms? Contact us at <a href="mailto:autovisionpro07@gmail.com">autovisionpro07@gmail.com</a> or via our <a href="/contact">Contact page</a>.
       </p>

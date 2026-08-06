@@ -11,7 +11,7 @@ export default function PrivacyPage() {
     <LegalPage
       title="Privacy Policy"
       subtitle="We take your privacy seriously. Here's exactly how we handle your data."
-      lastUpdated="June 11, 2026"
+      lastUpdated="August 3, 2026"
     >
       <h2>1. Who We Are</h2>
       <p>
@@ -116,12 +116,30 @@ export default function PrivacyPage() {
         Our primary infrastructure is governed by Indian law. If you are located outside India, your data may be transferred to and processed in India or other countries where our sub-processors operate. We rely on standard contractual clauses or sub-processor certifications to ensure adequate protection.
       </p>
 
-      <h2>11. Changes to This Policy</h2>
+      <h2>11. Region-Specific Disclosures</h2>
+      <p>In addition to the rights described in Section 7, the following disclosures apply depending on where you are located.</p>
+
+      <h3>11.1 United Kingdom (UK GDPR)</h3>
+      <p>
+        If you are located in the United Kingdom, we process your personal data under the UK General Data Protection Regulation (UK GDPR) and the Data Protection Act 2018, in addition to the legal bases described in Section 4. You have the right to lodge a complaint with the <strong>Information Commissioner&apos;s Office (ICO)</strong> at <a href="https://ico.org.uk" target="_blank" rel="noreferrer">ico.org.uk</a> if you believe we have not handled your data properly.
+      </p>
+
+      <h3>11.2 United States — California Privacy Rights (CCPA/CPRA)</h3>
+      <p>
+        If you are a California resident, the California Consumer Privacy Act (as amended by the CPRA) gives you the right to know what personal information we collect, request deletion or correction of that information, and opt out of the &quot;sale&quot; or &quot;sharing&quot; of personal information. <strong>We do not sell or share your personal information</strong> as those terms are defined under the CCPA/CPRA. To exercise any of these rights, email <a href="mailto:privacy@auto-vision-pro.com">privacy@auto-vision-pro.com</a> — we will not discriminate against you for exercising them.
+      </p>
+
+      <h3>11.3 India — Digital Personal Data Protection Act, 2023</h3>
+      <p>
+        If you are located in India, we process your personal data (referred to as your &quot;Personal Data&quot;, with you as the &quot;Data Principal&quot;) in accordance with the Digital Personal Data Protection Act, 2023 and the Information Technology Act, 2000. You have the right to access, correct, and request erasure of your Personal Data, and to nominate another individual to exercise your rights in the event of death or incapacity. Grievances relating to your Personal Data can be raised with our Grievance Officer at <a href="mailto:privacy@auto-vision-pro.com">privacy@auto-vision-pro.com</a>; we aim to acknowledge grievances within 48 hours and resolve them within 30 days.
+      </p>
+
+      <h2>12. Changes to This Policy</h2>
       <p>
         We may update this policy to reflect changes in our practices or applicable law. We will notify you of material changes by email or in-app notice at least 14 days in advance. The &quot;Last updated&quot; date at the top of this page reflects the most recent revision.
       </p>
 
-      <h2>12. Contact</h2>
+      <h2>13. Contact</h2>
       <p>
         For privacy-related questions or requests, contact our data protection contact at <a href="mailto:privacy@auto-vision-pro.com">privacy@auto-vision-pro.com</a> or use our <a href="/contact">Contact form</a>.
       </p>

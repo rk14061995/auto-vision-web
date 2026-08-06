@@ -11,7 +11,7 @@ export default function CookiesPage() {
     <LegalPage
       title="Cookie Policy"
       subtitle="We use a small number of cookies to keep the platform secure and to understand how it's used."
-      lastUpdated="June 11, 2026"
+      lastUpdated="August 3, 2026"
     >
       <h2>1. What Are Cookies?</h2>
       <p>
@@ -137,12 +137,29 @@ export default function CookiesPage() {
         To opt out of Google Analytics tracking across all websites, you can install the <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noreferrer">Google Analytics Opt-out Browser Add-on</a>.
       </p>
 
-      <h2>6. Changes to This Policy</h2>
+      <h2>6. Regional Cookie Rights</h2>
+
+      <h3>6.1 United Kingdom / EEA</h3>
+      <p>
+        Under UK and EU rules on cookies (PECR and the ePrivacy framework, alongside UK GDPR/GDPR), you have the right to control non-essential cookies such as our analytics cookies. You can do this using the browser controls in Section 3. We are working towards a cookie consent solution that will let UK/EEA visitors opt in or out of analytics cookies before they are set; until then, please use your browser settings if you would prefer analytics cookies not to load.
+      </p>
+
+      <h3>6.2 United States — California</h3>
+      <p>
+        California residents have the right to opt out of the &quot;sale&quot; or &quot;sharing&quot; of personal information, including via cookies used for cross-context behavioural advertising. We do not sell or share personal information collected through cookies, so no opt-out mechanism is currently required; this section will be updated if that changes.
+      </p>
+
+      <h3>6.3 India</h3>
+      <p>
+        Under the Digital Personal Data Protection Act, 2023, cookies that collect personal data should be used with your knowledge. Analytics cookies on AutoVision Pro collect anonymised, aggregated usage data as described in Section 2.2; you can control them using the browser settings in Section 3.
+      </p>
+
+      <h2>7. Changes to This Policy</h2>
       <p>
         We may update this Cookie Policy from time to time. Material changes will be communicated via an in-app notice. The &quot;Last updated&quot; date at the top reflects the most recent revision.
       </p>
 
-      <h2>7. Contact</h2>
+      <h2>8. Contact</h2>
       <p>
         Questions about our cookie practices? Email us at <a href="mailto:privacy@auto-vision-pro.com">privacy@auto-vision-pro.com</a> or visit our <a href="/contact">Contact page</a>.
       </p>

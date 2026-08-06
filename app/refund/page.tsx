@@ -11,7 +11,7 @@ export default function RefundPage() {
     <LegalPage
       title="Refund Policy"
       subtitle="We want you to be happy with every purchase. Here's how refunds work."
-      lastUpdated="June 11, 2026"
+      lastUpdated="August 3, 2026"
     >
       <h2>1. Overview</h2>
       <p>
@@ -80,7 +80,24 @@ export default function RefundPage() {
         Domain registration fees and third-party service costs (if applicable) are non-refundable as they are passed directly to third-party providers.
       </p>
 
-      <h2>7. How to Request a Refund</h2>
+      <h2>7. Regional Statutory Rights</h2>
+
+      <h3>7.1 United Kingdom / EEA — Right to Cancel</h3>
+      <p>
+        Under the Consumer Contracts Regulations 2013 (or the equivalent law in your EEA country), you may have a statutory right to cancel a digital service purchase within 14 days without giving a reason. This right ends as soon as you begin using AI credits, once our team begins creative design work, or once your website building service begins, because you are consenting to immediate performance of a digital service. Where this statutory right does not apply or has ended, the refund terms in Sections 2–6 above apply.
+      </p>
+
+      <h3>7.2 United States — Automatic Renewal Disclosure</h3>
+      <p>
+        In line with state auto-renewal laws, we confirm that subscriptions renew automatically at the price shown at checkout and can be cancelled at any time from your dashboard before the next renewal date to avoid being charged.
+      </p>
+
+      <h3>7.3 India — Consumer Protection (E-Commerce) Rules, 2020</h3>
+      <p>
+        If you are located in India, refund requests are acknowledged within 48 hours and resolved within 30 days in line with the Consumer Protection (E-Commerce) Rules, 2020. You may also escalate unresolved grievances to our team at <a href="mailto:autovisionpro07@gmail.com">autovisionpro07@gmail.com</a>.
+      </p>
+
+      <h2>8. How to Request a Refund</h2>
       <ol>
         <li>Email <a href="mailto:autovisionpro07@gmail.com">autovisionpro07@gmail.com</a> with subject line &quot;Refund Request — [Order ID]&quot;.</li>
         <li>Include your registered email address, the product purchased, and the reason for your request.</li>
@@ -88,12 +105,12 @@ export default function RefundPage() {
         <li>Approved refunds are processed to the original payment method within 5–10 business days (Razorpay/PayPal processing times may vary).</li>
       </ol>
 
-      <h2>8. Chargebacks</h2>
+      <h2>9. Chargebacks</h2>
       <p>
         We encourage you to contact us before initiating a chargeback with your bank. Unresolved chargebacks may result in account suspension. We will provide all relevant documentation to your bank in the event of a dispute.
       </p>
 
-      <h2>9. Contact</h2>
+      <h2>10. Contact</h2>
       <p>
         For any refund questions, contact us at <a href="mailto:autovisionpro07@gmail.com">autovisionpro07@gmail.com</a> or use the <a href="/contact">Contact page</a>.
       </p>
